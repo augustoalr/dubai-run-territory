@@ -1,0 +1,21 @@
+{
+  "name": "@dubai-run/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "h3-js": "4.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.24",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,8 @@
+node_modules
+pnpm-lock.yaml
+apps/web/.next
+apps/web/out
+apps/web/next-env.d.ts
+apps/web/public/map/style.json
+apps/web/public/map/maplibre-gl-worker.mjs
+coverage
