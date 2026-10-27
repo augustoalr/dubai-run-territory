@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 — 2026-10-27
+
+Advisors del proyecto ya migrado. Migración nueva, sin tocar las tres aplicadas.
+
+- Las políticas que filtran por el corredor usan `(SELECT auth.uid())`.
+- Índices para las claves ajenas que el advisor marcó sin cubrir: `cell_efforts.season_id`, `cell_ownership (zone_id, h3)`, `daily_points.league_id`, `daily_points.user_id`, `runs.season_id` y `user_leagues.season_id`.
+- `is_admin()` pasa a `private.is_admin()`. El esquema `private` no entra en la API. `anon` no tiene `EXECUTE`.
+
 ## 0.2.0 — 2026-10-27
 
 Esquema, RLS y seed de la zona.
