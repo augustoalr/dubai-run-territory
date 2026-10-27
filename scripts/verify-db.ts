@@ -1,0 +1,524 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import pg from "pg";
+import { splitSql } from "../packages/core/src/db/sql-split.ts";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const connectionString =
+  process.env.DATABASE_URL ?? "postgres://territory:territory@127.0.0.1:5432/territory";
+
+const userA = "11111111-1111-4111-8111-111111111111";
+const userB = "22222222-2222-4222-8222-222222222222";
+
+function assertLocalDatabase(value: string): void {
+  const host = new URL(value).hostname;
+  if (host !== "localhost" && host !== "127.0.0.1" && host !== "::1") {
+    throw new Error(`db:verify solo corre contra localhost (recibí ${host}).`);
+  }
+}
+
+function preview(statement: string): string {
+  return statement.slice(0, 200).replace(/\s+/g, " ");
+}
+
+function asNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string" && value.trim() !== "") return Number(value);
+  throw new Error(`expected a number, got ${String(value)}`);
+}
+
+function errorText(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const sql =
+    typeof error === "object" && error !== null && "sql" in error
+      ? String((error as { sql?: string }).sql ?? "")
+      : "";
+  return sql ? `${message}\nSQL: ${preview(sql)}` : message;
+}
+
+function errorCode(error: unknown): string | undefined {
+  return typeof error === "object" && error !== null && "code" in error
+    ? String((error as { code?: string }).code)
+    : undefined;
+}
+
+async function expectFailure(
+  run: () => Promise<unknown>,
+  code: string,
+  messageIncludes: string,
+): Promise<void> {
+  try {
+    await run();
+  } catch (error) {
+    if (errorCode(error) !== code || !errorText(error).toLowerCase().includes(messageIncludes)) {
+      throw new Error(
+        `expected ${code} containing "${messageIncludes}", got ${errorCode(error)}: ${errorText(error)}`,
+      );
+    }
+    return;
+  }
+  throw new Error(`expected SQLSTATE ${code}`);
+}
+
+async function main(): Promise<void> {
+  assertLocalDatabase(connectionString);
+  const client = new pg.Client({ connectionString });
+  await connect(client);
+  const query = client.query.bind(client);
+  client.query = ((...args: Parameters<pg.Client["query"]>) => {
+    const pending = query(...args);
+    return Promise.resolve(pending).catch((error: unknown) => {
+      if (typeof error === "object" && error !== null && typeof args[0] === "string") {
+        (error as { sql?: string }).sql = args[0];
+      }
+      throw error;
+    });
+  }) as pg.Client["query"];
+  console.log("applying migrations");
+  await resetDatabase(client);
+  await applyFile(client, join(root, "supabase/tests/harness.sql"));
+  const migrations = readdirSync(join(root, "supabase/migrations"))
+    .filter((name) => name.endsWith(".sql"))
+    .sort();
+  for (const name of migrations) {
+    await applyFile(client, join(root, "supabase/migrations", name));
+  }
+  const seedPath = join(root, "supabase/migrations/20261027130000_seed_jumeirah_kite.sql");
+  await applyFile(client, seedPath);
+
+  const zone = await one<{ id: string; status: string }>(
+    client,
+    "SELECT id, status FROM public.zones WHERE slug = 'jumeirah-kite'",
+  );
+  if (zone.status !== "draft") throw new Error(`zone status ${zone.status}`);
+  await expectCount(client, "public.zone_cells", 99);
+  await expectCount(client, "public.leagues", 4);
+  await expectCount(client, "public.seasons", 1);
+  const invalidCells = await one<{ n: number }>(
+    client,
+    `SELECT count(*)::int AS n
+     FROM public.zone_cells
+     WHERE NOT extensions.ST_IsValid(boundary::extensions.geometry)`,
+  );
+  if (invalidCells.n !== 0) throw new Error(`${invalidCells.n} invalid cell boundaries`);
+  const zoneValid = await one<{ ok: boolean; srid: number }>(
+    client,
+    `SELECT extensions.ST_IsValid(polygon::extensions.geometry) AS ok,
+            extensions.ST_SRID(polygon::extensions.geometry)::int AS srid
+     FROM public.zones WHERE slug = 'jumeirah-kite'`,
+  );
+  if (!zoneValid.ok || zoneValid.srid !== 4326) {
+    throw new Error(`zone polygon invalid or SRID ${zoneValid.srid}`);
+  }
+
+  console.log("checking RLS");
+  await client.query("INSERT INTO auth.users (id) VALUES ($1::uuid), ($2::uuid)", [userA, userB]);
+  await client.query("UPDATE public.profiles SET alias = 'runner_a' WHERE id = $1::uuid", [userA]);
+  await client.query("UPDATE public.profiles SET alias = 'runner_b' WHERE id = $1::uuid", [userB]);
+
+  const season = await one<{ id: string }>(
+    client,
+    "SELECT id FROM public.seasons WHERE name = 'Temporada 1'",
+  );
+  const league = await one<{ id: string }>(
+    client,
+    "SELECT id FROM public.leagues WHERE code = 'intermediate'",
+  );
+  const cell = await one<{ h3: string }>(
+    client,
+    "SELECT h3 FROM public.zone_cells ORDER BY h3 LIMIT 1",
+  );
+
+  const runA = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, storage_path, file_sha256, format, source,
+       external_activity_id, status, started_at, ended_at
+     ) VALUES (
+       $1, $2, $3, 'server/garmin/a.fit', $4, 'fit', 'garmin', 'act-100',
+       'accepted', '2026-11-02 06:00:00+04', '2026-11-02 07:00:00+04'
+     ) RETURNING id`,
+    [userA, zone.id, season.id, "a".repeat(64)],
+  );
+  const runB = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, storage_path, file_sha256, format, source, status
+     ) VALUES (
+       $1, $2, $3, 'server/upload/b.gpx', $4, 'gpx', 'upload', 'accepted'
+     ) RETURNING id`,
+    [userB, zone.id, season.id, "b".repeat(64)],
+  );
+  const effort = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.cell_efforts (
+       run_id, user_id, zone_id, season_id, league_id, h3, crossed_at, pace_s,
+       window_start_m, window_end_m
+     ) VALUES (
+       $1, $2, $3, $4, $5, $6, '2026-11-02 06:15:00+04', 330, 100, 1100
+     ) RETURNING id`,
+    [runA.id, userA, zone.id, season.id, league.id, cell.h3],
+  );
+  await client.query(
+    `INSERT INTO public.cell_ownership (
+       zone_id, season_id, league_id, h3, owner_id, effort_id, pace_s, achieved_at
+     ) VALUES ($1, $2, $3, $4, $5, $6, 330, '2026-11-02 06:15:00+04')`,
+    [zone.id, season.id, league.id, cell.h3, userA, effort.id],
+  );
+  await client.query(
+    `INSERT INTO public.daily_points (season_id, league_id, user_id, day, cells_owned, points)
+     VALUES ($1, $2, $3, '2026-11-02', 1, 1)`,
+    [season.id, league.id, userA],
+  );
+  await client.query(
+    `INSERT INTO public.provider_connections (user_id, provider, tokens)
+     VALUES ($1, 'garmin', '{"access_token":"secret-access","refresh_token":"secret-refresh"}'::jsonb)`,
+    [userA],
+  );
+
+  await expectFailure(
+    () =>
+      client.query(
+        `INSERT INTO public.runs (user_id, zone_id, storage_path, file_sha256, format, source)
+         VALUES ($1, $2, 'server/x.gpx', $3, 'gpx', 'strava')`,
+        [userA, zone.id, "c".repeat(64)],
+      ),
+    "22P02",
+    "strava",
+  );
+  await expectFailure(
+    () =>
+      client.query(
+        `INSERT INTO public.provider_connections (user_id, provider, tokens)
+         VALUES ($1, 'strava', '{}'::jsonb)`,
+        [userA],
+      ),
+    "22P02",
+    "strava",
+  );
+
+  await client.query("BEGIN");
+  await expectFailure(
+    () =>
+      client.query(
+        `INSERT INTO public.runs (
+           user_id, zone_id, storage_path, file_sha256, format, source, external_activity_id
+         ) VALUES ($1, $2, 'server/garmin/dup.fit', $3, 'fit', 'garmin', 'act-100')`,
+        [userB, zone.id, "d".repeat(64)],
+      ),
+    "23505",
+    "runs_source_external_activity",
+  );
+  await client.query("ROLLBACK");
+
+  await client.query(
+    `INSERT INTO public.runs (
+       user_id, zone_id, storage_path, file_sha256, format, source, external_activity_id, status
+     ) VALUES ($1, $2, 'server/polar/a.fit', $3, 'fit', 'polar', 'act-100', 'accepted')`,
+    [userB, zone.id, "e".repeat(64)],
+  );
+
+  await asUser(client, userA, "rollback", async () => {
+    await expectFailure(
+      () =>
+        client.query(
+          `INSERT INTO public.runs (user_id, zone_id, storage_path, file_sha256, format)
+           VALUES ($1, $2, $3, $4, 'gpx')`,
+          [userA, zone.id, `runs-raw/${userA}/early.gpx`, "1".repeat(64)],
+        ),
+      "42501",
+      "row-level security",
+    );
+  });
+
+  await client.query("UPDATE public.zones SET status = 'active' WHERE id = $1", [zone.id]);
+
+  await asUser(client, userA, "commit", async () => {
+    const seen = await client.query("SELECT id FROM public.runs");
+    if (seen.rows.length !== 1) throw new Error(`A should see 1 run, saw ${seen.rows.length}`);
+    const efforts = await client.query("SELECT id FROM public.cell_efforts");
+    if (efforts.rows.length !== 1) throw new Error("A should see their cell effort");
+    const aliases = await client.query("SELECT alias FROM public.profiles ORDER BY alias");
+    if (aliases.rows.length !== 2) throw new Error("aliases should be public");
+    const admin = await client.query("SELECT public.is_admin() AS ok");
+    if (admin.rows[0]?.ok !== false) throw new Error("A is not an admin yet");
+    await client.query("UPDATE public.profiles SET alias = 'ana' WHERE id = $1", [userA]);
+    const stolen = await client.query("UPDATE public.profiles SET alias = 'bob' WHERE id = $1", [
+      userB,
+    ]);
+    if (stolen.rowCount !== 0) throw new Error("A updated B's alias");
+    await client.query(
+      `INSERT INTO public.runs (user_id, zone_id, storage_path, file_sha256, format)
+       VALUES ($1, $2, $3, $4, 'gpx')`,
+      [userA, zone.id, `runs-raw/${userA}/ok.gpx`, "2".repeat(64)],
+    );
+  });
+  // A failed statement aborts the transaction, so each denial sits on its own.
+  await asUser(client, userA, "rollback", async () => {
+    await expectFailure(
+      () => client.query("SELECT is_admin FROM public.profiles"),
+      "42501",
+      "permission denied",
+    );
+  });
+  await asUser(client, userA, "rollback", async () => {
+    await expectFailure(
+      () =>
+        client.query(
+          `INSERT INTO public.runs (user_id, zone_id, storage_path, file_sha256, format, source)
+           VALUES ($1, $2, $3, $4, 'fit', 'garmin')`,
+          [userA, zone.id, `runs-raw/${userA}/nope.fit`, "3".repeat(64)],
+        ),
+      "42501",
+      "row-level security",
+    );
+  });
+  await asUser(client, userA, "rollback", async () => {
+    await expectFailure(
+      () =>
+        client.query(
+          `INSERT INTO public.runs (
+             user_id, zone_id, storage_path, file_sha256, format, external_activity_id
+           ) VALUES ($1, $2, $3, $4, 'gpx', 'act-9')`,
+          [userA, zone.id, `runs-raw/${userA}/ext.gpx`, "4".repeat(64)],
+        ),
+      "42501",
+      "row-level security",
+    );
+  });
+  await asUser(client, userA, "rollback", async () => {
+    await expectFailure(
+      () => client.query("SELECT tokens FROM public.provider_connections"),
+      "42501",
+      "permission denied",
+    );
+  });
+
+  await asUser(client, userB, "rollback", async () => {
+    const seen = await client.query("SELECT id FROM public.runs");
+    const ids = new Set(seen.rows.map((row: { id: string }) => row.id));
+    if (ids.has(runA.id) || !ids.has(runB.id)) {
+      throw new Error("B can see another runner's run or missed their own");
+    }
+    const efforts = await client.query("SELECT id FROM public.cell_efforts");
+    if (efforts.rows.length !== 0) throw new Error("B can see A's cell efforts");
+  });
+
+  await asRole(client, "anon", null, "rollback", async () => {
+    const cells = await client.query("SELECT count(*)::int AS n FROM public.zone_cells");
+    if (asNumber(cells.rows[0]?.n) !== 99) throw new Error("anon cannot read zone cells");
+    const owned = await client.query("SELECT owner_id FROM public.cell_ownership");
+    if (owned.rows.length !== 1) throw new Error("anon cannot read cell ownership");
+    const points = await client.query("SELECT points FROM public.daily_points");
+    if (points.rows.length !== 1) throw new Error("anon cannot read daily points");
+  });
+  await asRole(client, "anon", null, "rollback", async () => {
+    await expectFailure(
+      () => client.query("SELECT id FROM public.runs"),
+      "42501",
+      "permission denied",
+    );
+  });
+  await asRole(client, "anon", null, "rollback", async () => {
+    await expectFailure(
+      () => client.query("SELECT tokens FROM public.provider_connections"),
+      "42501",
+      "permission denied",
+    );
+  });
+
+  await client.query("BEGIN");
+  await client.query("GRANT INSERT ON public.cell_ownership TO anon");
+  await client.query("SET LOCAL ROLE anon");
+  await expectFailure(
+    () =>
+      client.query(
+        `INSERT INTO public.cell_ownership (
+           zone_id, season_id, league_id, h3, owner_id, effort_id, pace_s, achieved_at
+         ) VALUES ($1, $2, $3, $4, $5, $6, 300, now())`,
+        [zone.id, season.id, league.id, cell.h3, userA, effort.id],
+      ),
+    "42501",
+    "row-level security",
+  );
+  await client.query("ROLLBACK");
+
+  await client.query("BEGIN");
+  await client.query("GRANT SELECT ON public.provider_connections TO authenticated");
+  await client.query("SELECT set_config('request.jwt.claim.sub', $1, true)", [userA]);
+  await client.query("SET LOCAL ROLE authenticated");
+  const hidden = await client.query("SELECT count(*)::int AS n FROM public.provider_connections");
+  if (asNumber(hidden.rows[0]?.n) !== 0) {
+    throw new Error("authenticated read provider tokens through RLS");
+  }
+  await client.query("ROLLBACK");
+
+  await asRole(client, "service_role", null, "rollback", async () => {
+    const tokens = await client.query(
+      "SELECT tokens->>'access_token' AS token FROM public.provider_connections",
+    );
+    if (tokens.rows[0]?.token !== "secret-access") {
+      throw new Error("service_role should read provider tokens");
+    }
+  });
+
+  await client.query("UPDATE public.profiles SET is_admin = true WHERE id = $1", [userA]);
+  await asUser(client, userA, "rollback", async () => {
+    const seen = await client.query("SELECT id FROM public.runs");
+    if (seen.rows.length !== 4) throw new Error(`admin should see 4 runs, saw ${seen.rows.length}`);
+    const admin = await client.query("SELECT public.is_admin() AS ok");
+    if (admin.rows[0]?.ok !== true) throw new Error("is_admin() should be true");
+  });
+  await asUser(client, userB, "rollback", async () => {
+    await expectFailure(
+      () => client.query("UPDATE public.profiles SET is_admin = true WHERE id = $1", [userB]),
+      "42501",
+      "permission denied",
+    );
+  });
+
+  const anonPrivilege = await one<{ ok: boolean }>(
+    client,
+    "SELECT has_table_privilege('anon', 'public.provider_connections', 'SELECT') AS ok",
+  );
+  if (anonPrivilege.ok) throw new Error("anon can select provider_connections");
+  const tokenPrivilege = await one<{ ok: boolean }>(
+    client,
+    "SELECT has_column_privilege('authenticated', 'public.provider_connections', 'tokens', 'SELECT') AS ok",
+  );
+  if (tokenPrivilege.ok) throw new Error("authenticated can select tokens");
+
+  await applyFile(client, seedPath);
+  const stillActive = await one<{ status: string }>(
+    client,
+    "SELECT status FROM public.zones WHERE slug = 'jumeirah-kite'",
+  );
+  if (stillActive.status !== "active") throw new Error("seed reset an active zone to draft");
+  await expectCount(client, "public.zone_cells", 99);
+  await expectCount(client, "public.leagues", 4);
+  await expectCount(client, "public.seasons", 1);
+
+  await client.query(
+    `UPDATE public.seasons
+     SET status = 'active',
+         starts_at = '2026-12-07 00:00:00+04',
+         ends_at = '2026-12-27 23:59:59+04'
+     WHERE id = $1`,
+    [season.id],
+  );
+  await applyFile(client, seedPath);
+  const seasonAfter = await one<{ status: string; starts_at: Date }>(
+    client,
+    "SELECT status, starts_at FROM public.seasons WHERE id = $1",
+    [season.id],
+  );
+  if (seasonAfter.status !== "active") throw new Error("seed closed an active season");
+  if (seasonAfter.starts_at.toISOString() !== "2026-12-06T20:00:00.000Z") {
+    throw new Error(`seed moved an active season to ${seasonAfter.starts_at.toISOString()}`);
+  }
+
+  console.log("db verify ok");
+  await client.end();
+}
+
+async function connect(client: pg.Client): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    try {
+      await client.connect();
+      return;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+  throw lastError;
+}
+
+async function resetDatabase(client: pg.Client): Promise<void> {
+  const statements = [
+    "DROP EXTENSION IF EXISTS postgis_tiger_geocoder CASCADE",
+    "DROP EXTENSION IF EXISTS postgis_topology CASCADE",
+    "DROP EXTENSION IF EXISTS postgis CASCADE",
+    "DROP SCHEMA IF EXISTS extensions CASCADE",
+    "DROP SCHEMA IF EXISTS public CASCADE",
+    "DROP SCHEMA IF EXISTS auth CASCADE",
+    "CREATE SCHEMA public",
+    "GRANT ALL ON SCHEMA public TO CURRENT_USER",
+    "GRANT USAGE, CREATE ON SCHEMA public TO PUBLIC",
+    "SET search_path TO public",
+  ];
+  for (const statement of statements) {
+    await client.query(statement);
+  }
+}
+
+async function applyFile(client: pg.Client, file: string): Promise<void> {
+  const statements = splitSql(readFileSync(file, "utf8"));
+  await client.query("BEGIN");
+  try {
+    for (const statement of statements) {
+      try {
+        await client.query(statement);
+      } catch (error) {
+        throw new Error(`${file}\n${errorText(error)}\nSQL: ${preview(statement)}`);
+      }
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+}
+
+async function one<T extends pg.QueryResultRow>(
+  client: pg.Client,
+  sql: string,
+  params: unknown[] = [],
+): Promise<T> {
+  const result = await client.query<T>(sql, params);
+  const row = result.rows[0];
+  if (!row) throw new Error(`no row for ${preview(sql)}`);
+  return row;
+}
+
+async function expectCount(client: pg.Client, table: string, expected: number): Promise<void> {
+  const row = await one<{ n: number }>(client, `SELECT count(*)::int AS n FROM ${table}`);
+  if (row.n !== expected) throw new Error(`${table} has ${row.n} rows, expected ${expected}`);
+}
+
+async function asRole(
+  client: pg.Client,
+  role: "anon" | "authenticated" | "service_role",
+  userId: string | null,
+  ending: "rollback" | "commit",
+  fn: () => Promise<void>,
+): Promise<void> {
+  await client.query("BEGIN");
+  try {
+    await client.query("SELECT set_config('request.jwt.claim.sub', $1::text, true)", [
+      userId ?? "",
+    ]);
+    await client.query(`SET LOCAL ROLE ${role}`);
+    await fn();
+    await client.query(ending === "commit" ? "COMMIT" : "ROLLBACK");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+}
+
+async function asUser(
+  client: pg.Client,
+  userId: string,
+  ending: "rollback" | "commit",
+  fn: () => Promise<void>,
+): Promise<void> {
+  await asRole(client, "authenticated", userId, ending, fn);
+}
+
+main().catch((error: unknown) => {
+  console.error(errorText(error));
+  process.exit(1);
+});

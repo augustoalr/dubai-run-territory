@@ -28,15 +28,16 @@ pnpm build
 python3 -m http.server 3000 --directory apps/web/out
 ```
 
-`pnpm zone:cells` regenera el polígono y las 99 celdas H3 de la zona a partir del eje de la pista.
+`pnpm zone:cells` regenera el polígono y las 99 celdas H3 de la zona a partir del eje de la pista. `pnpm seed:sql` escribe la migración idempotente que inserta esa zona, las cuatro ligas y la temporada 1.
 
 ## Estructura
 
 ```
 apps/web/                 PWA (Next.js, mapa, textos es/en)
-packages/core/            Zonas, buffer, celdas H3 y bandas de liga. Sin DOM
-supabase/seed/zones/      GeoJSON de Jumeirah · Kite y la lista de celdas
-scripts/create-zone.ts    Regenera esa zona
+packages/core/            Zonas, celdas H3, ligas y el tipo CellEffort. Sin DOM
+supabase/migrations/      Esquema, RLS y seed de Jumeirah · Kite
+supabase/seed/zones/      GeoJSON de la zona y la lista de celdas
+scripts/                  Regenera la zona, el seed SQL y la prueba de RLS
 docs/                     PRODUCTO, ARQUITECTURA, TAREAS, DEPLOY
 ```
 
@@ -54,11 +55,19 @@ Copia `.env.example` a `apps/web/.env.local` cuando haya anon key. Sin esa clave
 
 El proyecto es `dubai-run-territory` (`usduksotdecgusaxeyva`, `ap-south-1`).
 
+## Base de datos
+
+Las migraciones están en `supabase/migrations/`. Para aplicarlas al proyecto real, con el CLI de Supabase y sin guardar claves en el repo:
+
+```bash
+supabase link --project-ref usduksotdecgusaxeyva
+supabase db push
+```
+
+Eso crea el esquema, el RLS y el seed de Jumeirah · Kite (zona en borrador, 99 celdas, 4 ligas, temporada 1 en `scheduled`). Los pasos y el contrato `CellEffort` están en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) §4.
+
+`pnpm db:verify` comprueba las migraciones contra un Postgres local. No usa el proyecto hospedado.
+
 ## Próximos pasos
 
-El backlog está en [`docs/TAREAS.md`](docs/TAREAS.md). Esta base cubre el andamiaje (T-01, adaptado a Next.js), la preparación del despliegue estático (parte de T-03) y la geometría de la zona con el mapa de ejemplo (parte de T-04 y T-16). Siguen, en este orden:
-
-1. T-02: migraciones, PostGIS y RLS.
-2. T-04: insertar `zones` y `zone_cells` en Supabase y que Augusto apruebe el polígono.
-3. T-05 a T-13: GPX/FIT, antitrampas y la Edge Function.
-4. T-14 a T-20: login con Google, subida, ranking y admin.
+El backlog está en [`docs/TAREAS.md`](docs/TAREAS.md). El esquema y el seed de la zona ya están en el repo. Augusto tiene que aplicar las migraciones y aprobar el polígono. Siguen los parsers, el antitrampas y la Edge Function (T-05 a T-13), y después el login y la subida (T-14 en adelante). Garmin y Polar podrán conectar cuentas; Strava no entra en la fase 0.

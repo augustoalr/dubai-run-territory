@@ -10,12 +10,17 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r --if-present typecheck && tsc -p scripts/tsconfig.json",
     "test": "pnpm --filter @dubai-run/core test",
-    "zone:cells": "tsx scripts/create-zone.ts"
+    "zone:cells": "tsx scripts/create-zone.ts",
+    "seed:sql": "tsx scripts/generate-seed.ts",
+    "db:verify": "tsx scripts/verify-db.ts",
+    "db:types": "supabase gen types typescript --db-url \"$DATABASE_URL\" --schema public | prettier --parser typescript > supabase/database.types.ts"
   },
   "devDependencies": {
-    "@types/node": "^20.19.24",
     "@eslint/js": "^9.39.1",
+    "@types/node": "^20.19.24",
+    "@types/pg": "^8.23.1",
     "eslint": "^9.39.1",
+    "pg": "^8.23.1",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
