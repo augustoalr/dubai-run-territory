@@ -133,7 +133,7 @@ Eso crea el esquema, las políticas y el seed de Jumeirah · Kite. `supabase db 
 DATABASE_URL=postgres://postgres:postgres@127.0.0.1:54322/postgres pnpm db:types
 ```
 
-`pnpm db:verify` aplica las migraciones en un Postgres local de prueba y comprueba el RLS. No apunta al proyecto hospedado.
+Si ese Postgres no acepta TLS, la CLI 2.122.0 falla hasta que la URL lleve `?sslmode=disable`. CI lo añade al servicio `postgis/postgis` antes de comparar `supabase/database.types.ts`. `pnpm db:verify` aplica las migraciones en un Postgres local de prueba y comprueba el RLS. No apunta al proyecto hospedado.
 
 ## 5. Flujo de procesamiento de una carrera
 
