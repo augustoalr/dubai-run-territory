@@ -1,0 +1,31 @@
+{
+  "id": "copied-track",
+  "file": "copied-track.gpx",
+  "format": "gpx",
+  "source": "strava",
+  "sport": "running",
+  "league": "advanced",
+  "status": "review",
+  "reason": "COPIED_TRACK",
+  "approxCells": 0,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 300,
+  "speedKmh": null,
+  "pointCount": 1501,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": "run-advanced-5min",
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "Los mismos trkpt que la carrera avanzada, con otro creator y otro nombre. El SHA-256 del archivo cambia y el recorrido no: es la copia de otro usuario (COPIED_TRACK, a revisión)."
+}

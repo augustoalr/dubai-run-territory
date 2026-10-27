@@ -1,0 +1,31 @@
+{
+  "id": "future-date",
+  "file": "future-date.gpx",
+  "format": "gpx",
+  "source": "garmin-connect",
+  "sport": "running",
+  "league": "advanced",
+  "status": "rejected",
+  "reason": "OUT_OF_WINDOW",
+  "approxCells": 0,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 300,
+  "speedKmh": null,
+  "pointCount": 1501,
+  "startedAt": "2027-06-01T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1811817000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "La misma carrera a 5:00/km con inicio el 1 jun 2027. El parser la lee. El antitrampas la rechaza por fecha futura (OUT_OF_WINDOW). La ventana de 72 h y la temporada activa llegan con T-10, cuando existan las temporadas."
+}

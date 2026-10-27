@@ -10,10 +10,13 @@
     "format:check": "prettier --check .",
     "typecheck": "pnpm -r --if-present typecheck && tsc -p scripts/tsconfig.json",
     "test": "pnpm --filter @dubai-run/core test",
-    "zone:cells": "tsx scripts/create-zone.ts"
+    "zone:cells": "tsx scripts/create-zone.ts",
+    "fixtures": "tsx scripts/make-fixture.ts"
   },
   "devDependencies": {
+    "@garmin/fitsdk": "21.218.0",
     "@types/node": "^20.19.24",
+    "h3-js": "4.5.0",
     "@eslint/js": "^9.39.1",
     "eslint": "^9.39.1",
     "prettier": "^3.6.2",

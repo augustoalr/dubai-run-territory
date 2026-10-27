@@ -1,0 +1,31 @@
+{
+  "id": "run-starter-6min30",
+  "file": "run-starter-6min30.gpx",
+  "format": "gpx",
+  "source": "garmin-connect",
+  "sport": "running",
+  "league": "starter",
+  "status": "accepted",
+  "reason": null,
+  "approxCells": 54,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 390,
+  "speedKmh": null,
+  "pointCount": 1951,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "Carrera de la liga Inicial a 6:30/km y 5 km. GPX de Garmin Connect. Es la carrera válida lenta de T-05."
+}

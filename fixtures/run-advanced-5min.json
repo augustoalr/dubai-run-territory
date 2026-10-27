@@ -1,0 +1,31 @@
+{
+  "id": "run-advanced-5min",
+  "file": "run-advanced-5min.gpx",
+  "format": "gpx",
+  "source": "strava",
+  "sport": "running",
+  "league": "advanced",
+  "status": "accepted",
+  "reason": null,
+  "approxCells": 54,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 300,
+  "speedKmh": null,
+  "pointCount": 1501,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "Carrera de la liga Avanzado a 5:00/km y 5 km. GPX como lo exporta Strava (extensiones Garmin de pulso y cadencia). Es la carrera válida de T-05."
+}

@@ -1,0 +1,31 @@
+{
+  "id": "duplicate-advanced",
+  "file": "duplicate-advanced.gpx",
+  "format": "gpx",
+  "source": "strava",
+  "sport": "running",
+  "league": "advanced",
+  "status": "rejected",
+  "reason": "DUPLICATE",
+  "approxCells": 0,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 300,
+  "speedKmh": null,
+  "pointCount": 1501,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": "run-advanced-5min",
+  "sameTrackAs": "run-advanced-5min",
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "Los mismos bytes que run-advanced-5min.gpx. El SHA-256 del archivo coincide, así que es un duplicado propio (DUPLICATE). No añade datos personales."
+}
