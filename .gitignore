@@ -1,0 +1,16 @@
+node_modules
+.pnpm-store
+.turbo
+dist
+coverage
+.DS_Store
+*.tsbuildinfo
+.vercel
+.env
+.env.local
+.env.*.local
+!.env.example
+apps/web/.next
+apps/web/out
+# Copied from maplibre-gl on `next build` / `next dev`. See apps/web/next.config.ts.
+apps/web/public/map/maplibre-gl-worker.mjs
