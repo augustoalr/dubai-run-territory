@@ -83,13 +83,13 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-12 · Conquista
 
-- **Estado:** en esta rama (`cursor/apply-run-b408`). La migración no está aplicada en el Supabase remoto.
+- **Estado:** en el PR #7 (`cursor/apply-run-b408`). La migración no está aplicada en el Supabase remoto.
 - **Hecho:** `apply_run`, `recompute_season` y `snapshot_daily_points` en `supabase/migrations/20261029160000_apply_run.sql`. Robo solo con ritmo estrictamente menor; empate para quien cruzó antes. Temporada activa y 72 h. Mapa por liga. `pnpm db:verify` cubre conquista, defensa, robo, empate, mejora, dos ligas, anulación más recálculo, el rechazo de una subida tardía y dos `apply_run` a la vez. La comparación también está en `decideClaim`.
 - **Pendiente:** que Augusto revise y aplique la migración. El CI local de `db:verify` no toca el proyecto remoto.
 - **Siguiente paso:** si `verify` falla, corregir solo ese fallo. No aplicar la migración con el CLI de Supabase.
 
 ## En curso
 
-| Tarea | PR  | Siguiente paso exacto                                                                 |
-| ----- | --- | ------------------------------------------------------------------------------------- |
-| T-12  | —   | Abrir el PR contra main y dejar el `verify` verde. No aplicar la migración en remoto. |
+| Tarea | PR  | Siguiente paso exacto                                                   |
+| ----- | --- | ----------------------------------------------------------------------- |
+| T-12  | #7  | Dejar el `verify` verde. No aplicar la migración en el Supabase remoto. |
