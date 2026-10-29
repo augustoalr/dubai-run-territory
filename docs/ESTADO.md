@@ -90,13 +90,13 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-13 · process-run
 
-- **Estado:** en esta rama (`cursor/process-run-b408`). No desplegada.
+- **Estado:** en el PR #8 (`cursor/process-run-b408`). No desplegada.
 - **Hecho:** `planRun` en `packages/core`. Función fina en `supabase/functions/process-run`: lee la carrera, el archivo o los puntos, escribe el estado y llama a `apply_run` solo si hay marcas. Si el estado ya es terminal o ya hay `cell_efforts`, no repite. Aún no carga carreras de otros usuarios, así que `COPIED_TRACK` no salta.
 - **Pendiente:** desplegar a mano tras revisar. Falta el informe de CPU de un FIT de 3 h.
 - **Siguiente paso:** si `verify` falla, corregir solo ese fallo. No ejecutar `supabase functions deploy`.
 
 ## En curso
 
-| Tarea | PR  | Siguiente paso exacto                                |
-| ----- | --- | ---------------------------------------------------- |
-| T-13  | —   | Abrir el PR y dejar el `verify` verde. No desplegar. |
+| Tarea | PR  | Siguiente paso exacto                             |
+| ----- | --- | ------------------------------------------------- |
+| T-13  | #8  | Dejar el `verify` verde. No desplegar la función. |
