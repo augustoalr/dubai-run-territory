@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 29 oct 2026, con main en `d744ea7` (PR #6).
+Actualizado el 29 oct 2026, con main en `3955f66` (PR #7).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El trabajo de código en curso es **T-12**. Después, T-13.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El trabajo de código en curso es **T-13**. Después, T-14.
 
 ## T-01 · Scaffolding
 
@@ -83,13 +83,20 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-12 · Conquista
 
-- **Estado:** en el PR #7 (`cursor/apply-run-b408`). La migración no está aplicada en el Supabase remoto.
-- **Hecho:** `apply_run`, `recompute_season` y `snapshot_daily_points` en `supabase/migrations/20261029160000_apply_run.sql`. Robo solo con ritmo estrictamente menor; empate para quien cruzó antes. Temporada activa y 72 h. Mapa por liga. `pnpm db:verify` cubre conquista, defensa, robo, empate, mejora, dos ligas, anulación más recálculo, el rechazo de una subida tardía y dos `apply_run` a la vez. La comparación también está en `decideClaim`.
-- **Pendiente:** que Augusto revise y aplique la migración. El CI local de `db:verify` no toca el proyecto remoto.
-- **Siguiente paso:** si `verify` falla, corregir solo ese fallo. No aplicar la migración con el CLI de Supabase.
+- **Estado:** hecho. Migración `20261029160000_apply_run` aplicada en Supabase (squash `3955f66`).
+- **Hecho:** `apply_run`, `recompute_season` y `snapshot_daily_points`. PR #7.
+- **Pendiente:** nada de esta tarea.
+- **Siguiente paso:** ninguno.
+
+## T-13 · process-run
+
+- **Estado:** en el PR #8 (`cursor/process-run-b408`). No desplegada.
+- **Hecho:** `planRun` y `historyContext` en `packages/core`. La función exige el JWT del dueño o la service role (si no, 403). `uploadedAt` es `runs.created_at`. El contexto trae hashes, solapes y el conteo del día del propio usuario (60 días); el ritmo de referencia sale de sus marcas. Un fallo al insertar `user_leagues` se escribe en el log. `knownTracks` sigue vacío: `COPIED_TRACK` no salta.
+- **Pendiente:** desplegar a mano tras revisar. Falta el informe de CPU de un FIT de 3 h.
+- **Siguiente paso:** si `verify` falla, corregir solo ese fallo. No ejecutar `supabase functions deploy`.
 
 ## En curso
 
-| Tarea | PR  | Siguiente paso exacto                                                   |
-| ----- | --- | ----------------------------------------------------------------------- |
-| T-12  | #7  | Dejar el `verify` verde. No aplicar la migración en el Supabase remoto. |
+| Tarea | PR  | Siguiente paso exacto                             |
+| ----- | --- | ------------------------------------------------- |
+| T-13  | #8  | Dejar el `verify` verde. No desplegar la función. |
