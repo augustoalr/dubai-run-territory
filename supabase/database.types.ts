@@ -706,7 +706,9 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      apply_run: { Args: { p_efforts: Json; p_run_id: string }; Returns: Json };
+      recompute_season: { Args: { p_season_id: string }; Returns: Json };
+      snapshot_daily_points: { Args: { p_day: string; p_season_id: string }; Returns: undefined };
     };
     Enums: {
       activity_provider: "garmin" | "polar";
