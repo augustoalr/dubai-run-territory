@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 29 oct 2026, con main en `e16ed39` (PR #5).
+Actualizado el 29 oct 2026, con main en `d744ea7` (PR #6).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El trabajo de código en curso es **T-11** (PR de ligas). Después, T-12.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El trabajo de código en curso es **T-12**. Después, T-13.
 
 ## T-01 · Scaffolding
 
@@ -76,13 +76,20 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-11 · Ligas
 
-- **Estado:** en el PR #6 (`cursor/league-pace-b408`), a la espera del CI.
-- **Hecho:** `bestKmWindow`, `referencePaceS` (60 días) y `resolveLeagueForRun`. Primera carrera provisional, ascenso inmediato, sin descenso a mitad de temporada, recálculo al inicio de temporada. Bandas iguales al seed (élite ≤ 254, avanzado 255–314, intermedio 315–374, inicial ≥ 375).
-- **Pendiente:** merge del PR cuando `verify` pase.
-- **Siguiente paso:** si `verify` falla, corregir solo ese fallo, commit y push. No abrir T-12 en esta rama.
+- **Estado:** hecho.
+- **Hecho:** `bestKmWindow`, `referencePaceS` (60 días) y `resolveLeagueForRun`. Primera carrera provisional, ascenso inmediato, sin descenso a mitad de temporada, recálculo al inicio de temporada. Bandas iguales al seed. PR #6.
+- **Pendiente:** nada de esta tarea.
+- **Siguiente paso:** ninguno.
+
+## T-12 · Conquista
+
+- **Estado:** en esta rama (`cursor/apply-run-b408`). La migración no está aplicada en el Supabase remoto.
+- **Hecho:** `apply_run`, `recompute_season` y `snapshot_daily_points` en `supabase/migrations/20261029160000_apply_run.sql`. Robo solo con ritmo estrictamente menor; empate para quien cruzó antes. Temporada activa y 72 h. Mapa por liga. `pnpm db:verify` cubre conquista, defensa, robo, empate, mejora, dos ligas, anulación más recálculo, el rechazo de una subida tardía y dos `apply_run` a la vez. La comparación también está en `decideClaim`.
+- **Pendiente:** que Augusto revise y aplique la migración. El CI local de `db:verify` no toca el proyecto remoto.
+- **Siguiente paso:** si `verify` falla, corregir solo ese fallo. No aplicar la migración con el CLI de Supabase.
 
 ## En curso
 
-| Tarea | PR  | Siguiente paso exacto                                              |
-| ----- | --- | ------------------------------------------------------------------ |
-| T-11  | #6  | Dejar el `verify` verde. Luego T-12, en una rama nueva desde main. |
+| Tarea | PR  | Siguiente paso exacto                                                                 |
+| ----- | --- | ------------------------------------------------------------------------------------- |
+| T-12  | —   | Abrir el PR contra main y dejar el `verify` verde. No aplicar la migración en remoto. |

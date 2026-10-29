@@ -533,8 +533,257 @@ async function main(): Promise<void> {
     throw new Error(`seed moved an active season to ${seasonAfter.starts_at.toISOString()}`);
   }
 
+  console.log("checking conquest");
+  await verifyConquest(client, connectionString);
+
   console.log("db verify ok");
   await client.end();
+}
+
+async function verifyConquest(client: pg.Client, connectionString: string): Promise<void> {
+  const cellA = "8a43a136148ffff";
+  const cellB = "8a43a136149ffff";
+  const zone = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.zones (slug, name, polygon, h3_res, status, timezone)
+     VALUES (
+       'conquest-test', 'Conquest',
+       extensions.ST_GeogFromText('SRID=4326;POLYGON((55 25, 55.02 25, 55.02 25.02, 55 25.02, 55 25))'),
+       10, 'active', 'Asia/Dubai'
+     ) RETURNING id`,
+  );
+  const ring = `extensions.ST_GeogFromText('SRID=4326;POLYGON((55 25, 55.01 25, 55.01 25.01, 55 25.01, 55 25))')`;
+  const point = `extensions.ST_GeogFromText('SRID=4326;POINT(55.005 25.005)')`;
+  for (const h3 of [cellA, cellB]) {
+    await client.query(
+      `INSERT INTO public.zone_cells (zone_id, h3, center, boundary)
+       VALUES ($1, $2, ${point}, ${ring})`,
+      [zone.id, h3],
+    );
+  }
+  const elite = await one<{ id: string }>(
+    client,
+    "SELECT id FROM public.leagues WHERE zone_id IS NULL AND code = 'elite'",
+  );
+  const advanced = await one<{ id: string }>(
+    client,
+    "SELECT id FROM public.leagues WHERE zone_id IS NULL AND code = 'advanced'",
+  );
+  const season = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.seasons (zone_id, name, starts_at, ends_at, status)
+     VALUES ($1, 'Conquista', '2026-11-02 00:00:00+04', '2026-11-22 23:59:59+04', 'active')
+     RETURNING id`,
+    [zone.id],
+  );
+
+  const uploaded = "2026-11-02 12:00:00+04";
+  const started = "2026-11-02 10:00:00+04";
+  const ended = "2026-11-02 11:00:00+04";
+  const run = async (
+    userId: string,
+    leagueId: string,
+    hash: string,
+    createdAt: string,
+  ): Promise<string> => {
+    const row = await one<{ id: string }>(
+      client,
+      `INSERT INTO public.runs (
+         user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
+         source, status, started_at, ended_at, created_at
+       ) VALUES (
+         $1, $2, $3, $4, $5, $6, 'gpx', 'upload', 'accepted', $7, $8, $9
+       ) RETURNING id`,
+      [
+        userId,
+        zone.id,
+        season.id,
+        leagueId,
+        `server/${hash.slice(0, 8)}.gpx`,
+        hash,
+        started,
+        ended,
+        createdAt,
+      ],
+    );
+    return row.id;
+  };
+
+  const effort = (h3: string, paceS: number, crossedAt: string): string =>
+    JSON.stringify([{ h3, crossedAt, paceS, windowStartM: 0, windowEndM: 1000 }]);
+
+  const ownerOf = async (
+    leagueId: string,
+    h3: string,
+  ): Promise<{ owner_id: string; pace_s: number }> =>
+    one(
+      client,
+      `SELECT owner_id, pace_s FROM public.cell_ownership
+       WHERE season_id = $1 AND league_id = $2 AND h3 = $3`,
+      [season.id, leagueId, h3],
+    );
+
+  const hash = (prefix: string) => `${prefix}${"a".repeat(62)}`;
+  const first = await run(userA, elite.id, hash("c0"), uploaded);
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      first,
+      effort(cellA, 300, "2026-11-02T06:00:00.000Z"),
+    ]);
+  });
+  const conquered = await ownerOf(elite.id, cellA);
+  if (conquered.owner_id !== userA || conquered.pace_s !== 300) {
+    throw new Error("conquest did not give the cell to A");
+  }
+
+  const slower = await run(userB, elite.id, hash("c1"), "2026-11-02 13:00:00+04");
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      slower,
+      effort(cellA, 320, "2026-11-02T06:30:00.000Z"),
+    ]);
+  });
+  if ((await ownerOf(elite.id, cellA)).owner_id !== userA)
+    throw new Error("slower run stole the cell");
+  const defended = await one<{ n: number }>(
+    client,
+    `SELECT count(*)::int AS n FROM public.ownership_events
+     WHERE run_id = $1 AND type = 'defend'`,
+    [slower],
+  );
+  if (defended.n !== 1) throw new Error("missing defend event");
+
+  const faster = await run(userB, elite.id, hash("c2"), "2026-11-02 14:00:00+04");
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      faster,
+      effort(cellA, 280, "2026-11-02T07:00:00.000Z"),
+    ]);
+  });
+  const stolen = await ownerOf(elite.id, cellA);
+  if (stolen.owner_id !== userB || stolen.pace_s !== 280)
+    throw new Error("faster run did not steal");
+
+  const tied = await run(userA, elite.id, hash("c3"), "2026-11-02 15:00:00+04");
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      tied,
+      effort(cellB, 300, "2026-11-02T08:00:00.000Z"),
+    ]);
+  });
+  const earlier = await run(userB, elite.id, hash("c4"), "2026-11-02 16:00:00+04");
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      earlier,
+      effort(cellB, 300, "2026-11-02T05:00:00.000Z"),
+    ]);
+  });
+  if ((await ownerOf(elite.id, cellB)).owner_id !== userB) {
+    throw new Error("equal pace should keep the runner who crossed first");
+  }
+
+  const improved = await run(userB, elite.id, hash("c5"), "2026-11-02 17:00:00+04");
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      improved,
+      effort(cellA, 260, "2026-11-02T07:10:00.000Z"),
+    ]);
+  });
+  const better = await ownerOf(elite.id, cellA);
+  if (better.owner_id !== userB || better.pace_s !== 260) throw new Error("owner did not improve");
+
+  const otherLeague = await run(userA, advanced.id, hash("c6"), uploaded);
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      otherLeague,
+      effort(cellA, 400, "2026-11-02T06:00:00.000Z"),
+    ]);
+  });
+  const both = await client.query<{ league_id: string; owner_id: string }>(
+    `SELECT league_id, owner_id FROM public.cell_ownership
+     WHERE season_id = $1 AND h3 = $2`,
+    [season.id, cellA],
+  );
+  const byLeague = new Map(both.rows.map((row) => [row.league_id, row.owner_id]));
+  if (byLeague.get(elite.id) !== userB || byLeague.get(advanced.id) !== userA) {
+    throw new Error("each league should keep its own owner of the same cell");
+  }
+
+  const points = await one<{ cells_owned: number; points: number }>(
+    client,
+    `SELECT cells_owned, points FROM public.daily_points
+     WHERE season_id = $1 AND league_id = $2 AND user_id = $3 AND day = '2026-11-02'`,
+    [season.id, elite.id, userB],
+  );
+  if (points.cells_owned < 1 || points.points < points.cells_owned) {
+    throw new Error(`daily points look empty: ${points.cells_owned}/${points.points}`);
+  }
+
+  await client.query("UPDATE public.runs SET status = 'voided' WHERE id = $1", [faster]);
+  await client.query("UPDATE public.runs SET status = 'voided' WHERE id = $1", [improved]);
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.recompute_season($1)", [season.id]);
+  });
+  const restored = await ownerOf(elite.id, cellA);
+  if (restored.owner_id !== userA || restored.pace_s !== 300) {
+    throw new Error("void plus recompute did not restore A's cell");
+  }
+  const ghost = await one<{ n: number }>(
+    client,
+    "SELECT count(*)::int AS n FROM public.cell_efforts WHERE run_id = $1 OR run_id = $2",
+    [faster, improved],
+  );
+  if (ghost.n !== 0) throw new Error("voided runs still have efforts");
+
+  const late = await run(userB, elite.id, hash("c7"), "2026-11-06 12:00:00+04");
+  await asRole(client, "service_role", null, "rollback", async () => {
+    await expectFailure(
+      () =>
+        client.query("SELECT public.apply_run($1, $2::jsonb)", [
+          late,
+          effort(cellB, 200, "2026-11-02T06:00:00.000Z"),
+        ]),
+      "P0001",
+      "out_of_window",
+    );
+  });
+
+  await asRole(client, "authenticated", userA, "rollback", async () => {
+    await expectFailure(
+      () => client.query("SELECT public.apply_run($1, '[]'::jsonb)", [first]),
+      "42501",
+      "permission denied",
+    );
+  });
+
+  const left = await run(userA, advanced.id, hash("c8"), "2026-11-02 18:00:00+04");
+  const right = await run(userB, advanced.id, hash("c9"), "2026-11-02 18:30:00+04");
+  const slowJson = effort(cellB, 350, "2026-11-02T06:20:00.000Z");
+  const fastJson = effort(cellB, 310, "2026-11-02T06:40:00.000Z");
+  const leftClient = new pg.Client({ connectionString });
+  const rightClient = new pg.Client({ connectionString });
+  await leftClient.connect();
+  await rightClient.connect();
+  try {
+    await Promise.all([
+      leftClient.query("SELECT public.apply_run($1, $2::jsonb)", [left, slowJson]),
+      rightClient.query("SELECT public.apply_run($1, $2::jsonb)", [right, fastJson]),
+    ]);
+  } finally {
+    await leftClient.end();
+    await rightClient.end();
+  }
+  const raced = await ownerOf(advanced.id, cellB);
+  if (raced.owner_id !== userB || raced.pace_s !== 310) {
+    throw new Error("concurrent apply_run did not keep the faster mark");
+  }
+  const rows = await one<{ n: number }>(
+    client,
+    `SELECT count(*)::int AS n FROM public.cell_ownership
+     WHERE season_id = $1 AND league_id = $2 AND h3 = $3`,
+    [season.id, advanced.id, cellB],
+  );
+  if (rows.n !== 1) throw new Error("concurrent apply_run duplicated the cell");
 }
 
 async function connect(client: pg.Client): Promise<void> {
