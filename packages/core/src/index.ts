@@ -55,6 +55,8 @@ export type { DatedPace } from "./leagues/reference";
 export { resolveLeagueForRun } from "./leagues/resolve";
 export type { LeagueDecision, LeagueReason } from "./leagues/resolve";
 export { bestKmWindow } from "./leagues/window";
+export { decideClaim } from "./ownership/decide";
+export type { CellClaim, CellMark } from "./ownership/decide";
 export { ACTIVITY_PROVIDERS, RUN_SOURCES } from "./runs/source";
 export type { ActivityProvider, RunSource } from "./runs/source";
 export {

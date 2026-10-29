@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 — 2026-10-29
+
+Motor de conquista en SQL. La migración no se ha aplicado en el Supabase remoto.
+
+- T-12: `apply_run`, `recompute_season` y `snapshot_daily_points`. Robo solo si el ritmo redondeado es estrictamente menor; en empate se queda quien cruzó la celda antes (y, en el mismo instante, quien subió antes). Solo carreras `accepted` de la temporada activa, con inicio dentro de la temporada y subida en 72 h. El mapa es por liga. Los eventos son conquista, robo, mejora y defensa. La foto diaria suma las celdas del cierre del día, más 1 por conquista y 2 por robo. Funciones `SECURITY DEFINER` con `search_path` vacío, ejecutables solo por `service_role`. Casos en `docs/CONQUISTA.md`. `pnpm db:verify` los corre en local.
+
 ## 0.4.0 — 2026-10-29
 
 Ligas: ritmo de referencia y ascensos. Sin cambios de base de datos ni del mapa.
