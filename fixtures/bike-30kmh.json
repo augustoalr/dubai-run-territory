@@ -1,0 +1,31 @@
+{
+  "id": "bike-30kmh",
+  "file": "bike-30kmh.gpx",
+  "format": "gpx",
+  "source": "strava",
+  "sport": "cycling",
+  "league": null,
+  "status": "rejected",
+  "reason": "NOT_RUNNING",
+  "approxCells": 0,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": null,
+  "speedKmh": 30,
+  "pointCount": 601,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 88,
+    "hr": 138
+  },
+  "notes": "Vuelta en bici a 30 km/h por el mismo eje. GPX de Strava con <type>cycling</type>. El antitrampas la rechaza: no es carrera."
+}

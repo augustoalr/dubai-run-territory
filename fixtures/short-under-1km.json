@@ -1,0 +1,31 @@
+{
+  "id": "short-under-1km",
+  "file": "short-under-1km.gpx",
+  "format": "gpx",
+  "source": "apple-watch",
+  "sport": "running",
+  "league": "advanced",
+  "status": "accepted",
+  "reason": "TOO_SHORT",
+  "approxCells": 0,
+  "cellsTouched": 10,
+  "scoringCells": 0,
+  "distanceM": 800,
+  "paceSPerKm": 300,
+  "speedKmh": null,
+  "pointCount": 241,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "800 m a 5:00/km dentro de la zona. Se acepta y no puntúa celdas (TOO_SHORT): el tramo continuo no llega al kilómetro de la ventana."
+}

@@ -1,0 +1,31 @@
+{
+  "id": "run-elite-4min",
+  "file": "run-elite-4min.gpx",
+  "format": "gpx",
+  "source": "garmin-connect",
+  "sport": "running",
+  "league": "elite",
+  "status": "accepted",
+  "reason": null,
+  "approxCells": 54,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 240,
+  "speedKmh": null,
+  "pointCount": 1201,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "Carrera de la liga Élite a 4:00/km y 5 km sobre el eje de Jumeirah · Kite. GPX como lo exporta Garmin Connect: la cadencia va en revoluciones de un pie."
+}

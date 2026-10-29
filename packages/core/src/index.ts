@@ -1,3 +1,8 @@
+export { TrackParseError, isTrackParseError } from "./parse/errors";
+export type { ParseErrorCode } from "./parse/errors";
+export { parseFit } from "./parse/fit";
+export { parseGpx } from "./parse/gpx";
+export type { ParsedActivity, RawPoint, Sport } from "./parse/types";
 export { bufferCenterline } from "./geo/buffer";
 export {
   distanceToPolylineMeters,

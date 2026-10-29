@@ -1,0 +1,31 @@
+{
+  "id": "bike-cycling",
+  "file": "bike-cycling.fit",
+  "format": "fit",
+  "source": "garmin-fit",
+  "sport": "cycling",
+  "league": null,
+  "status": "rejected",
+  "reason": "NOT_RUNNING",
+  "approxCells": 0,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": null,
+  "speedKmh": 30,
+  "pointCount": 601,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138010799885,
+    "lon": 55.23099702782929,
+    "tMs": 1792377000000,
+    "cad": 88,
+    "hr": 138
+  },
+  "notes": "FIT sintético de ciclismo a 30 km/h. session.sport es cycling. La cadencia queda en revoluciones del pedal, sin duplicar. El antitrampas lo rechaza (NOT_RUNNING)."
+}

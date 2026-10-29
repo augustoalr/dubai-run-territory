@@ -1,0 +1,31 @@
+{
+  "id": "run-advanced",
+  "file": "run-advanced.fit",
+  "format": "fit",
+  "source": "garmin-fit",
+  "sport": "running",
+  "league": "advanced",
+  "status": "accepted",
+  "reason": null,
+  "approxCells": 54,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 300,
+  "speedKmh": null,
+  "pointCount": 1501,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138010799885,
+    "lon": 55.23099702782929,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "FIT sintético con el SDK oficial de Garmin, misma carrera a 5:00/km. session.sport es running. La cadencia se guarda en zancadas (un pie) y el parser la pasa a pasos por minuto. No es un archivo de un reloj real."
+}

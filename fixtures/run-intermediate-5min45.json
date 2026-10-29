@@ -1,0 +1,31 @@
+{
+  "id": "run-intermediate-5min45",
+  "file": "run-intermediate-5min45.gpx",
+  "format": "gpx",
+  "source": "apple-watch",
+  "sport": "running",
+  "league": "intermediate",
+  "status": "accepted",
+  "reason": null,
+  "approxCells": 54,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 345,
+  "speedKmh": null,
+  "pointCount": 1726,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "Carrera de la liga Intermedio a 5:45/km y 5 km. GPX de HealthFit, el export habitual de un Apple Watch: la cadencia ya viene en pasos por minuto."
+}

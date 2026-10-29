@@ -1,0 +1,31 @@
+{
+  "id": "teleport-500m",
+  "file": "teleport-500m.gpx",
+  "format": "gpx",
+  "source": "garmin-connect",
+  "sport": "running",
+  "league": "advanced",
+  "status": "accepted",
+  "reason": null,
+  "approxCells": 54,
+  "cellsTouched": 54,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 300,
+  "speedKmh": null,
+  "pointCount": 1502,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 2,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 0,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "A 2,5 km el siguiente punto está a 500 m en línea recta (1 s después) y la carrera sigue otros 2,5 km, a 5:00/km. Por la curva de la costa, el hueco a lo largo del eje es mayor que 500 m. T-08 tiene que partirla en 2 tramos. Un filtro que borre todo lo que supere 12 m/s se comería el segundo tramo: el salto también es un pico."
+}

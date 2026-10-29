@@ -1,0 +1,31 @@
+{
+  "id": "gps-spike",
+  "file": "gps-spike.gpx",
+  "format": "gpx",
+  "source": "strava",
+  "sport": "running",
+  "league": "advanced",
+  "status": "accepted",
+  "reason": null,
+  "approxCells": 54,
+  "cellsTouched": 55,
+  "scoringCells": 54,
+  "distanceM": 5000,
+  "paceSPerKm": 300,
+  "speedKmh": null,
+  "pointCount": 1501,
+  "startedAt": "2026-10-19T02:30:00.000Z",
+  "segmentCount": 1,
+  "duplicateOf": null,
+  "sameTrackAs": null,
+  "offTrackPoints": 1,
+  "throws": null,
+  "first": {
+    "lat": 25.193138,
+    "lon": 55.230997,
+    "tMs": 1792377000000,
+    "cad": 170,
+    "hr": 152
+  },
+  "notes": "Un solo punto se desplaza al este y el siguiente vuelve al eje. El tramo pasa de 12 m/s y se queda por debajo de 100 m: es un pico de GPS, no un teletransporte. T-08 debe descartar ese punto. Sigue junto a la playa: no es una casa."
+}
