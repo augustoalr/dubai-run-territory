@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 — 2026-10-29
+
+Edge Function `process-run`, sin desplegar.
+
+- T-13: `planRun` en `packages/core` decide estado, motivo, liga y si hay que llamar a `apply_run`. La función en `supabase/functions/process-run` solo lee la carrera (archivo en Storage o puntos ya parseados), escribe `runs` y, si toca, llama a `apply_run` con la service role. Si el estado ya es terminal o ya hay marcas, no repite. No se ha desplegado ni se ha escrito en el proyecto remoto.
+
 ## 0.5.0 — 2026-10-29
 
 Motor de conquista en SQL. La migración no se ha aplicado en el Supabase remoto.

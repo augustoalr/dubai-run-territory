@@ -57,6 +57,8 @@ export type { LeagueDecision, LeagueReason } from "./leagues/resolve";
 export { bestKmWindow } from "./leagues/window";
 export { decideClaim } from "./ownership/decide";
 export type { CellClaim, CellMark } from "./ownership/decide";
+export { planRun } from "./runs/process";
+export type { RunPlan } from "./runs/process";
 export { ACTIVITY_PROVIDERS, RUN_SOURCES } from "./runs/source";
 export type { ActivityProvider, RunSource } from "./runs/source";
 export {
