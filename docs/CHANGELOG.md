@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-10-29
+
+Normalización, celdas y antitrampas. Sin cambios de base de datos ni del mapa.
+
+- T-08: `normalize` ordena, quita duplicados y descarta picos de GPS (las dos patas cortas superan 12 m/s). Un salto de más de 100 m no borra lo que viene detrás: `clipToZone` lo parte en tramos, igual que una pausa de más de 30 s. El margen alrededor del polígono es 30 m.
+- T-09: `computeCellEfforts` rellena el `CellEffort` que ya está en main (ventana de 1 km, `paceS` entero, `crossedAt` en ISO). En los extremos la ventana se corre hacia dentro. Un tramo de menos de 1 km no puntúa. La ida y vuelta se queda con la mejor marca.
+- T-10: `checkRun` cumple el contrato de los `.json` de `fixtures/`. Bici declarada, fecha futura, subida pasadas 72 h, duplicado, copia, picos y densidad usan los motivos de ARQUITECTURA §6. Por debajo de 2:40/km, el patrón de bici y la cadencia rara van a revisión. Los umbrales están en `DEFAULT_ANTI_CHEAT`. La actividad normalizada lleva `source`: `upload`, `garmin`, `polar` o `browser` (`RunSource`).
+- `AGENTS.md` y `docs/ESTADO.md`: reglas para cortes de créditos y el estado real de T-01 a T-10.
+
 ## 0.2.2 — 2026-10-27
 
 Parsers de carrera y fixtures de la pista. Sin cambios de base de datos ni del mapa.

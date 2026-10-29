@@ -1,3 +1,29 @@
+export { assessRun } from "./track/assess";
+export type { Assessment } from "./track/assess";
+export { checkRun, REASON } from "./track/check";
+export type {
+  CheckContext,
+  CheckResult,
+  KnownTrack,
+  PriorRun,
+  ReasonCode,
+  RunFlag,
+  RunMeta,
+  RunStatus,
+  SeasonWindow,
+} from "./track/check";
+export { computeCellEfforts } from "./track/compute";
+export { DEFAULT_ANTI_CHEAT } from "./track/config";
+export type { AntiCheatConfig } from "./track/config";
+export { trackHash } from "./track/hash";
+export { clipToZone, normalize, normalizeActivity } from "./track/normalize";
+export type {
+  NormalizeResult,
+  NormalizedActivity,
+  NormalizedPoint,
+  SplitKind,
+  TrackSegment,
+} from "./track/normalize";
 export { TrackParseError, isTrackParseError } from "./parse/errors";
 export type { ParseErrorCode } from "./parse/errors";
 export { parseFit } from "./parse/fit";
