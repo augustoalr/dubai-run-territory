@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-10-29
+
+Ligas: ritmo de referencia y ascensos. Sin cambios de base de datos ni del mapa.
+
+- T-11: `bestKmWindow` es la mejor ventana de 1 km, redondeada a 1 s/km. `referencePaceS` se queda con la más rápida de los últimos 60 días. `resolveLeagueForRun` asigna la liga provisional en la primera carrera, asciende en el acto (también saltando ligas) y no baja a mitad de temporada. Al empezar temporada se recalcula con esos 60 días y entonces sí se puede bajar. Las bandas son las del seed: élite ≤ 254, avanzado 255–314, intermedio 315–374, inicial ≥ 375.
+
 ## 0.3.0 — 2026-10-29
 
 Normalización, celdas y antitrampas. Sin cambios de base de datos ni del mapa.

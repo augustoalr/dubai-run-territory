@@ -50,6 +50,11 @@ export { formatPace } from "./format/pace";
 export { assignLeague } from "./leagues/assign";
 export { LEAGUE_BANDS, LEAGUE_CODES } from "./leagues/bands";
 export type { LeagueBand, LeagueCode } from "./leagues/bands";
+export { REFERENCE_WINDOW_MS, referencePaceS } from "./leagues/reference";
+export type { DatedPace } from "./leagues/reference";
+export { resolveLeagueForRun } from "./leagues/resolve";
+export type { LeagueDecision, LeagueReason } from "./leagues/resolve";
+export { bestKmWindow } from "./leagues/window";
 export { ACTIVITY_PROVIDERS, RUN_SOURCES } from "./runs/source";
 export type { ActivityProvider, RunSource } from "./runs/source";
 export {
