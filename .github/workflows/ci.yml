@@ -8,6 +8,21 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:17-3.6
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: territory
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d territory"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/territory
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -21,4 +36,16 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm db:verify
+      - name: Check generated database types
+        run: |
+          set -o pipefail
+          curl -fsSL -o /tmp/supabase.tar.gz https://github.com/supabase/cli/releases/download/v2.122.0/supabase_2.122.0_linux_amd64.tar.gz
+          tar -xzf /tmp/supabase.tar.gz -C /tmp
+          # The PostGIS service container does not speak TLS. CLI 2.122.0
+          # refuses plaintext unless the URL sets sslmode=disable.
+          /tmp/supabase gen types typescript --db-url "${DATABASE_URL}?sslmode=disable" --schema public \
+            | pnpm exec prettier --parser typescript > /tmp/database.types.ts
+          test -s /tmp/database.types.ts
+          diff -u supabase/database.types.ts /tmp/database.types.ts
       - run: pnpm build
