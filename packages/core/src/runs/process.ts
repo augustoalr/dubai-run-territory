@@ -5,10 +5,70 @@ import type { RawPoint, Sport } from "../parse/types";
 import { LEAGUE_BANDS, type LeagueBand, type LeagueCode } from "../leagues/bands";
 import type { LeagueReason } from "../leagues/resolve";
 import { resolveLeagueForRun } from "../leagues/resolve";
+import { REFERENCE_WINDOW_MS, referencePaceS } from "../leagues/reference";
 import { bestKmWindow } from "../leagues/window";
 import type { RunSource } from "./source";
 import { assessRun } from "../track/assess";
-import type { CheckContext, ReasonCode, RunFlag, RunStatus } from "../track/check";
+import type { CheckContext, PriorRun, ReasonCode, RunFlag, RunStatus } from "../track/check";
+
+const GULF = "Asia/Dubai";
+
+/** One of the caller's earlier runs, already loaded from the database. */
+export type HistoryRun = {
+  fileSha256: string;
+  startedAt: number | null;
+  endedAt: number | null;
+  createdAt: number;
+  /** Best stored 1 km, when the run produced cell marks. */
+  bestPaceS: number | null;
+};
+
+export type HistoryContext = {
+  ownFileHashes: string[];
+  ownRuns: PriorRun[];
+  runsToday: number;
+  referencePaceS: number | null;
+};
+
+/**
+ * Anti-cheat facts from the runner's last 60 days.
+ * `knownTracks` stays empty: other people's tracks are not loaded here.
+ * `runsToday` counts the Gulf day of the start (or of the upload, if there is no start).
+ */
+export function historyContext(runs: readonly HistoryRun[], now: number): HistoryContext {
+  const oldest = now - REFERENCE_WINDOW_MS;
+  const today = gulfDayKey(now);
+  const recent = runs.filter((run) => {
+    const at = run.startedAt ?? run.createdAt;
+    return at >= oldest && at <= now;
+  });
+  const ownRuns: PriorRun[] = [];
+  const paces: { at: number; paceS: number }[] = [];
+  let runsToday = 0;
+  for (const run of recent) {
+    const at = run.startedAt ?? run.createdAt;
+    if (gulfDayKey(at) === today) runsToday += 1;
+    if (run.startedAt !== null && run.endedAt !== null) {
+      ownRuns.push({ startedAt: run.startedAt, endedAt: run.endedAt });
+    }
+    if (run.bestPaceS !== null && run.bestPaceS > 0) paces.push({ at, paceS: run.bestPaceS });
+  }
+  return {
+    ownFileHashes: recent.map((run) => run.fileSha256),
+    ownRuns,
+    runsToday,
+    referencePaceS: referencePaceS(paces, now),
+  };
+}
+
+function gulfDayKey(ms: number): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: GULF,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(ms));
+}
 
 /**
  * What the Edge Function should write. No database and no Storage.

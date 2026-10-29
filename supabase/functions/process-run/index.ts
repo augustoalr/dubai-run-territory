@@ -8,7 +8,11 @@ import { parseFit } from "../../../packages/core/src/parse/fit.ts";
 import { parseGpx } from "../../../packages/core/src/parse/gpx.ts";
 import type { RawPoint } from "../../../packages/core/src/parse/types.ts";
 import type { LeagueCode } from "../../../packages/core/src/leagues/bands.ts";
-import { planRun } from "../../../packages/core/src/runs/process.ts";
+import {
+  historyContext,
+  planRun,
+  type HistoryRun,
+} from "../../../packages/core/src/runs/process.ts";
 import type { RunSource } from "../../../packages/core/src/runs/source.ts";
 import { cellsForZone, TRACK_H3_RESOLUTION } from "../../../packages/core/src/zones/cells.ts";
 import { jumeirahKiteZone } from "../../../packages/core/src/zones/registry.ts";
@@ -23,20 +27,34 @@ Deno.serve(async (request) => {
   const runId = body?.run_id;
   if (!runId) return json({ error: "run_id" }, 400);
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } },
-  );
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const token = bearer(request);
+  if (!token) return json({ error: "forbidden" }, 403);
+
+  const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const serviceCall = token === serviceKey;
+  let callerId: string | null = null;
+  if (!serviceCall) {
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const userClient = createClient(url, anonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false },
+    });
+    const { data, error: authError } = await userClient.auth.getUser(token);
+    callerId = data.user?.id ?? null;
+    if (authError || !callerId) return json({ error: "forbidden" }, 403);
+  }
 
   const { data: run, error } = await supabase
     .from("runs")
     .select(
-      "id, user_id, zone_id, season_id, storage_path, file_sha256, format, source, sport, status, reject_code, league_id",
+      "id, user_id, zone_id, season_id, storage_path, file_sha256, format, source, sport, status, reject_code, league_id, created_at",
     )
     .eq("id", runId)
     .maybeSingle();
   if (error || !run) return json({ error: "run_not_found" }, 404);
+  if (!serviceCall && callerId !== run.user_id) return json({ error: "forbidden" }, 403);
   if (terminal.has(run.status)) {
     return json({ ok: true, idempotent: true, status: run.status, reject_code: run.reject_code });
   }
@@ -57,6 +75,7 @@ Deno.serve(async (request) => {
   if (!polygon || run.zone_id == null) return json({ error: "zone" }, 422);
 
   const currentLeague = await currentLeagueCode(supabase, run.user_id, run.season_id);
+  const history = historyContext(await recentRuns(supabase, run.user_id, runId), Date.now());
   const plan = await planRun({
     points: parsed.points,
     source: run.source as RunSource,
@@ -67,13 +86,14 @@ Deno.serve(async (request) => {
     fileSha256: run.file_sha256,
     context: {
       now: Date.now(),
-      uploadedAt: Date.now(),
+      uploadedAt: Date.parse(run.created_at),
       userId: run.user_id,
-      ownFileHashes: [],
-      ownRuns: [],
+      ownFileHashes: history.ownFileHashes,
+      ownRuns: history.ownRuns,
       knownTracks: [],
-      runsToday: 0,
+      runsToday: history.runsToday,
     },
+    referencePaceS: history.referencePaceS,
     currentLeague,
     parseError: parsed.parseError,
   });
@@ -98,13 +118,18 @@ Deno.serve(async (request) => {
     leagueId &&
     run.season_id
   ) {
-    await supabase.from("user_leagues").insert({
+    const { error: leagueError } = await supabase.from("user_leagues").insert({
       user_id: run.user_id,
       season_id: run.season_id,
       league_id: leagueId,
       ref_pace_s: plan.refPaceS,
       reason: plan.leagueReason,
     });
+    if (leagueError) {
+      console.error(
+        JSON.stringify({ run_id: runId, error: "league_insert_failed", code: leagueError.code }),
+      );
+    }
   }
 
   if (plan.apply) {
@@ -179,6 +204,41 @@ function finish(
   return { points: parsed.points, sport: parsed.sport, parseError: null as const };
 }
 
+async function recentRuns(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  runId: string,
+): Promise<HistoryRun[]> {
+  const since = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from("runs")
+    .select("id, file_sha256, started_at, ended_at, created_at")
+    .eq("user_id", userId)
+    .neq("id", runId)
+    .or(`started_at.gte.${since},created_at.gte.${since}`);
+  const rows = data ?? [];
+  const ids = rows.map((row) => row.id);
+  const paces = new Map<string, number>();
+  if (ids.length > 0) {
+    const { data: efforts } = await supabase
+      .from("cell_efforts")
+      .select("run_id, pace_s")
+      .in("run_id", ids);
+    for (const effort of efforts ?? []) {
+      const previous = paces.get(effort.run_id);
+      if (previous === undefined || effort.pace_s < previous)
+        paces.set(effort.run_id, effort.pace_s);
+    }
+  }
+  return rows.map((row) => ({
+    fileSha256: row.file_sha256,
+    startedAt: row.started_at ? Date.parse(row.started_at) : null,
+    endedAt: row.ended_at ? Date.parse(row.ended_at) : null,
+    createdAt: Date.parse(row.created_at),
+    bestPaceS: paces.get(row.id) ?? null,
+  }));
+}
+
 async function currentLeagueCode(
   supabase: ReturnType<typeof createClient>,
   userId: string,
@@ -214,6 +274,13 @@ async function leagueIdFor(supabase: ReturnType<typeof createClient>, code: Leag
     .is("zone_id", null)
     .maybeSingle();
   return data?.id ?? null;
+}
+
+function bearer(request: Request): string | null {
+  const header = request.headers.get("Authorization");
+  if (!header) return null;
+  const match = /^Bearer\s+(\S+)$/i.exec(header);
+  return match?.[1] ?? null;
 }
 
 function json(body: unknown, status = 200) {

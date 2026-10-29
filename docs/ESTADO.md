@@ -91,7 +91,7 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 ## T-13 · process-run
 
 - **Estado:** en el PR #8 (`cursor/process-run-b408`). No desplegada.
-- **Hecho:** `planRun` en `packages/core`. Función fina en `supabase/functions/process-run`: lee la carrera, el archivo o los puntos, escribe el estado y llama a `apply_run` solo si hay marcas. Si el estado ya es terminal o ya hay `cell_efforts`, no repite. Aún no carga carreras de otros usuarios, así que `COPIED_TRACK` no salta.
+- **Hecho:** `planRun` y `historyContext` en `packages/core`. La función exige el JWT del dueño o la service role (si no, 403). `uploadedAt` es `runs.created_at`. El contexto trae hashes, solapes y el conteo del día del propio usuario (60 días); el ritmo de referencia sale de sus marcas. Un fallo al insertar `user_leagues` se escribe en el log. `knownTracks` sigue vacío: `COPIED_TRACK` no salta.
 - **Pendiente:** desplegar a mano tras revisar. Falta el informe de CPU de un FIT de 3 h.
 - **Siguiente paso:** si `verify` falla, corregir solo ese fallo. No ejecutar `supabase functions deploy`.
 

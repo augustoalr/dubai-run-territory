@@ -1,13 +1,74 @@
 import { describe, expect, it } from "vitest";
 import { parseCellEfforts } from "../efforts/cell-effort";
 import { TRACK_H3_RESOLUTION, cellsForZone, jumeirahKiteZone } from "../index";
-import { planRun } from "./process";
+import { historyContext, planRun } from "./process";
 import { traceCenterline } from "../track/trace";
 
 const polygon = jumeirahKiteZone.polygon;
 if (!polygon) throw new Error("missing polygon");
 const zoneCells = cellsForZone(jumeirahKiteZone);
 const now = Date.UTC(2026, 9, 19, 6, 0, 0);
+
+describe("historyContext", () => {
+  const day = 24 * 60 * 60 * 1000;
+
+  it("keeps 60 days of hashes, overlaps, today's count and the fastest mark", () => {
+    const context = historyContext(
+      [
+        {
+          fileSha256: "aa",
+          startedAt: now - 2 * day,
+          endedAt: now - 2 * day + 60_000,
+          createdAt: now - 2 * day,
+          bestPaceS: 300,
+        },
+        {
+          fileSha256: "bb",
+          startedAt: now - 10 * day,
+          endedAt: now - 10 * day + 60_000,
+          createdAt: now - 10 * day,
+          bestPaceS: 240,
+        },
+        {
+          fileSha256: "old",
+          startedAt: now - 61 * day,
+          endedAt: now - 61 * day + 60_000,
+          createdAt: now - 61 * day,
+          bestPaceS: 200,
+        },
+        {
+          fileSha256: "future",
+          startedAt: now + day,
+          endedAt: now + day + 60_000,
+          createdAt: now + day,
+          bestPaceS: 180,
+        },
+      ],
+      now,
+    );
+    expect(context.ownFileHashes).toEqual(["aa", "bb"]);
+    expect(context.ownRuns).toHaveLength(2);
+    expect(context.referencePaceS).toBe(240);
+    expect(context.runsToday).toBe(0);
+  });
+
+  it("counts a run that started today in Gulf time", () => {
+    const context = historyContext(
+      [
+        {
+          fileSha256: "today",
+          startedAt: now,
+          endedAt: now + 60_000,
+          createdAt: now,
+          bestPaceS: null,
+        },
+      ],
+      now,
+    );
+    expect(context.runsToday).toBe(1);
+    expect(context.referencePaceS).toBeNull();
+  });
+});
 
 describe("planRun", () => {
   it("rejects a declared bike and does not apply cells", async () => {
@@ -61,6 +122,15 @@ describe("planRun", () => {
     expect(plan.apply).toBe(false);
   });
 
+  it("rejects a file the same runner already uploaded", async () => {
+    const input = base(traceCenterline({ distanceM: 1_500, paceSPerKm: 300 }), "running");
+    input.context.ownFileHashes = [input.fileSha256];
+    const plan = await planRun(input);
+    expect(plan.status).toBe("rejected");
+    expect(plan.rejectCode).toBe("DUPLICATE");
+    expect(plan.apply).toBe(false);
+  });
+
   it("rejects a file without timestamps", async () => {
     const plan = await planRun({
       ...base([], "running"),
@@ -86,7 +156,7 @@ function base(points: ReturnType<typeof traceCenterline>, sport: "running" | "cy
       now,
       uploadedAt: now,
       userId: "runner-a",
-      ownFileHashes: [],
+      ownFileHashes: [] as string[],
       ownRuns: [],
       knownTracks: [],
       runsToday: 0,
