@@ -76,13 +76,13 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-11 · Ligas
 
-- **Estado:** en esta rama (`cursor/league-pace-b408`), a la espera del CI.
+- **Estado:** en el PR #6 (`cursor/league-pace-b408`), a la espera del CI.
 - **Hecho:** `bestKmWindow`, `referencePaceS` (60 días) y `resolveLeagueForRun`. Primera carrera provisional, ascenso inmediato, sin descenso a mitad de temporada, recálculo al inicio de temporada. Bandas iguales al seed (élite ≤ 254, avanzado 255–314, intermedio 315–374, inicial ≥ 375).
 - **Pendiente:** merge del PR cuando `verify` pase.
 - **Siguiente paso:** si `verify` falla, corregir solo ese fallo, commit y push. No abrir T-12 en esta rama.
 
 ## En curso
 
-| Tarea | PR  | Siguiente paso exacto                                          |
-| ----- | --- | -------------------------------------------------------------- |
-| T-11  | —   | Abrir el PR contra main y dejar el `verify` verde. Luego T-12. |
+| Tarea | PR  | Siguiente paso exacto                                              |
+| ----- | --- | ------------------------------------------------------------------ |
+| T-11  | #6  | Dejar el `verify` verde. Luego T-12, en una rama nueva desde main. |
