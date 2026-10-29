@@ -96,7 +96,8 @@ Las geometrías van en `geography(…, 4326)` y los índices H3 como `text` (for
 **RLS (Row Level Security):**
 
 - `zones`, `cell_ownership`, `zone_cells`, `seasons`, `leagues`, el alias en `profiles` y `daily_points` son **públicos en lectura**.
-- `runs` y `cell_efforts` solo los lee su dueño; el admin lo lee todo.
+- `runs` y `cell_efforts` solo los lee su dueño; el admin lo lee todo. Esas políticas comparan con `(SELECT auth.uid())`, una vez por consulta.
+- `private.is_admin()` es `SECURITY DEFINER` y no está en los esquemas de la API. `authenticated` puede ejecutarla desde una política; `anon` no. No es un RPC.
 - Nadie escribe directamente en `cell_ownership`; solo las funciones `security definer` llamadas por la Edge Function con la service key.
 - `provider_connections` no se lee ni se escribe con la anon key ni con el JWT del corredor. Los tokens (access y refresh) viven en esa tabla y solo los usa el servidor. Strava no es un `provider` ni un `source` en la fase 0: un GPX exportado desde Strava se sube como `upload`. `browser` reserva la grabación en la PWA, que no es de esta fase.
 

@@ -112,6 +112,111 @@ async function main(): Promise<void> {
     throw new Error(`zone polygon invalid or SRID ${zoneValid.srid}`);
   }
 
+  console.log("checking advisor fixes");
+  const missingIndexes = await client.query<{ table_name: string }>(
+    `WITH wanted AS (
+       SELECT * FROM (VALUES
+         ('cell_efforts', ARRAY['season_id']::text[]),
+         ('cell_ownership', ARRAY['zone_id', 'h3']::text[]),
+         ('daily_points', ARRAY['league_id']::text[]),
+         ('daily_points', ARRAY['user_id']::text[]),
+         ('runs', ARRAY['season_id']::text[]),
+         ('user_leagues', ARRAY['season_id']::text[])
+       ) AS v(table_name, cols)
+     )
+     SELECT w.table_name
+     FROM wanted w
+     WHERE NOT EXISTS (
+       SELECT 1
+       FROM pg_index i
+       JOIN pg_class t ON t.oid = i.indrelid
+       JOIN pg_namespace n ON n.oid = t.relnamespace
+       WHERE n.nspname = 'public'
+         AND t.relname = w.table_name
+         AND i.indisvalid
+         AND (
+           SELECT array_agg(a.attname::text ORDER BY u.ord)
+           FROM unnest(string_to_array(i.indkey::text, ' ')::int[]) WITH ORDINALITY AS u(attnum, ord)
+           JOIN pg_attribute a
+             ON a.attrelid = t.oid
+            AND a.attnum = u.attnum
+           WHERE u.ord <= cardinality(w.cols)
+             AND u.attnum > 0
+         ) = w.cols
+     )`,
+  );
+  if (missingIndexes.rows.length !== 0) {
+    throw new Error(
+      `foreign keys still lack a covering index: ${missingIndexes.rows.map((row) => row.table_name).join(", ")}`,
+    );
+  }
+  const slowPolicies = await one<{ n: number }>(
+    client,
+    `SELECT count(*)::int AS n
+     FROM pg_policies
+     WHERE schemaname = 'public'
+       AND policyname IN (
+         'profiles_update_own',
+         'user_leagues_select_own',
+         'runs_select_own',
+         'runs_insert_own_upload',
+         'cell_efforts_select_own',
+         'ownership_events_select_involved',
+         'reports_select_own',
+         'reports_insert_own'
+       )
+       AND (
+         (qual IS NOT NULL AND qual ILIKE '%auth.uid()%' AND qual NOT ILIKE '%select auth.uid()%')
+         OR (
+           with_check IS NOT NULL
+           AND with_check ILIKE '%auth.uid()%'
+           AND with_check NOT ILIKE '%select auth.uid()%'
+         )
+       )`,
+  );
+  if (slowPolicies.n !== 0)
+    throw new Error(`${slowPolicies.n} policies still call auth.uid() per row`);
+  const wrapped = await one<{ n: number }>(
+    client,
+    `SELECT count(*)::int AS n
+     FROM pg_policies
+     WHERE schemaname = 'public'
+       AND policyname IN (
+         'profiles_update_own',
+         'user_leagues_select_own',
+         'runs_select_own',
+         'runs_insert_own_upload',
+         'cell_efforts_select_own',
+         'ownership_events_select_involved',
+         'reports_select_own',
+         'reports_insert_own'
+       )
+       AND (
+         coalesce(qual, '') ILIKE '%select auth.uid()%'
+         OR coalesce(with_check, '') ILIKE '%select auth.uid()%'
+       )`,
+  );
+  if (wrapped.n !== 8) throw new Error(`expected 8 wrapped policies, saw ${wrapped.n}`);
+  const adminFn = await one<{
+    public_gone: boolean;
+    anon_exec: boolean;
+    auth_exec: boolean;
+    anon_usage: boolean;
+    auth_usage: boolean;
+  }>(
+    client,
+    `SELECT to_regprocedure('public.is_admin()') IS NULL AS public_gone,
+            has_function_privilege('anon', 'private.is_admin()', 'EXECUTE') AS anon_exec,
+            has_function_privilege('authenticated', 'private.is_admin()', 'EXECUTE') AS auth_exec,
+            has_schema_privilege('anon', 'private', 'USAGE') AS anon_usage,
+            has_schema_privilege('authenticated', 'private', 'USAGE') AS auth_usage`,
+  );
+  if (!adminFn.public_gone) throw new Error("public.is_admin() is still an RPC");
+  if (adminFn.anon_exec || adminFn.anon_usage) throw new Error("anon can reach private.is_admin()");
+  if (!adminFn.auth_exec || !adminFn.auth_usage) {
+    throw new Error("authenticated cannot execute private.is_admin() from RLS");
+  }
+
   console.log("checking RLS");
   await client.query("INSERT INTO auth.users (id) VALUES ($1::uuid), ($2::uuid)", [userA, userB]);
   await client.query("UPDATE public.profiles SET alias = 'runner_a' WHERE id = $1::uuid", [userA]);
@@ -241,7 +346,7 @@ async function main(): Promise<void> {
     if (efforts.rows.length !== 1) throw new Error("A should see their cell effort");
     const aliases = await client.query("SELECT alias FROM public.profiles ORDER BY alias");
     if (aliases.rows.length !== 2) throw new Error("aliases should be public");
-    const admin = await client.query("SELECT public.is_admin() AS ok");
+    const admin = await client.query("SELECT private.is_admin() AS ok");
     if (admin.rows[0]?.ok !== false) throw new Error("A is not an admin yet");
     await client.query("UPDATE public.profiles SET alias = 'ana' WHERE id = $1", [userA]);
     const stolen = await client.query("UPDATE public.profiles SET alias = 'bob' WHERE id = $1", [
@@ -322,6 +427,16 @@ async function main(): Promise<void> {
   });
   await asRole(client, "anon", null, "rollback", async () => {
     await expectFailure(
+      () => client.query("SELECT private.is_admin()"),
+      "42501",
+      "permission denied",
+    );
+  });
+  await asUser(client, userA, "rollback", async () => {
+    await expectFailure(() => client.query("SELECT public.is_admin()"), "42883", "does not exist");
+  });
+  await asRole(client, "anon", null, "rollback", async () => {
+    await expectFailure(
       () => client.query("SELECT tokens FROM public.provider_connections"),
       "42501",
       "permission denied",
@@ -367,7 +482,7 @@ async function main(): Promise<void> {
   await asUser(client, userA, "rollback", async () => {
     const seen = await client.query("SELECT id FROM public.runs");
     if (seen.rows.length !== 4) throw new Error(`admin should see 4 runs, saw ${seen.rows.length}`);
-    const admin = await client.query("SELECT public.is_admin() AS ok");
+    const admin = await client.query("SELECT private.is_admin() AS ok");
     if (admin.rows[0]?.ok !== true) throw new Error("is_admin() should be true");
   });
   await asUser(client, userB, "rollback", async () => {
@@ -442,6 +557,7 @@ async function resetDatabase(client: pg.Client): Promise<void> {
     "DROP EXTENSION IF EXISTS postgis_topology CASCADE",
     "DROP EXTENSION IF EXISTS postgis CASCADE",
     "DROP SCHEMA IF EXISTS extensions CASCADE",
+    "DROP SCHEMA IF EXISTS private CASCADE",
     "DROP SCHEMA IF EXISTS public CASCADE",
     "DROP SCHEMA IF EXISTS auth CASCADE",
     "CREATE SCHEMA public",
