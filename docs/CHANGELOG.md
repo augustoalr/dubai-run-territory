@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 — 2026-10-31
+
+Grabación de carrera en la app PWA en local (T-25).
+
+- T-25: Grabación local de carrera en el teléfono sin servidor. Nueva ruta `/grabar` en `apps/web` con botón grande "Empezar carrera", captura continua de ubicación GPS en alta precisión (`watchPosition`) y visualización en vivo de tiempo transcurrido, distancia recorrida y ritmo actual en formato "5:12 /km". Botón "Terminar" para concluir la sesión.
+- Integración de Screen Wake Lock para mantener la pantalla encendida durante la carrera y aviso visible en lenguaje directo: "Deja la pantalla encendida mientras corres".
+- Lógica pura y agnóstica de UI en `packages/core`: filtrado de puntos descartando precisión deficiente (> 30 m) y saltos imposibles (> 12 m/s), cálculo de métricas de distancia y ritmo (actual y medio) y constructor de archivos GPX estándar 1.1.
+- Cobertura de tests unitarios completa en `packages/core`, verificando el descarte de anomalías de GPS y que el archivo GPX generado es parseado e interpretado correctamente por `parseGpx`.
+- Persistencia local en el dispositivo del usuario mediante IndexedDB en formato GPX y pantalla de resumen final con distancia, tiempo y ritmo medio, descarga opcional del GPX y botón de regreso al mapa.
+- Diseño consistente con la identidad atlética del mapa (modo oscuro/claro, tokens semánticos, tipografía Oswald y Outfit) y lenguaje cercano libre de tecnicismos (sin menciones a H3 ni s/km).
+
 ## 0.8.0 — 2026-10-31
 
 Páginas legales: privacidad y términos (T-21).
