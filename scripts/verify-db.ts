@@ -899,7 +899,16 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   }
 
   // 3. Regla 3: Tope de 20 puntos diarios
-  // Seed 25 cells for userB on Day 0
+  const starter = await one<{ id: string }>(
+    client,
+    "SELECT id FROM public.leagues WHERE code = 'starter'",
+  );
+  const intermediate = await one<{ id: string }>(
+    client,
+    "SELECT id FROM public.leagues WHERE code = 'intermediate'",
+  );
+
+  // Seed 25 cells for userB on Day 0 in starter league
   const dummyCells: string[] = [];
   for (let i = 0; i < 25; i += 1) {
     const h3 = `8a43a13614${i.toString(16).padStart(2, "0")}fff`;
@@ -919,7 +928,7 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
        $1, $2, $3, $4, 'server/cells25.gpx', $5, 'gpx', 'upload', 'accepted',
        '2026-11-02 06:00:00+04', '2026-11-02 08:00:00+04', '2026-11-02 08:30:00+04'
      ) RETURNING id`,
-    [userB, zone.id, season.id, advanced.id, hash("c25")],
+    [userB, zone.id, season.id, starter.id, hash("c25")],
   );
   const efforts25 = JSON.stringify(
     dummyCells.map((h3) => ({
@@ -937,7 +946,7 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
     client,
     `SELECT cells_owned, points FROM public.daily_points
      WHERE season_id = $1 AND league_id = $2 AND user_id = $3 AND day = '2026-11-02'`,
-    [season.id, advanced.id, userB],
+    [season.id, starter.id, userB],
   );
   // cells_owned is 25, but cell points are capped at 20 (+ 25 conquests = 45 total)
   if (points25.cells_owned !== 25) {
@@ -948,18 +957,18 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   }
 
   // 4. Regla 4: Liberación de baldosas al ascender de liga
-  // User B currently owns 25 cells in advanced.
-  // Insert a promotion into user_leagues to elite.
+  // User B currently owns 25 cells in starter.
+  // Insert a promotion into user_leagues to intermediate.
   await client.query(
     `INSERT INTO public.user_leagues (user_id, season_id, league_id, ref_pace_s, reason)
-     VALUES ($1, $2, $3, 240, 'promotion')`,
-    [userB, season.id, elite.id],
+     VALUES ($1, $2, $3, 300, 'promotion')`,
+    [userB, season.id, intermediate.id],
   );
-  // Trigger should have liberated User B's cells in advanced!
+  // Trigger should have liberated User B's cells in starter!
   const liberated = await client.query(
     `SELECT count(*)::int AS n FROM public.cell_ownership
      WHERE season_id = $1 AND league_id = $2 AND owner_id = $3`,
-    [season.id, advanced.id, userB],
+    [season.id, starter.id, userB],
   );
   if (asNumber(liberated.rows[0]?.n) !== 0) {
     throw new Error(`promotion trigger did not liberate cells: ${liberated.rows[0]?.n} remain`);
@@ -972,7 +981,7 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   const afterRecompute = await client.query(
     `SELECT count(*)::int AS n FROM public.cell_ownership
      WHERE season_id = $1 AND league_id = $2 AND owner_id = $3`,
-    [season.id, advanced.id, userB],
+    [season.id, starter.id, userB],
   );
   if (asNumber(afterRecompute.rows[0]?.n) !== 0) {
     throw new Error(
