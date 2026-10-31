@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0 — 2026-10-31
+
+Mapa de territorios interactivo (T-16).
+
+- T-16: Mapa MapLibre GL con OpenFreeMap a pantalla completa centrado en la pista de Jumeirah–Kite Beach (99 celdas). 4 estados con paleta atlética moderna (Mía en naranja intenso `#FF5500`, Mía en peligro con borde exterior pulsante animado, De otro en gris neutro, Libre con contorno sin relleno). Soporte completo para modo oscuro y claro con conmutador rápido. Selector superior de ligas (con indicación de "Tu liga"). Leyenda flotante compacta. Tarjeta inferior (bottom sheet) al tocar cualquier celda mostrando iniciales, alias, ritmo legible (ej. 5:12 /km) y botón "Cómo robarla" con modal explicativo para corredores. Arquitectura modular con capa de repositorio desacoplada en `apps/web/src/lib/territory` lista para Supabase.
+
 ## 0.6.0 — 2026-10-29
 
 Edge Function `process-run`, sin desplegar.
