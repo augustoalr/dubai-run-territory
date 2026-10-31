@@ -960,8 +960,8 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   // User B currently owns 25 cells in starter.
   // Insert a promotion into user_leagues to intermediate.
   await client.query(
-    `INSERT INTO public.user_leagues (user_id, season_id, league_id, ref_pace_s, reason)
-     VALUES ($1, $2, $3, 300, 'promotion')`,
+    `INSERT INTO public.user_leagues (user_id, season_id, league_id, ref_pace_s, reason, valid_from)
+     VALUES ($1, $2, $3, 300, 'promotion', '2026-11-02 12:00:00+04')`,
     [userB, season.id, intermediate.id],
   );
   // Trigger should have liberated User B's cells in starter!
