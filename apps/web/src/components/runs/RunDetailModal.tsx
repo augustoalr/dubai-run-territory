@@ -51,10 +51,8 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
       await onDelete(run.id);
       setIsConfirmingDelete(false);
       onClose();
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "No se pudo borrar la carrera. Inténtalo de nuevo.";
-      setDeleteError(msg);
+    } catch {
+      setDeleteError("No se pudo borrar la carrera. Inténtalo de nuevo.");
     } finally {
       setIsDeleting(false);
     }

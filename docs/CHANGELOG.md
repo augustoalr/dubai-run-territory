@@ -2,7 +2,7 @@
 
 ## 0.10.0 — 2026-10-31
 
-Pantalla "Mis carreras" local (T-15).
+Pantalla "Mis carreras" local (T-15) y reglas de conquista según revisión de producto (T-27).
 
 - T-15: Nueva pantalla `/carreras` en `apps/web` con la lista de carreras guardadas en el teléfono (IndexedDB), ordenadas cronológicamente (la más reciente primero).
 - Cada tarjeta muestra fecha y hora formateadas, distancia (`km`), duración (`mm:ss`) y ritmo medio en formato `"5:12 /km"`.
@@ -11,6 +11,14 @@ Pantalla "Mis carreras" local (T-15).
 - Opción avanzada al final de la pantalla para importar archivos de reloj deportivo (`.gpx` y `.fit`), validando la integridad con los parsers de `packages/core` y mostrando mensajes de error en lenguaje claro si el archivo está corrupto.
 - Acceso directo a `/carreras` desde el resumen posterior a la grabación en `/grabar` y desde el grupo de botones flotantes sobre el mapa de la pista.
 - Corrección en la descripción de la página `/grabar` eliminando la referencia técnica a "track GPX" y garantizando que no se muestren términos técnicos ("H3", "s/km", ni "GPX" fuera de la opción avanzada).
+- T-27: Nueva migración SQL `supabase/migrations/20261031170000_conquest_rules_review.sql` (no aplicada en base de datos remota) que aplica las cuatro decisiones de la revisión de producto:
+  1. El día cierra antes de las 04:00 (hora de Dubái) (en lugar de medianoche) en `snapshot_daily_points`, `apply_run`, `recompute_season` y la función auxiliar `private.zone_day_key`.
+  2. Debilitamiento: si el dueño no ha vuelto a correr una baldosa en 7 días, su tiempo empeora 5 s/km por día, hasta un máximo de 60 s/km. Superar ese tiempo debilitado es necesario para robarla (en empate defiende el dueño actual).
+  3. Tope de 20 puntos diarios por baldosas poseídas (+1 por conquista y +2 por robo siguen aparte).
+  4. Al ascender de liga (`reason = 'promotion'`), se liberan las baldosas que la persona tenía en su liga anterior mediante trigger `user_league_promoted` en `user_leagues`.
+- Mantén la seguridad actual: funciones `SECURITY DEFINER` con `search_path = ''` y acceso exclusivo para `service_role`.
+- Funciones puras de dominio en `packages/core/src/ownership/` (`day.ts` y `decide.ts`).
+- Tests completos en `packages/core/src/ownership/rules.test.ts` y validación SQL en `scripts/verify-db.ts` cubriendo los casos límite: día 7 contra día 8, tope de 60, exactamente 20 puntos, empate, el día cierra antes de las 04:00 (hora de Dubái) y liberación de baldosas al ascender.
 
 ## 0.9.0 — 2026-10-31
 

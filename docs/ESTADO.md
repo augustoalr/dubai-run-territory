@@ -118,13 +118,13 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-27 · Reglas de conquista de la revisión de producto
 
-- **Estado:** terminada.
+- **Estado:** terminada (PR #13 fusionado en `main`).
 - **Hecho:** nueva migración `supabase/migrations/20261031170000_conquest_rules_review.sql` (no aplicada en ninguna base de datos) que aplica las 4 decisiones de la revisión de producto:
-  1. Cierre del día a las 03:59 hora de Dubái (en lugar de medianoche) para `snapshot_daily_points`, `apply_run`, `recompute_season` y el conteo de días mediante `private.zone_day_key`.
+  1. El día cierra antes de las 04:00 (hora de Dubái) (en lugar de medianoche) para `snapshot_daily_points`, `apply_run`, `recompute_season` y el conteo de días mediante `private.zone_day_key`.
   2. Debilitamiento: si el dueño no vuelve a correr una baldosa en 7 días, su tiempo empeora 5 s/km por día hasta un máximo de 60 s/km. Superar ese tiempo debilitado es necesario para robarla (en empate defiende el dueño actual).
   3. Tope de 20 puntos diarios por baldosas poseídas (+1 por conquista y +2 por robo siguen aparte).
   4. Al ascender de liga (`reason = 'promotion'`), se liberan las baldosas que el corredor poseía en su liga anterior mediante trigger `user_league_promoted` en `user_leagues`.
-  5. Lógica de dominio en `packages/core/src/ownership/` (`day.ts` y `decide.ts`) y tests unitarios exhaustivos (`rules.test.ts`) junto con validación en `scripts/verify-db.ts` que cubren todos los casos límite (día 7 contra día 8, tope de 60, exactamente 20 puntos, empate, corte de día a las 03:59 y liberación de baldosas). Seguridad preservada con `SECURITY DEFINER`, `search_path = ''` y permisos exclusivos para `service_role`.
+  5. Lógica de dominio en `packages/core/src/ownership/` (`day.ts` y `decide.ts`) y tests unitarios exhaustivos (`rules.test.ts`) junto con validación en `scripts/verify-db.ts` que cubren todos los casos límite (día 7 contra día 8, tope de 60, exactamente 20 puntos, empate, el día cierra antes de las 04:00 (hora de Dubái) y liberación de baldosas). Seguridad preservada con `SECURITY DEFINER`, `search_path = ''` y permisos exclusivos para `service_role`.
 - **Pendiente:** ninguno.
 - **Siguiente paso:** ninguno.
 
