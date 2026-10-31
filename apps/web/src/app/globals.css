@@ -1001,3 +1001,524 @@ button:disabled {
     animation: none;
   }
 }
+
+/* ==========================================================================
+   APP MENU & HEADER MENU BUTTON
+   ========================================================================== */
+.header-menu-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: var(--btn-close-bg);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.header-menu-button:hover {
+  background: var(--btn-close-hover);
+  border-color: var(--color-mine);
+}
+
+.header-menu-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 480px) {
+  .header-menu-label {
+    display: none;
+  }
+  .header-menu-button {
+    padding: 0.45rem;
+  }
+}
+
+.app-menu-card {
+  max-width: 28rem;
+  width: 92%;
+}
+
+.app-menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.menu-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.menu-nav-item:hover {
+  background: var(--btn-close-hover);
+  border-color: var(--color-mine);
+  transform: translateY(-1px);
+}
+
+.menu-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 85, 0, 0.12);
+  color: var(--color-mine);
+  flex-shrink: 0;
+}
+
+.menu-item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.menu-item-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.menu-item-desc {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.menu-item-arrow {
+  color: var(--text-tertiary);
+  font-size: 1.1rem;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
+}
+
+.menu-nav-item:hover .menu-item-arrow {
+  transform: translateX(3px);
+  color: var(--color-mine);
+}
+
+.app-menu-info-box {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--border-glass);
+}
+
+.app-menu-info-text {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0.35rem 0 0;
+}
+
+/* ==========================================================================
+   MAP LEGEND FOOTER LEGAL ROW
+   ========================================================================== */
+.legend-legal-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--border-glass);
+  font-size: 0.7rem;
+}
+
+.legend-legal-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+
+.legend-legal-link:hover {
+  color: var(--color-mine);
+  text-decoration: underline;
+}
+
+.legend-legal-sep {
+  color: var(--text-tertiary);
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   LEGAL PAGES VIEWPORT & DESIGN SYSTEM
+   ========================================================================== */
+.legal-viewport {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.legal-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.legal-topbar-inner {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.legal-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.legal-back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: var(--btn-close-bg);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.legal-back-button:hover {
+  background: var(--btn-close-hover);
+  border-color: var(--color-mine);
+}
+
+.legal-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legal-app-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+@media (max-width: 520px) {
+  .legal-brand-group .zone-badge {
+    display: none;
+  }
+}
+
+.legal-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.legal-lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.lang-option {
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.lang-option.active {
+  background: var(--color-mine);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255, 85, 0, 0.35);
+}
+
+.lang-option:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+.legal-content-wrap {
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem calc(3rem + env(safe-area-inset-bottom));
+}
+
+.legal-document {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Legal Notice Banner (Draft pending legal review) */
+.legal-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 170, 0, 0.12);
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  box-shadow: 0 4px 24px rgba(255, 170, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.notice-icon {
+  color: var(--color-threatened);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notice-body {
+  flex: 1;
+}
+
+.notice-headline {
+  margin: 0 0 0.25rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-threatened);
+  letter-spacing: 0.02em;
+}
+
+.notice-subtext {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* Legal Doc Header */
+.legal-doc-header {
+  margin-bottom: 2rem;
+}
+
+.legal-doc-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.legal-date-badge {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.legal-doc-title {
+  margin: 0 0 0.65rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.1rem, 6vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.legal-doc-subtitle {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* Legal Sections */
+.legal-sections-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.legal-section-card {
+  border-radius: 1.35rem;
+  padding: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .legal-section-card {
+    padding: 1.75rem 2rem;
+  }
+}
+
+.legal-section-title {
+  margin: 0 0 1rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+
+.legal-paragraph {
+  margin: 0 0 0.85rem;
+  font-size: 0.94rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.legal-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.legal-bullet-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.legal-bullet-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.bullet-bullet {
+  color: var(--color-mine);
+  font-weight: 800;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.legal-bullet-strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.legal-callout-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1.15rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 0.95rem;
+  background: rgba(255, 85, 0, 0.08);
+  border-left: 3px solid var(--color-mine);
+  border: 1px solid rgba(255, 85, 0, 0.22);
+}
+
+.callout-icon {
+  color: var(--color-mine);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.callout-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Legal Footer Card */
+.legal-doc-footer {
+  margin-top: 2.5rem;
+  border-radius: 1.35rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .footer-links-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.legal-related-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--color-mine);
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+
+.legal-related-link:hover {
+  text-decoration: underline;
+  transform: translateX(2px);
+}
+
+.legal-footer-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.legal-footer-home-link:hover {
+  color: var(--text-primary);
+}
+
+.footer-bottom-copy {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-glass);
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.footer-contact-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.footer-email-link {
+  color: var(--color-mine);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footer-email-link:hover {
+  text-decoration: underline;
+}
