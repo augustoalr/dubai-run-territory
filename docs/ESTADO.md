@@ -102,8 +102,15 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 - **Pendiente:** conectar con la base de datos remota una vez completada la autenticación.
 - **Siguiente paso:** Revisión de SWE.
 
+## T-21 · Páginas legales
+
+- **Estado:** hecho (rama `t21-legal`).
+- **Hecho:** páginas `/privacidad` y `/terminos` en Next.js estático (`apps/web`), bilingües (español e inglés) con conmutador instantáneo y diseño adaptado a móvil usando los tokens del sistema visual (modo oscuro/claro y tipografías Oswald y Outfit). Ambas páginas llevan en lo alto el aviso destacado "Borrador pendiente de revisión legal" ("Draft pending legal review"). En `/privacidad` se explica con lenguaje claro los datos almacenados (alias, email, carreras con GPS y ritmos), la finalidad del juego y las ligas, que nunca se publican horarios ni puntos de inicio/fin, que provienen de Garmin, Polar o app solo si se conectan, el derecho a borrar la cuenta y los datos en cualquier momento, y el correo de contacto `privacidad@PENDIENTE`. En `/terminos` se estipula que es un juego gratuito, que el usuario corre bajo su propia responsabilidad respetando las normas y el tráfico de Dubái, la prohibición estricta de trampas (vehículos a motor/ruedas, compartir cuentas, falsear GPS) y la potestad de anular carreras sospechosas y sancionar cuentas. Se han integrado enlaces en el menú superior de la app (`TerritoryHeader` -> `AppMenuModal`) y en el pie de la pantalla (`MapLegend`).
+- **Pendiente:** validación jurídica formal antes del lanzamiento en producción.
+- **Siguiente paso:** revisión y merge del PR hacia `main`.
+
 ## En curso
 
-| Tarea | PR       | Siguiente paso exacto |
-| ----- | -------- | --------------------- |
-| T-16  | t16-mapa | Revisión de SWE       |
+| Tarea | PR        | Siguiente paso exacto |
+| ----- | --------- | --------------------- |
+| T-21  | t21-legal | Revisión de SWE       |

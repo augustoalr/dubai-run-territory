@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0 — 2026-10-31
+
+Páginas legales: privacidad y términos (T-21).
+
+- T-21: Páginas estáticas `/privacidad` y `/terminos` en `apps/web`, disponibles en español e inglés con conmutador dinámico y diseño responsivo móvil usando la identidad visual de la aplicación (tokens de color, glassmorphism, tipografía Oswald y Outfit, y soporte para modo oscuro y claro).
+- Aviso superior "Borrador pendiente de revisión legal" ("Draft pending legal review") en ambas páginas.
+- `/privacidad`: Explicación en lenguaje transparente sobre datos guardados (alias, email, GPS y ritmos), propósito del juego y las ligas, garantía de que nunca se muestran horarios ni puntos de inicio/fin de carrera, origen voluntario de los datos (Garmin, Polar o grabación en la app) y derecho al borrado permanente de cuenta y datos con correo de contacto `privacidad@PENDIENTE`.
+- `/terminos`: Juego 100% gratuito, responsabilidad del participante cumpliendo la normativa de tráfico y seguridad vial de Dubái, política de tolerancia cero frente a trampas (vehículos de motor o ruedas, cuentas compartidas, manipulación GPS) y potestad para anular carreras sospechosas y suspender cuentas.
+- Enlaces de acceso integrados en el pie del mapa (`MapLegend`) y en el menú principal de la aplicación (`TerritoryHeader` -> `AppMenuModal`).
+
 ## 0.7.0 — 2026-10-31
 
 Mapa de territorios interactivo (T-16).
