@@ -69,5 +69,24 @@ export {
   cellsForZone,
 } from "./zones/cells";
 export { readZoneGeometry } from "./zones/parse";
+export {
+  DEFAULT_FILTER_CONFIG,
+  buildGpx,
+  calculateAveragePaceSecondsPerKm,
+  calculateCurrentPaceSecondsPerKm,
+  calculateDistanceMeters,
+  computeRecordingStats,
+  filterRecordedPoints,
+  formatDisplayDistance,
+  formatDisplayDuration,
+  formatDisplayPace,
+  isValidRecordedPoint,
+} from "./recording";
+export type {
+  BuildGpxOptions,
+  LiveRecordingStats,
+  PointFilterConfig,
+  RecordedPoint,
+} from "./recording";
 export { ZONE_CATALOG, activeZones, getZone, jumeirahKiteZone } from "./zones/registry";
 export type { LocalizedName, ZoneDefinition, ZoneStatus } from "./zones/types";

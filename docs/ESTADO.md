@@ -109,8 +109,16 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 - **Pendiente:** validación jurídica formal antes del lanzamiento en producción.
 - **Siguiente paso:** revisión y merge del PR hacia `main`.
 
+## T-25 · Grabar carrera en la app (PWA)
+
+- **Estado:** en progreso (rama `t25-grabar`).
+- **Hecho:** nueva página `/grabar` en `apps/web` con botón grande "Empezar carrera", seguimiento GPS en alta precisión (`watchPosition`), Wake Lock para mantener encendida la pantalla con aviso sencillo ("Deja la pantalla encendida mientras corres"), visualización en tiempo real de tiempo transcurrido, distancia y ritmo actual en formato "5:12 /km", y botón "Terminar". Al finalizar, persistencia local en el teléfono con IndexedDB en formato GPX y vista de resumen (distancia, tiempo y ritmo medio) con descarga opcional de GPX y retorno al mapa. Lógica pura en `packages/core`: filtrado de puntos (descarte de precisión > 30 m y saltos imposibles > 12 m/s), cálculo de métricas de ritmo y distancia, y constructor de GPX 1.1 con tests unitarios que verifican que el GPX producido es interpretado correctamente por `parseGpx`. Diseño atlético en español sin tecnicismos (sin mención a H3 ni a s/km).
+- **Pendiente:** prueba de campo con teléfono real corriendo en la pista de Jumeirah–Kite.
+- **Siguiente paso:** revisión de SWE y merge del PR hacia `main`.
+
 ## En curso
 
-| Tarea | PR        | Siguiente paso exacto |
-| ----- | --------- | --------------------- |
-| T-21  | t21-legal | Revisión de SWE       |
+| Tarea | PR         | Siguiente paso exacto |
+| ----- | ---------- | --------------------- |
+| T-21  | t21-legal  | Revisión de SWE       |
+| T-25  | t25-grabar | Revisión de SWE       |

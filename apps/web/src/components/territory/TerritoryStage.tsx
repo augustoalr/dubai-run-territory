@@ -1,6 +1,7 @@
 "use client";
 
 import { cellPolygon, jumeirahKiteZone, type LeagueCode } from "@dubai-run/core";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getCellPaint, type ThemeMode } from "@/lib/territory/cell-paint";
 import { territoryRepository } from "@/lib/territory/territory-repository";
@@ -104,6 +105,16 @@ export function TerritoryStage() {
 
       {/* Fixed Small Legend */}
       <MapLegend />
+
+      {/* Floating Action Button: Grabar carrera */}
+      {!selectedCell && (
+        <Link href="/grabar" className="territory-record-fab" aria-label="Grabar carrera">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+          <span>Grabar</span>
+        </Link>
+      )}
 
       {/* Bottom Sheet on cell tap */}
       <CellBottomSheet
