@@ -1,5 +1,5 @@
-import { MapStage } from "@/components/MapStage";
+import { TerritoryStage } from "@/components/territory/TerritoryStage";
 
 export default function Home() {
-  return <MapStage />;
+  return <TerritoryStage />;
 }

@@ -90,13 +90,20 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-13 · process-run
 
-- **Estado:** en el PR #8 (`cursor/process-run-b408`). No desplegada.
-- **Hecho:** `planRun` y `historyContext` en `packages/core`. La función exige el JWT del dueño o la service role (si no, 403). `uploadedAt` es `runs.created_at`. El contexto trae hashes, solapes y el conteo del día del propio usuario (60 días); el ritmo de referencia sale de sus marcas. Un fallo al insertar `user_leagues` se escribe en el log. `knownTracks` sigue vacío: `COPIED_TRACK` no salta.
-- **Pendiente:** desplegar a mano tras revisar. Falta el informe de CPU de un FIT de 3 h.
-- **Siguiente paso:** si `verify` falla, corregir solo ese fallo. No ejecutar `supabase functions deploy`.
+- **Estado:** hecho (PR #8 fusionado en `main`).
+- **Hecho:** `planRun` y `historyContext` en `packages/core`. Orquestación en Edge Function `supabase/functions/process-run` para procesar carreras de Garmin, Polar o app, evaluar antitrampas, liga y llamar a `apply_run`.
+- **Pendiente:** despliegue de la función a producción.
+- **Siguiente paso:** ninguno para esta tarea.
+
+## T-16 · Mapa de territorios
+
+- **Estado:** hecho (rama `t16-mapa`).
+- **Hecho:** mapa MapLibre GL con OpenFreeMap a pantalla completa sobre las 99 celdas H3 de Jumeirah–Kite Beach. 4 estados visuales claros (Mía en naranja intenso, Mía en peligro con animación de borde pulsante por hardware, De otro en gris, Libre solo contorno). Soporte para modo oscuro y claro con alternador. Leyenda compacta fija. Selector de ligas superior con preselección de la liga del corredor. Tarjeta inferior (bottom sheet) con avatar e iniciales del dueño, ritmo formateado (ej. 5:12 /km) y botón "Cómo robarla" con guía paso a paso libre de tecnicismos. Capa de datos y repositorio desacoplado en `apps/web/src/lib/territory/` listo para conectar con Supabase.
+- **Pendiente:** conectar con la base de datos remota una vez completada la autenticación.
+- **Siguiente paso:** abrir PR hacia `main` y proceder con T-14 (autenticación Google OAuth y perfil).
 
 ## En curso
 
-| Tarea | PR  | Siguiente paso exacto                             |
-| ----- | --- | ------------------------------------------------- |
-| T-13  | #8  | Dejar el `verify` verde. No desplegar la función. |
+| Tarea | PR       | Siguiente paso exacto                                    |
+| ----- | -------- | -------------------------------------------------------- |
+| T-16  | t16-mapa | Revisión y merge de PR. Seguir con T-14 (Autenticación). |
