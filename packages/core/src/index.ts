@@ -55,8 +55,19 @@ export type { DatedPace } from "./leagues/reference";
 export { resolveLeagueForRun } from "./leagues/resolve";
 export type { LeagueDecision, LeagueReason } from "./leagues/resolve";
 export { bestKmWindow } from "./leagues/window";
-export { decideClaim } from "./ownership/decide";
-export type { CellClaim, CellMark } from "./ownership/decide";
+export {
+  DECAY_GRACE_DAYS,
+  DECAY_PACE_PER_DAY,
+  MAX_DECAY_PACE,
+  MAX_DAILY_CELL_POINTS,
+  calculateDailyPoints,
+  calculatePaceDecay,
+  decideClaim,
+  effectivePace,
+  liberateTilesOnPromotion,
+} from "./ownership/decide";
+export type { CellClaim, CellMark, OwnedTile } from "./ownership/decide";
+export { GULF_TIMEZONE, diffGameDays, gulfGameDay } from "./ownership/day";
 export { planRun } from "./runs/process";
 export type { RunPlan } from "./runs/process";
 export { ACTIVITY_PROVIDERS, RUN_SOURCES } from "./runs/source";
