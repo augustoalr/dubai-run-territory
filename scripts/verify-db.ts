@@ -785,7 +785,7 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   if (rows.n !== 1) throw new Error("concurrent apply_run duplicated the cell");
 
   console.log("checking product review rules (T-27)");
-  // 1. Day close at 03:59 Dubai time (04:00 cutoff)
+  // 1. El día cierra antes de las 04:00 (hora de Dubái)
   const dayKeyTest = await one<{ d1: string; d2: string; d3: string }>(
     client,
     `SELECT private.zone_day_key('2026-11-03 03:59:00+04'::timestamptz, 'Asia/Dubai')::text AS d1,
@@ -986,6 +986,56 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   if (asNumber(afterRecompute.rows[0]?.n) !== 0) {
     throw new Error(
       `recompute_season restored liberated cells: ${afterRecompute.rows[0]?.n} remain`,
+    );
+  }
+
+  // 5. Late uploaded run: ended at 07:00, promotion at 12:00, uploaded at 13:00.
+  // The run was uploaded after promotion, so recompute_season must preserve this cell.
+  const cellLate = "8a43a1361430fff";
+  await client.query(
+    `INSERT INTO public.zone_cells (zone_id, h3, center, boundary)
+     VALUES ($1, $2, ${point}, ${ring}) ON CONFLICT DO NOTHING`,
+    [zone.id, cellLate],
+  );
+  const runLate = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
+       source, status, started_at, ended_at, created_at
+     ) VALUES (
+       $1, $2, $3, $4, 'server/late.gpx', $5, 'gpx', 'upload', 'accepted',
+       '2026-11-02 06:00:00+04', '2026-11-02 07:00:00+04', '2026-11-02 13:00:00+04'
+     ) RETURNING id`,
+    [userB, zone.id, season.id, starter.id, hash("late")],
+  );
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      runLate.id,
+      effort(cellLate, 310, "2026-11-02T02:30:00.000Z"),
+    ]);
+  });
+  if ((await ownerOf(starter.id, cellLate)).owner_id !== userB) {
+    throw new Error("late run test: conquest failed");
+  }
+
+  // After recompute_season, this cell must STILL belong to userB in starter
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.recompute_season($1)", [season.id]);
+  });
+  const lateOwnerAfter = await ownerOf(starter.id, cellLate);
+  if (lateOwnerAfter.owner_id !== userB) {
+    throw new Error(
+      `recompute_season incorrectly liberated late-uploaded cell: owned by ${lateOwnerAfter.owner_id}, expected ${userB}`,
+    );
+  }
+  const starterRemaining = await client.query(
+    `SELECT count(*)::int AS n FROM public.cell_ownership
+     WHERE season_id = $1 AND league_id = $2 AND owner_id = $3`,
+    [season.id, starter.id, userB],
+  );
+  if (asNumber(starterRemaining.rows[0]?.n) !== 1) {
+    throw new Error(
+      `expected exactly 1 cell remaining in starter for userB, got ${starterRemaining.rows[0]?.n}`,
     );
   }
 }

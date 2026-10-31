@@ -1,11 +1,11 @@
 -- Reglas de la revisión de producto para el motor de conquista (T-27).
--- 1. Cierre del día a las 03:59 hora de Dubái (en lugar de medianoche) para snapshot_daily_points y contar días.
+-- 1. El día cierra antes de las 04:00 (hora de Dubái) (en lugar de medianoche) para snapshot_daily_points y contar días.
 -- 2. Debilitamiento: si el dueño no corre la baldosa en 7 días, empeora 5 s/km por día (máx 60 s/km).
 -- 3. Tope de 20 puntos diarios por baldosas poseídas (+1 conquista y +2 robo siguen aparte).
 -- 4. Al ascender de liga, se liberan las baldosas que la persona tenía en su liga anterior.
 -- Funciones SECURITY DEFINER con search_path vacío, ejecutables solo por service_role.
 
--- Función auxiliar para obtener la fecha de juego en la zona horaria dada, cerrando el día a las 03:59:59 (antes de las 04:00).
+-- Función auxiliar para obtener la fecha de juego en la zona horaria dada: el día cierra antes de las 04:00 (hora de Dubái).
 CREATE OR REPLACE FUNCTION private.zone_day_key(p_ts timestamptz, p_tz text)
 RETURNS date
 LANGUAGE sql
@@ -20,7 +20,7 @@ REVOKE ALL ON FUNCTION private.zone_day_key(timestamptz, text)
   FROM PUBLIC, anon, authenticated, service_role;
 
 COMMENT ON FUNCTION private.zone_day_key(timestamptz, text) IS
-  'Calcula la fecha de juego en la zona horaria: el día cierra a las 03:59:00.';
+  'Calcula la fecha de juego en la zona horaria: el día cierra antes de las 04:00 (hora de Dubái).';
 
 -- Trigger para liberar baldosas al ascender de liga (Regla 4).
 CREATE OR REPLACE FUNCTION private.handle_league_promotion()
@@ -52,7 +52,7 @@ CREATE TRIGGER user_league_promoted
 COMMENT ON FUNCTION private.handle_league_promotion() IS
   'Al ascender de liga (reason = promotion), libera las baldosas que el corredor tenía en su liga anterior.';
 
--- claim_cell con debilitamiento y cierre a las 03:59 (Reglas 1 y 2).
+-- claim_cell con debilitamiento y cierre antes de las 04:00 (hora de Dubái) (Reglas 1 y 2).
 CREATE OR REPLACE FUNCTION private.claim_cell(
   p_run_id uuid,
   p_user_id uuid,
@@ -177,7 +177,7 @@ BEGIN
     v_last_run := v_achieved;
   END IF;
 
-  -- Contar días según el cierre a las 03:59 hora de la zona.
+  -- Contar días: el día cierra antes de las 04:00 (hora de Dubái).
   v_owner_day := private.zone_day_key(v_last_run, v_tz);
   v_incoming_day := private.zone_day_key(p_crossed_at, v_tz);
   v_days := v_incoming_day - v_owner_day;
@@ -243,7 +243,7 @@ COMMENT ON FUNCTION private.claim_cell(
 ) IS
   'Una celda, ya bloqueada. Aplica debilitamiento tras 7 días de inactividad (5 s/km por día, máx 60).';
 
--- snapshot_daily_points con cierre a las 03:59, tope de 20 puntos por posesión y liberación por ascenso.
+-- snapshot_daily_points: el día cierra antes de las 04:00 (hora de Dubái), tope de 20 puntos por posesión y liberación por ascenso.
 CREATE OR REPLACE FUNCTION public.snapshot_daily_points(p_season_id uuid, p_day date)
 RETURNS void
 LANGUAGE plpgsql
@@ -340,7 +340,7 @@ REVOKE ALL ON FUNCTION public.snapshot_daily_points(uuid, date)
 GRANT EXECUTE ON FUNCTION public.snapshot_daily_points(uuid, date) TO service_role;
 
 COMMENT ON FUNCTION public.snapshot_daily_points(uuid, date) IS
-  'Foto diaria (cierre a las 03:59 hora de la zona): celdas poseídas con tope de 20 pts, más bonus acumulados.';
+  'Foto diaria: el día cierra antes de las 04:00 (hora de Dubái), celdas poseídas con tope de 20 pts, más bonus acumulados.';
 
 -- apply_run actualizado para usar private.zone_day_key.
 CREATE OR REPLACE FUNCTION public.apply_run(p_run_id uuid, p_efforts jsonb)
@@ -493,7 +493,7 @@ BEGIN
     v_events := v_events || jsonb_build_array(jsonb_build_object('h3', v_h3, 'type', v_event));
   END LOOP;
 
-  -- Contar el día con el cierre de las 03:59.
+  -- Contar el día: el día cierra antes de las 04:00 (hora de Dubái).
   v_day := private.zone_day_key(v_uploaded, v_tz);
   PERFORM public.snapshot_daily_points(v_season, v_day);
   RETURN jsonb_build_object('events', v_events);
@@ -578,14 +578,18 @@ BEGIN
   END LOOP;
 
   -- Al reproducir las carreras accepted, recompute_season recrea las baldosas
-  -- en la liga anterior de usuarios ascendidos. Liberar esas celdas:
+  -- en la liga anterior de usuarios ascendidos. Liberar las celdas poseídas al momento del ascenso:
   DELETE FROM public.cell_ownership AS o
-  USING public.user_leagues AS ul
+  USING public.user_leagues AS ul,
+        public.cell_efforts AS e,
+        public.runs AS r
   WHERE ul.season_id = p_season_id
     AND ul.user_id = o.owner_id
     AND ul.reason = 'promotion'
     AND ul.league_id <> o.league_id
-    AND o.achieved_at <= ul.valid_from;
+    AND e.id = o.effort_id
+    AND r.id = e.run_id
+    AND r.created_at <= ul.valid_from;
 
   SELECT zone.timezone
   INTO v_tz

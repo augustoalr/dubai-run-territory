@@ -11,7 +11,7 @@ import {
 } from "./decide";
 
 describe("T-27 Product Review Rules", () => {
-  describe("Regla 1: Cierre del día a las 03:59 hora de Dubái", () => {
+  describe("Regla 1: El día cierra antes de las 04:00 (hora de Dubái)", () => {
     it("asigna al día anterior cualquier hora hasta antes de las 04:00:00", () => {
       // 03:58 en Dubái (+04:00) es 23:58 UTC del día anterior
       expect(gulfGameDay("2026-11-03T03:58:00+04:00")).toBe("2026-11-02");
