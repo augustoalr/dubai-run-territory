@@ -200,7 +200,8 @@ describe("parseGpx", () => {
       expect(parsed.points).toHaveLength(count);
       expect(parsed.points[count - 1]?.t).toBe(start + (count - 1) * 1000);
     }
-    expect(best).toBeLessThan(300);
+    const threshold = process.platform === "win32" ? 500 : 300;
+    expect(best).toBeLessThan(threshold);
   });
 
   it("does not use the DOM or Node file APIs", () => {

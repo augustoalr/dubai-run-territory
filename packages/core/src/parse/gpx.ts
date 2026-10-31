@@ -99,6 +99,11 @@ function normalizeGpxCadence(raw: number, sport: Sport | undefined): number {
 }
 
 function readTime(value: unknown): number | undefined {
+  if (typeof value === "string") {
+    if (!GPX_TIME.test(value)) return undefined;
+    const ms = Date.parse(value);
+    return Number.isFinite(ms) ? ms : undefined;
+  }
   const text = textContent(value);
   if (!text || !GPX_TIME.test(text)) return undefined;
   const ms = Date.parse(text);
@@ -106,14 +111,18 @@ function readTime(value: unknown): number | undefined {
 }
 
 function readCoord(value: unknown, limit: number): number | undefined {
-  const text = typeof value === "string" ? value : typeof value === "number" ? String(value) : "";
-  if (!text) return undefined;
-  const coord = Number(text);
-  if (!Number.isFinite(coord) || Math.abs(coord) > limit) return undefined;
-  return coord;
+  if (typeof value === "number") {
+    return Number.isFinite(value) && Math.abs(value) <= limit ? value : undefined;
+  }
+  if (typeof value === "string" && value.length > 0) {
+    const coord = Number(value);
+    return Number.isFinite(coord) && Math.abs(coord) <= limit ? coord : undefined;
+  }
+  return undefined;
 }
 
 function readVitals(extensions: unknown): { hr?: number; cad?: number } {
+  if (extensions == null || !isRecord(extensions)) return {};
   const found: { hr?: number; cad?: number } = {};
   walkVitals(extensions, found, 0);
   return found;
