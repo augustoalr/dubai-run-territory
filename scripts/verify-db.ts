@@ -1006,7 +1006,7 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
        $1, $2, $3, $4, 'server/late.gpx', $5, 'gpx', 'upload', 'accepted',
        '2026-11-02 06:00:00+04', '2026-11-02 07:00:00+04', '2026-11-02 13:00:00+04'
      ) RETURNING id`,
-    [userB, zone.id, season.id, starter.id, hash("late")],
+    [userB, zone.id, season.id, starter.id, hash("fa")],
   );
   await asRole(client, "service_role", null, "commit", async () => {
     await client.query("SELECT public.apply_run($1, $2::jsonb)", [
