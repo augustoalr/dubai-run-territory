@@ -82,4 +82,17 @@ export const localRunStorage = {
       transaction.oncomplete = () => db.close();
     });
   },
+
+  async deleteRun(id: string): Promise<void> {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error || new Error("No se pudo borrar la carrera"));
+      transaction.oncomplete = () => db.close();
+    });
+  },
 };

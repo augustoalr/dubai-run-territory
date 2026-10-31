@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.0 — 2026-10-31
+
+Pantalla "Mis carreras" local (T-15).
+
+- T-15: Nueva pantalla `/carreras` en `apps/web` con la lista de carreras guardadas en el teléfono (IndexedDB), ordenadas cronológicamente (la más reciente primero).
+- Cada tarjeta muestra fecha y hora formateadas, distancia (`km`), duración (`mm:ss`) y ritmo medio en formato `"5:12 /km"`.
+- Al tocar una carrera se despliega un visor modal detallado con mini mapa interactivo de la ruta (MapLibre GL con ajuste automático de vista y respaldo SVG ligero si no hay aceleración gráfica), métricas completas, botón para descargar el archivo de la carrera y acción de borrado con ventana de confirmación previa.
+- Vista de bienvenida para corredores sin actividad registrada con mensaje amable y botón principal hacia `/grabar` ("Grabar mi primera carrera").
+- Opción avanzada al final de la pantalla para importar archivos de reloj deportivo (`.gpx` y `.fit`), validando la integridad con los parsers de `packages/core` y mostrando mensajes de error en lenguaje claro si el archivo está corrupto.
+- Acceso directo a `/carreras` desde el resumen posterior a la grabación en `/grabar` y desde el grupo de botones flotantes sobre el mapa de la pista.
+- Corrección en la descripción de la página `/grabar` eliminando la referencia técnica a "track GPX" y garantizando que no se muestren términos técnicos ("H3", "s/km", ni "GPX" fuera de la opción avanzada).
+
 ## 0.9.0 — 2026-10-31
 
 Grabación de carrera en la app PWA en local (T-25).

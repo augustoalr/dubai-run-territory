@@ -238,4 +238,30 @@ describe("GPX generation and parser compatibility", () => {
     expect(last.t).toBe(baseTime + 10000);
     expect(last.ele).toBeCloseTo(5.6, 1);
   });
+
+  it("converts imported points (like from a watch file) to GPX and preserves distance and pace", () => {
+    const baseTime = 1761920000000;
+    const rawPoints = [
+      { lat: 25.1412, lon: 55.1852, t: baseTime, ele: 2 },
+      { lat: 25.1421, lon: 55.1861, t: baseTime + 60000, ele: 3 },
+    ];
+    const recordedPoints: RecordedPoint[] = rawPoints.map((p) => ({
+      lat: p.lat,
+      lon: p.lon,
+      time: p.t,
+      ele: p.ele,
+    }));
+    const dist = calculateDistanceMeters(recordedPoints);
+    const duration = calculateDurationSeconds(rawPoints[0]!.t, rawPoints[1]!.t);
+    const pace = calculateAveragePaceSecondsPerKm(dist, duration);
+
+    expect(dist).toBeGreaterThan(0);
+    expect(duration).toBe(60);
+    expect(pace).toBeGreaterThan(0);
+
+    const gpx = buildGpx(recordedPoints, { name: "Reloj importado" });
+    const parsed = parseGpx(gpx);
+    expect(parsed.points).toHaveLength(2);
+    expect(parsed.points[0]?.lat).toBeCloseTo(25.1412, 4);
+  });
 });
