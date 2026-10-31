@@ -47,6 +47,7 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
           "Alias público: El nombre o apodo que tú eliges libremente para identificarte en el mapa, en las baldosas que conquistas y en las clasificaciones.",
           "Dirección de email: Tu correo electrónico, utilizado exclusivamente para que puedas iniciar sesión de forma segura y acceder a tu perfil.",
           "Carreras con GPS y ritmos: Las coordenadas de los tramos que corres dentro de la pista oficial, la distancia recorrida, los tiempos de paso y tus ritmos calculados por kilómetro y por baldosa.",
+          "Edad mínima (16 años): La aplicación es exclusivamente para mayores de 16 años. No recopilamos conscientemente datos de menores de 16 años.",
         ],
       },
       {
@@ -56,7 +57,7 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
           "Toda la información se utiliza exclusivamente para la mecánica deportiva del juego:",
         ],
         bulletPoints: [
-          "El juego de baldosas: Comparamos tus marcas con las de otros corredores en cada celda hexagonal de la pista de Jumeirah Beach – Kite Beach para determinar quién ostenta el territorio.",
+          "El juego de baldosas: Comparamos tus marcas con las de otros corredores en cada baldosa de la pista de Jumeirah Beach – Kite Beach para determinar quién ostenta el territorio.",
           "Gestión de ligas equitativas: Asignamos y mantenemos tu categoría según tu ritmo de referencia (Élite, Avanzado, Intermedio o Inicial) para que compitas siempre contra corredores de tu mismo nivel.",
           "Puntos diarios y ascensos: Calculamos los puntos diarios ganados por poseer o robar baldosas y gestionamos los ascensos inmediatos de categoría cuando mejoras tu velocidad.",
         ],
@@ -70,8 +71,8 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
         bulletPoints: [
           "Nunca mostramos a qué hora corres: Nadie puede ver el horario en que entrenas ni tus días habituales de salida.",
           "Nunca mostramos dónde empieza o termina tu carrera: No revelamos tus puntos de inicio o fin, protegiendo tu domicilio, lugar de trabajo o trayectos cotidianos.",
-          "Recorte automático a la pista: Descartamos de inmediato cualquier coordenada que quede fuera de la zona oficial de la pista de running.",
-          "Solo marcas agregadas: Los demás jugadores solo ven tu alias, tu liga actual y el ritmo medio al que pasaste por cada baldosa.",
+          "Almacenamiento privado del archivo original: Guardamos el archivo original de tu carrera de forma privada, solo para verificarla y detectar trampas. Nadie más puede verlo. Para el juego solo usamos el tramo que corres dentro de la pista.",
+          "Solo marcas agregadas: Los demás jugadores solo ven tu alias, tu liga actual y tu ritmo en el kilómetro alrededor de cada baldosa.",
         ],
         callout:
           "En el mapa nadie puede ver tu trazado completo ni tus horarios. Solo se muestra tu mejor ritmo en las baldosas oficiales.",
@@ -80,19 +81,28 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
         id: "origen-datos",
         title: "4. ¿De dónde proceden los datos?",
         paragraphs: [
-          "Los datos de tus carreras llegan al sistema única y exclusivamente si tú decides conectarlos o subirlos voluntariamente:",
+          "Los datos de tus carreras llegan al sistema única y exclusivamente si tú decides conectarlos o subirlos voluntariamente, a través de las siguientes opciones:",
         ],
         bulletPoints: [
-          "Subida manual: Archivos .fit o .gpx que exportas desde tu reloj o app y subes directamente a la plataforma.",
-          "Conexión con dispositivos (Garmin / Polar): Solo si conectas expresamente tu cuenta para sincronizar tus actividades.",
-          "Grabación en la app: Solo si en el futuro decides iniciar una actividad y conceder permiso de ubicación mientras corres.",
+          "Conexión con Garmin o Polar: Vinculando tu cuenta de Garmin o Polar para sincronizar tus carreras automáticamente.",
+          "Grabación en la app: Grabando tu entrenamiento directamente desde la aplicación con permiso activo de ubicación.",
+          "Subir un archivo como opción avanzada: Subiendo manualmente un archivo .fit o .gpx exportado desde tu reloj o app deportiva.",
         ],
         callout:
           "No realizamos ningún tipo de seguimiento en segundo plano ni accedemos a tus dispositivos sin tu consentimiento explícito.",
       },
       {
+        id: "quien-guarda-datos",
+        title: "5. ¿Quién guarda tus datos?",
+        paragraphs: [
+          "Los datos se guardan en Supabase (base de datos y archivos de carrera en almacenamiento seguro) y la web se sirve con Vercel.",
+          "No vendemos datos, no mostramos publicidad y no compartimos datos con terceros, salvo con esos proveedores técnicos indispensables para prestar el servicio.",
+          "Si desconectas tu cuenta de Garmin o Polar, dejamos inmediatamente de recibir tus carreras.",
+        ],
+      },
+      {
         id: "borrado-datos",
-        title: "5. Borrado de cuenta y tus datos cuando quieras",
+        title: "6. Borrado de cuenta y tus datos cuando quieras",
         paragraphs: [
           "Tú eres el único dueño de tu información. Puedes solicitar el borrado completo de tu cuenta y de todos tus datos personales asociados en cualquier momento.",
           "Cuando solicitas la eliminación, borramos tus archivos GPS de los servidores y desvinculamos o eliminamos tus marcas del mapa histórico. No conservamos datos personales una vez cerrada tu cuenta.",
@@ -100,7 +110,7 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
       },
       {
         id: "contacto",
-        title: "6. Contacto y dudas de privacidad",
+        title: "7. Contacto y dudas de privacidad",
         paragraphs: [
           "Si tienes cualquier consulta sobre cómo protegemos tus datos o deseas solicitar el borrado de tu información, escríbenos a nuestro correo de contacto:",
         ],
@@ -130,6 +140,7 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
           "Public alias: The nickname you choose to identify yourself on the map, conquered tiles, and leaderboards.",
           "Email address: Your email, used strictly for secure sign-in and account authentication.",
           "GPS runs and paces: Coordinates of segments run within the official track, distance covered, split timestamps, and calculated paces per kilometer and tile.",
+          "Minimum age (16 years): The app is strictly for individuals 16 years of age or older. We do not knowingly collect personal data from anyone under 16.",
         ],
       },
       {
@@ -137,7 +148,7 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
         title: "2. Why do we use this data?",
         paragraphs: ["All recorded data is used solely for the sporting mechanics of the game:"],
         bulletPoints: [
-          "The tile game: We match your verified paces against other runners across hexagonal cells along the Jumeirah Beach – Kite Beach track to determine who conquers each territory.",
+          "The tile game: We match your verified paces against other runners across tiles along the Jumeirah Beach – Kite Beach track to determine who conquers each territory.",
           "Fair league matching: We assign and maintain your category based on your reference pace (Elite, Advanced, Intermediate, or Starter) so you always compete against peers of similar ability.",
           "Daily points and promotions: We calculate daily points earned for defending or stealing tiles and grant immediate promotions when you reach a faster pace bracket.",
         ],
@@ -151,8 +162,8 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
         bulletPoints: [
           "We never show what time you run: Other players cannot see what hours or days you train.",
           "We never show where your run starts or finishes: We do not display origin or destination points, keeping your home address, workplace, and routes private.",
-          "Automatic zone clipping: Any GPS point recorded outside the official running track is immediately discarded.",
-          "Aggregated marks only: Other runners only see your alias, current league, and the average pace you clocked through an official tile.",
+          "Private storage of original file: We store the original file of your run privately, solely to verify it and detect cheating. Nobody else can see it. For the game, we only use the segment you run within the track.",
+          "Aggregated marks only: Other runners only see your alias, current league, and your pace across the kilometer around each tile.",
         ],
         callout:
           "No one can see your full route or schedule on the map. Only your best pace on official tiles is visible.",
@@ -161,19 +172,28 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
         id: "origen-datos",
         title: "4. Where does the data come from?",
         paragraphs: [
-          "Your running data reaches the system only if you voluntarily upload it or link your services:",
+          "Your running data reaches the system only if you voluntarily connect or upload it, through the following options:",
         ],
         bulletPoints: [
-          "Manual file upload: .fit or .gpx files exported from your running watch or app and submitted by you.",
-          "Third-party sync (Garmin / Polar): Only if you explicitly connect your account to import your activities.",
-          "In-app recording: Only if you choose to record an activity directly in the app and grant active location permission.",
+          "Garmin or Polar connection: Linking your Garmin or Polar account to automatically sync your runs.",
+          "In-app recording: Recording your training run directly within the app with active location permission.",
+          "Uploading a file as an advanced option: Manually uploading a .fit or .gpx file exported from your watch or fitness app.",
         ],
         callout:
           "We do not track your location in the background or access your devices without your explicit action.",
       },
       {
+        id: "quien-guarda-datos",
+        title: "5. Who stores your data?",
+        paragraphs: [
+          "Data is stored in Supabase (database and run files in secure storage), and the web app is served with Vercel.",
+          "We do not sell data, we do not display advertisements, and we do not share data with third parties, except for these technical providers essential for running the service.",
+          "If you disconnect your Garmin or Polar account, we immediately stop receiving your runs.",
+        ],
+      },
+      {
         id: "borrado-datos",
-        title: "5. Deleting your account and data whenever you want",
+        title: "6. Deleting your account and data whenever you want",
         paragraphs: [
           "You have complete ownership of your information. You can request the full deletion of your account and all associated personal data at any time.",
           "Upon receiving your deletion request, your stored GPS files are purged from our servers, and your historical marks are removed or anonymized. We retain no personal data once your account is closed.",
@@ -181,7 +201,7 @@ export const privacyPolicyContent: Record<LegalLocale, LegalDocument> = {
       },
       {
         id: "contacto",
-        title: "6. Privacy contact and questions",
+        title: "7. Privacy contact and questions",
         paragraphs: [
           "If you have any questions about how your data is handled or wish to exercise your right to deletion, please contact us at:",
         ],
@@ -220,6 +240,7 @@ export const termsOfServiceContent: Record<LegalLocale, LegalDocument> = {
         ],
         bulletPoints: [
           "Bajo tu propia responsabilidad: Cada usuario es plenamente responsable de su estado físico y de salud para realizar ejercicio cardiovascular. Consulta a un médico antes de exigirte ritmos intensos.",
+          "Edad mínima (16 años): La participación en el juego está restringida exclusivamente a personas mayores de 16 años.",
           "Respeto al tráfico y normas de Dubái: Es obligatorio respetar en todo momento las normas de tráfico del Emirato de Dubái, la señalización vial y las instrucciones de la Dubai Police, Dubai Municipality y RTA (Road and Transport Authority).",
           "Prioridad peatonal y convivencia: La pista es un espacio compartido. Cede siempre el paso a peatones, familias y niños, y mantén una distancia de seguridad prudente.",
           "Condiciones climáticas y calor: El clima en Dubái puede ser extremo. Es responsabilidad de cada corredor hidratarse debidamente, evitar horas de insolación peligrosa y suspender el esfuerzo ante cualquier signo de golpe de calor o fatiga.",
@@ -299,6 +320,7 @@ export const termsOfServiceContent: Record<LegalLocale, LegalDocument> = {
         ],
         bulletPoints: [
           "At your own risk: Each runner is solely responsible for their physical fitness and medical suitability for intense cardiovascular exercise. Consult a physician before attempting demanding paces.",
+          "Minimum age (16 years): Participation in the game is restricted to individuals 16 years of age or older.",
           "Compliance with Dubai laws and traffic: You must strictly adhere to all applicable laws and traffic regulations in the Emirate of Dubai, road signage, and directives issued by Dubai Police, Dubai Municipality, and the RTA (Road and Transport Authority).",
           "Pedestrian priority and courtesy: The track is a shared public amenity. Always give way to pedestrians, strollers, and children, keeping a safe and respectful distance.",
           "Weather and extreme heat: Dubai temperatures and humidity can be severe. Runners must hydrate adequately, avoid peak midday sun, and cease running immediately at the first sign of heat exhaustion or distress.",

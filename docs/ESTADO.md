@@ -97,20 +97,19 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-16 · Mapa de territorios
 
-- **Estado:** hecho (rama `t16-mapa`, PR #9).
+- **Estado:** hecho (PR #9 fusionado en `main`).
 - **Hecho:** mapa MapLibre GL con OpenFreeMap a pantalla completa sobre las 99 baldosas de Jumeirah–Kite Beach. 4 estados visuales claros (Mía en naranja intenso, Mía en peligro con animación de borde que late solo si hay baldosas amenazadas y limitada a 15 fps respetando accesibilidad y batería, De otro en gris, Libre solo contorno). Soporte para modo oscuro y claro con `map.setStyle` sin recargar el mapa, usando estilos locales consistentes. Leyenda compacta fija. Selector de ligas superior con preselección de la liga del corredor. Tarjeta inferior (bottom sheet) con avatar e iniciales del dueño, ritmo formateado (ej. 5:12 /km) y botón "Cómo robarla" con guía paso a paso libre de tecnicismos. Capa de datos y repositorio desacoplado en `apps/web/src/lib/territory/` listo para conectar con Supabase.
 - **Pendiente:** conectar con la base de datos remota una vez completada la autenticación.
-- **Siguiente paso:** Revisión de SWE.
+- **Siguiente paso:** ninguno.
 
 ## T-21 · Páginas legales
 
-- **Estado:** hecho (rama `t21-legal`).
-- **Hecho:** páginas `/privacidad` y `/terminos` en Next.js estático (`apps/web`), bilingües (español e inglés) con conmutador instantáneo y diseño adaptado a móvil usando los tokens del sistema visual (modo oscuro/claro y tipografías Oswald y Outfit). Ambas páginas llevan en lo alto el aviso destacado "Borrador pendiente de revisión legal" ("Draft pending legal review"). En `/privacidad` se explica con lenguaje claro los datos almacenados (alias, email, carreras con GPS y ritmos), la finalidad del juego y las ligas, que nunca se publican horarios ni puntos de inicio/fin, que provienen de Garmin, Polar o app solo si se conectan, el derecho a borrar la cuenta y los datos en cualquier momento, y el correo de contacto `privacidad@PENDIENTE`. En `/terminos` se estipula que es un juego gratuito, que el usuario corre bajo su propia responsabilidad respetando las normas y el tráfico de Dubái, la prohibición estricta de trampas (vehículos a motor/ruedas, compartir cuentas, falsear GPS) y la potestad de anular carreras sospechosas y sancionar cuentas. Se han integrado enlaces en el menú superior de la app (`TerritoryHeader` -> `AppMenuModal`) y en el pie de la pantalla (`MapLegend`).
-- **Pendiente:** validación jurídica formal antes del lanzamiento en producción.
-- **Siguiente paso:** revisión y merge del PR hacia `main`.
+- **Estado:** hecho (PR #10 y PR #11 fusionados en `main`).
+- **Hecho:** páginas `/privacidad` y `/terminos` en Next.js estático (`apps/web`), bilingües (español e inglés) con conmutador instantáneo y diseño adaptado a móvil usando los tokens del sistema visual (modo oscuro/claro y tipografías Oswald y Outfit). Ambas páginas llevan en lo alto el aviso destacado "Borrador pendiente de revisión legal" ("Draft pending legal review"). En `/privacidad` se explica con lenguaje claro los datos almacenados (alias, email, carreras con GPS y ritmos), la finalidad del juego y las ligas, que nunca se publican horarios ni puntos de inicio/fin, que provienen de Garmin, Polar o app solo si se conectan, almacenamiento privado del archivo original exclusivamente para verificar y detectar trampas, quién guarda tus datos (Supabase y Vercel) sin venta ni publicidad, el derecho a borrar la cuenta y los datos en cualquier momento, edad mínima de 16 años, y el correo de contacto `privacidad@PENDIENTE`. En `/terminos` se estipula que es un juego gratuito, que el usuario corre bajo su propia responsabilidad respetando las normas y el tráfico de Dubái, edad mínima de 16 años, la prohibición estricta de trampas (vehículos a motor/ruedas, compartir cuentas, falsear GPS) y la potestad de anular carreras sospechosas y sancionar cuentas. Se han integrado enlaces en el menú superior de la app (`TerritoryHeader` -> `AppMenuModal`) y en el pie de la pantalla (`MapLegend`).
+- **Pendiente:** correo de contacto real en vez de `privacidad@PENDIENTE` y validación jurídica.
+- **Siguiente paso:** ninguno.
 
 ## En curso
 
-| Tarea | PR        | Siguiente paso exacto |
-| ----- | --------- | --------------------- |
-| T-21  | t21-legal | Revisión de SWE       |
+| Tarea | PR  | Siguiente paso exacto |
+| ----- | --- | --------------------- |
