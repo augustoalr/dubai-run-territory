@@ -12,19 +12,22 @@ import {
 
 describe("T-27 Product Review Rules", () => {
   describe("Regla 1: Cierre del día a las 03:59 hora de Dubái", () => {
-    it("asigna al día anterior cualquier hora hasta las 03:59:00 inclusive", () => {
+    it("asigna al día anterior cualquier hora hasta antes de las 04:00:00", () => {
       // 03:58 en Dubái (+04:00) es 23:58 UTC del día anterior
       expect(gulfGameDay("2026-11-03T03:58:00+04:00")).toBe("2026-11-02");
-      // Exactamente las 03:59:00 en Dubái (minuto de cierre)
+      // Exactamente las 03:59:00 en Dubái
       expect(gulfGameDay("2026-11-03T03:59:00+04:00")).toBe("2026-11-02");
-      // A las 04:00:00 ya arranca el día siguiente
+      // A las 03:59:30 y 03:59:59.999 sigue perteneciendo a la jornada anterior
+      expect(gulfGameDay("2026-11-03T03:59:30+04:00")).toBe("2026-11-02");
+      expect(gulfGameDay("2026-11-03T03:59:59.999+04:00")).toBe("2026-11-02");
+      // A las 04:00:00 ya arranca el día de juego siguiente
       expect(gulfGameDay("2026-11-03T04:00:00+04:00")).toBe("2026-11-03");
       expect(gulfGameDay("2026-11-03T12:00:00+04:00")).toBe("2026-11-03");
     });
 
-    it("calcula la diferencia de días de juego respetando el corte de las 03:59", () => {
+    it("calcula la diferencia de días de juego respetando el corte de las 04:00", () => {
       const tardeDia1 = "2026-11-02T18:00:00+04:00";
-      const madrugadaDia1Cierre = "2026-11-03T03:59:00+04:00";
+      const madrugadaDia1Cierre = "2026-11-03T03:59:30+04:00";
       const madrugadaDia2Inicio = "2026-11-03T04:00:00+04:00";
 
       // Misma jornada deportiva (0 días de diferencia)

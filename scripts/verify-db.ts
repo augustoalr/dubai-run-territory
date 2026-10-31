@@ -63,8 +63,7 @@ async function expectFailure(
 
 async function main(): Promise<void> {
   assertLocalDatabase(connectionString);
-  const client = new pg.Client({ connectionString });
-  await connect(client);
+  const client = await connect(connectionString);
   const query = client.query.bind(client);
   client.query = ((...args: Parameters<pg.Client["query"]>) => {
     const pending = query(...args);
@@ -623,7 +622,7 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
       [season.id, leagueId, h3],
     );
 
-  const hash = (prefix: string) => `${prefix}${"a".repeat(62)}`;
+  const hash = (prefix: string) => `${prefix}${"a".repeat(Math.max(0, 64 - prefix.length))}`;
   const first = await run(userA, elite.id, hash("c0"), uploaded);
   await asRole(client, "service_role", null, "commit", async () => {
     await client.query("SELECT public.apply_run($1, $2::jsonb)", [
@@ -786,14 +785,19 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   if (rows.n !== 1) throw new Error("concurrent apply_run duplicated the cell");
 
   console.log("checking product review rules (T-27)");
-  // 1. Day close at 03:59 Dubai time
-  const dayKeyTest = await one<{ d1: string; d2: string }>(
+  // 1. Day close at 03:59 Dubai time (04:00 cutoff)
+  const dayKeyTest = await one<{ d1: string; d2: string; d3: string }>(
     client,
     `SELECT private.zone_day_key('2026-11-03 03:59:00+04'::timestamptz, 'Asia/Dubai')::text AS d1,
-            private.zone_day_key('2026-11-03 04:00:00+04'::timestamptz, 'Asia/Dubai')::text AS d2`,
+            private.zone_day_key('2026-11-03 03:59:30+04'::timestamptz, 'Asia/Dubai')::text AS d2,
+            private.zone_day_key('2026-11-03 04:00:00+04'::timestamptz, 'Asia/Dubai')::text AS d3`,
   );
-  if (dayKeyTest.d1 !== "2026-11-02" || dayKeyTest.d2 !== "2026-11-03") {
-    throw new Error(`zone_day_key failed: ${dayKeyTest.d1}, ${dayKeyTest.d2}`);
+  if (
+    dayKeyTest.d1 !== "2026-11-02" ||
+    dayKeyTest.d2 !== "2026-11-02" ||
+    dayKeyTest.d3 !== "2026-11-03"
+  ) {
+    throw new Error(`zone_day_key failed: ${dayKeyTest.d1}, ${dayKeyTest.d2}, ${dayKeyTest.d3}`);
   }
 
   // 2. Debilitamiento (Decay): Day 7 vs Day 8, Tope de 60, Empate
@@ -856,10 +860,10 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
        user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
        source, status, started_at, ended_at, created_at
      ) VALUES (
-       $1, $2, $3, $4, 'server/decay8t.gpx', $5, 'gpx', 'upload', 'accepted',
+       $1, $2, $3, $4, 'server/decay8a.gpx', $5, 'gpx', 'upload', 'accepted',
        '2026-11-10 08:00:00+04', '2026-11-10 09:00:00+04', '2026-11-10 09:30:00+04'
      ) RETURNING id`,
-    [userB, zone.id, season.id, elite.id, hash("d8t")],
+    [userB, zone.id, season.id, elite.id, hash("d8a")],
   );
   await asRole(client, "service_role", null, "commit", async () => {
     await client.query("SELECT public.apply_run($1, $2::jsonb)", [
@@ -878,10 +882,10 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
        user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
        source, status, started_at, ended_at, created_at
      ) VALUES (
-       $1, $2, $3, $4, 'server/decay8s.gpx', $5, 'gpx', 'upload', 'accepted',
+       $1, $2, $3, $4, 'server/decay8b.gpx', $5, 'gpx', 'upload', 'accepted',
        '2026-11-10 10:00:00+04', '2026-11-10 11:00:00+04', '2026-11-10 11:30:00+04'
      ) RETURNING id`,
-    [userB, zone.id, season.id, elite.id, hash("d8s")],
+    [userB, zone.id, season.id, elite.id, hash("d8b")],
   );
   await asRole(client, "service_role", null, "commit", async () => {
     await client.query("SELECT public.apply_run($1, $2::jsonb)", [
@@ -898,7 +902,7 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   // Seed 25 cells for userB on Day 0
   const dummyCells: string[] = [];
   for (let i = 0; i < 25; i += 1) {
-    const h3 = `8a43a13614${i.toString(16).padStart(2, "0")}ffff`;
+    const h3 = `8a43a13614${i.toString(16).padStart(2, "0")}fff`;
     dummyCells.push(h3);
     await client.query(
       `INSERT INTO public.zone_cells (zone_id, h3, center, boundary)
@@ -960,16 +964,37 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   if (asNumber(liberated.rows[0]?.n) !== 0) {
     throw new Error(`promotion trigger did not liberate cells: ${liberated.rows[0]?.n} remain`);
   }
+
+  // Also verify recompute_season does not resurrect previous league cells for promoted user
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.recompute_season($1)", [season.id]);
+  });
+  const afterRecompute = await client.query(
+    `SELECT count(*)::int AS n FROM public.cell_ownership
+     WHERE season_id = $1 AND league_id = $2 AND owner_id = $3`,
+    [season.id, advanced.id, userB],
+  );
+  if (asNumber(afterRecompute.rows[0]?.n) !== 0) {
+    throw new Error(
+      `recompute_season restored liberated cells: ${afterRecompute.rows[0]?.n} remain`,
+    );
+  }
 }
 
-async function connect(client: pg.Client): Promise<void> {
+async function connect(connectionString: string): Promise<pg.Client> {
   let lastError: unknown;
   for (let attempt = 0; attempt < 30; attempt += 1) {
+    const client = new pg.Client({ connectionString });
     try {
       await client.connect();
-      return;
+      return client;
     } catch (error) {
       lastError = error;
+      try {
+        await client.end();
+      } catch {
+        // ignore
+      }
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }

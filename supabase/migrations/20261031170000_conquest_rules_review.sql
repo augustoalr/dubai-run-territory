@@ -5,24 +5,15 @@
 -- 4. Al ascender de liga, se liberan las baldosas que la persona tenía en su liga anterior.
 -- Funciones SECURITY DEFINER con search_path vacío, ejecutables solo por service_role.
 
--- Función auxiliar para obtener la fecha de juego en la zona horaria dada, cerrando el día a las 03:59.
+-- Función auxiliar para obtener la fecha de juego en la zona horaria dada, cerrando el día a las 03:59:59 (antes de las 04:00).
 CREATE OR REPLACE FUNCTION private.zone_day_key(p_ts timestamptz, p_tz text)
 RETURNS date
-LANGUAGE plpgsql
+LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
-DECLARE
-  v_local timestamp;
-BEGIN
-  v_local := p_ts AT TIME ZONE p_tz;
-  IF v_local::time <= time '03:59:00' THEN
-    RETURN (v_local::date - 1);
-  ELSE
-    RETURN v_local::date;
-  END IF;
-END;
+  SELECT ((p_ts AT TIME ZONE p_tz) - interval '4 hours')::date;
 $$;
 
 REVOKE ALL ON FUNCTION private.zone_day_key(timestamptz, text)
@@ -272,8 +263,8 @@ BEGIN
     RAISE EXCEPTION 'season not found';
   END IF;
 
-  -- Cierre a las 03:59 hora de la zona.
-  v_cutoff := ((p_day + 1)::timestamp + interval '3 hours 59 minutes') AT TIME ZONE v_tz;
+  -- Cierre del día de juego: el día p_day concluye antes de las 04:00 hora de la zona del día siguiente.
+  v_cutoff := ((p_day + 1)::timestamp + interval '4 hours') AT TIME ZONE v_tz;
 
   DELETE FROM public.daily_points
   WHERE season_id = p_season_id
@@ -288,7 +279,7 @@ BEGIN
     FROM public.ownership_events AS event
     WHERE event.season_id = p_season_id
       AND event.type IN ('conquest', 'steal')
-      AND event.created_at <= v_cutoff
+      AND event.created_at < v_cutoff
     ORDER BY event.league_id, event.h3, event.created_at DESC, event.id DESC
   ),
   -- Liberación de baldosas al ascender de liga antes o en el corte del día.
@@ -303,7 +294,7 @@ BEGIN
         AND ul.reason = 'promotion'
         AND ul.league_id <> o.league_id
         AND ul.valid_from >= o.acquired_at
-        AND ul.valid_from <= v_cutoff
+        AND ul.valid_from < v_cutoff
     )
   ),
   cells AS (
@@ -322,7 +313,7 @@ BEGIN
     FROM public.ownership_events AS event
     WHERE event.season_id = p_season_id
       AND event.type IN ('conquest', 'steal')
-      AND event.created_at <= v_cutoff
+      AND event.created_at < v_cutoff
     GROUP BY event.league_id, event.actor_id
   ),
   people AS (
@@ -585,6 +576,16 @@ BEGIN
     PERFORM public.apply_run(v_run.run_id, v_run.efforts);
     v_count := v_count + 1;
   END LOOP;
+
+  -- Al reproducir las carreras accepted, recompute_season recrea las baldosas
+  -- en la liga anterior de usuarios ascendidos. Liberar esas celdas:
+  DELETE FROM public.cell_ownership AS o
+  USING public.user_leagues AS ul
+  WHERE ul.season_id = p_season_id
+    AND ul.user_id = o.owner_id
+    AND ul.reason = 'promotion'
+    AND ul.league_id <> o.league_id
+    AND o.achieved_at <= ul.valid_from;
 
   SELECT zone.timezone
   INTO v_tz
