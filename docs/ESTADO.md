@@ -111,13 +111,25 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-25 · Grabar carrera en la app (PWA)
 
-- **Estado:** en progreso (rama `t25-grabar`).
+- **Estado:** hecho (PR #12 fusionado en `main`).
 - **Hecho:** nueva página `/grabar` en `apps/web` con botón grande "Empezar carrera", seguimiento GPS en alta precisión (`watchPosition`), Wake Lock para mantener encendida la pantalla con aviso sencillo ("Deja la pantalla encendida mientras corres"), visualización en tiempo real de tiempo transcurrido, distancia y ritmo actual en formato "5:12 /km", y botón "Terminar". Al finalizar, persistencia local en el teléfono con IndexedDB en formato GPX y vista de resumen (distancia, tiempo y ritmo medio) con descarga opcional de GPX y retorno al mapa. Lógica pura en `packages/core`: filtrado de puntos (descarte de precisión > 30 m y saltos imposibles > 12 m/s), cálculo de métricas de ritmo y distancia, y constructor de GPX 1.1 con tests unitarios que verifican que el GPX producido es interpretado correctamente por `parseGpx`. Diseño atlético en español sin tecnicismos (sin mención a H3 ni a s/km).
 - **Pendiente:** prueba de campo con teléfono real corriendo en la pista de Jumeirah–Kite.
-- **Siguiente paso:** revisión de SWE y merge del PR hacia `main`.
+- **Siguiente paso:** ninguno.
+
+## T-27 · Reglas de conquista de la revisión de producto
+
+- **Estado:** en curso (rama `t27-reglas`).
+- **Hecho:** nueva migración `supabase/migrations/20261031170000_conquest_rules_review.sql` (no aplicada en ninguna base de datos) que aplica las 4 decisiones de la revisión de producto:
+  1. Cierre del día a las 03:59 hora de Dubái (en lugar de medianoche) para `snapshot_daily_points`, `apply_run`, `recompute_season` y el conteo de días mediante `private.zone_day_key`.
+  2. Debilitamiento: si el dueño no vuelve a correr una baldosa en 7 días, su tiempo empeora 5 s/km por día hasta un máximo de 60 s/km. Superar ese tiempo debilitado es necesario para robarla (en empate defiende el dueño actual).
+  3. Tope de 20 puntos diarios por baldosas poseídas (+1 por conquista y +2 por robo siguen aparte).
+  4. Al ascender de liga (`reason = 'promotion'`), se liberan las baldosas que el corredor poseía en su liga anterior mediante trigger `user_league_promoted` en `user_leagues`.
+  5. Lógica de dominio en `packages/core/src/ownership/` (`day.ts` y `decide.ts`) y tests unitarios exhaustivos (`rules.test.ts`) junto con validación en `scripts/verify-db.ts` que cubren todos los casos límite (día 7 contra día 8, tope de 60, exactamente 20 puntos, empate, corte de día a las 03:59 y liberación de baldosas). Seguridad preservada con `SECURITY DEFINER`, `search_path = ''` y permisos exclusivos para `service_role`.
+- **Pendiente:** revisión de SWE y merge del PR hacia `main`.
+- **Siguiente paso:** revisión de SWE.
 
 ## En curso
 
 | Tarea | PR         | Siguiente paso exacto |
 | ----- | ---------- | --------------------- |
-| T-25  | t25-grabar | Revisión de SWE       |
+| T-27  | t27-reglas | Revisión de SWE       |

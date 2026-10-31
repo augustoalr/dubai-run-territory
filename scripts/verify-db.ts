@@ -784,6 +784,182 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
     [season.id, advanced.id, cellB],
   );
   if (rows.n !== 1) throw new Error("concurrent apply_run duplicated the cell");
+
+  console.log("checking product review rules (T-27)");
+  // 1. Day close at 03:59 Dubai time
+  const dayKeyTest = await one<{ d1: string; d2: string }>(
+    client,
+    `SELECT private.zone_day_key('2026-11-03 03:59:00+04'::timestamptz, 'Asia/Dubai')::text AS d1,
+            private.zone_day_key('2026-11-03 04:00:00+04'::timestamptz, 'Asia/Dubai')::text AS d2`,
+  );
+  if (dayKeyTest.d1 !== "2026-11-02" || dayKeyTest.d2 !== "2026-11-03") {
+    throw new Error(`zone_day_key failed: ${dayKeyTest.d1}, ${dayKeyTest.d2}`);
+  }
+
+  // 2. Debilitamiento (Decay): Day 7 vs Day 8, Tope de 60, Empate
+  const cellDecay = "8a43a13614cffff";
+  await client.query(
+    `INSERT INTO public.zone_cells (zone_id, h3, center, boundary)
+     VALUES ($1, $2, ${point}, ${ring}) ON CONFLICT DO NOTHING`,
+    [zone.id, cellDecay],
+  );
+  // User A conquers cellDecay on Day 0 (2026-11-02) with pace 300
+  const runDay0 = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
+       source, status, started_at, ended_at, created_at
+     ) VALUES (
+       $1, $2, $3, $4, 'server/decay0.gpx', $5, 'gpx', 'upload', 'accepted',
+       '2026-11-02 09:00:00+04', '2026-11-02 10:00:00+04', '2026-11-02 11:00:00+04'
+     ) RETURNING id`,
+    [userA, zone.id, season.id, elite.id, hash("d0")],
+  );
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      runDay0.id,
+      effort(cellDecay, 300, "2026-11-02T05:30:00.000Z"),
+    ]);
+  });
+  if ((await ownerOf(elite.id, cellDecay)).owner_id !== userA) {
+    throw new Error("decay test: conquest failed");
+  }
+
+  // Day 7: 2026-11-09 (7 days). Decay = 0.
+  // User B tries to steal with pace 300 (empate) -> defiende (no roba).
+  const runDay7 = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
+       source, status, started_at, ended_at, created_at
+     ) VALUES (
+       $1, $2, $3, $4, 'server/decay7.gpx', $5, 'gpx', 'upload', 'accepted',
+       '2026-11-09 09:00:00+04', '2026-11-09 10:00:00+04', '2026-11-09 11:00:00+04'
+     ) RETURNING id`,
+    [userB, zone.id, season.id, elite.id, hash("d7")],
+  );
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      runDay7.id,
+      effort(cellDecay, 300, "2026-11-09T05:30:00.000Z"),
+    ]);
+  });
+  if ((await ownerOf(elite.id, cellDecay)).owner_id !== userA) {
+    throw new Error("day 7: tie should defend");
+  }
+
+  // Day 8: 2026-11-10 (8 days). Decay = 5 s/km -> effective pace = 305 s/km.
+  // User B with pace 305 (empate with decayed pace) -> defiende (no roba).
+  const runDay8Tie = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
+       source, status, started_at, ended_at, created_at
+     ) VALUES (
+       $1, $2, $3, $4, 'server/decay8t.gpx', $5, 'gpx', 'upload', 'accepted',
+       '2026-11-10 08:00:00+04', '2026-11-10 09:00:00+04', '2026-11-10 09:30:00+04'
+     ) RETURNING id`,
+    [userB, zone.id, season.id, elite.id, hash("d8t")],
+  );
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      runDay8Tie.id,
+      effort(cellDecay, 305, "2026-11-10T04:30:00.000Z"),
+    ]);
+  });
+  if ((await ownerOf(elite.id, cellDecay)).owner_id !== userA) {
+    throw new Error("day 8: tie with decayed pace should defend");
+  }
+
+  // User B with pace 304 (< 305) -> roba!
+  const runDay8Steal = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
+       source, status, started_at, ended_at, created_at
+     ) VALUES (
+       $1, $2, $3, $4, 'server/decay8s.gpx', $5, 'gpx', 'upload', 'accepted',
+       '2026-11-10 10:00:00+04', '2026-11-10 11:00:00+04', '2026-11-10 11:30:00+04'
+     ) RETURNING id`,
+    [userB, zone.id, season.id, elite.id, hash("d8s")],
+  );
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      runDay8Steal.id,
+      effort(cellDecay, 304, "2026-11-10T06:30:00.000Z"),
+    ]);
+  });
+  const stolenDay8 = await ownerOf(elite.id, cellDecay);
+  if (stolenDay8.owner_id !== userB || stolenDay8.pace_s !== 304) {
+    throw new Error("day 8: pace 304 did not steal weakened pace of 305");
+  }
+
+  // 3. Regla 3: Tope de 20 puntos diarios
+  // Seed 25 cells for userB on Day 0
+  const dummyCells: string[] = [];
+  for (let i = 0; i < 25; i += 1) {
+    const h3 = `8a43a13614${i.toString(16).padStart(2, "0")}ffff`;
+    dummyCells.push(h3);
+    await client.query(
+      `INSERT INTO public.zone_cells (zone_id, h3, center, boundary)
+       VALUES ($1, $2, ${point}, ${ring}) ON CONFLICT DO NOTHING`,
+      [zone.id, h3],
+    );
+  }
+  const run25 = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
+       source, status, started_at, ended_at, created_at
+     ) VALUES (
+       $1, $2, $3, $4, 'server/cells25.gpx', $5, 'gpx', 'upload', 'accepted',
+       '2026-11-02 06:00:00+04', '2026-11-02 08:00:00+04', '2026-11-02 08:30:00+04'
+     ) RETURNING id`,
+    [userB, zone.id, season.id, advanced.id, hash("c25")],
+  );
+  const efforts25 = JSON.stringify(
+    dummyCells.map((h3) => ({
+      h3,
+      crossedAt: "2026-11-02T03:00:00.000Z",
+      paceS: 320,
+      windowStartM: 0,
+      windowEndM: 1000,
+    })),
+  );
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [run25.id, efforts25]);
+  });
+  const points25 = await one<{ cells_owned: number; points: number }>(
+    client,
+    `SELECT cells_owned, points FROM public.daily_points
+     WHERE season_id = $1 AND league_id = $2 AND user_id = $3 AND day = '2026-11-02'`,
+    [season.id, advanced.id, userB],
+  );
+  // cells_owned is 25, but cell points are capped at 20 (+ 25 conquests = 45 total)
+  if (points25.cells_owned !== 25) {
+    throw new Error(`expected 25 cells owned, got ${points25.cells_owned}`);
+  }
+  if (points25.points !== 20 + 25) {
+    throw new Error(`expected 45 points (20 cap + 25 conquests), got ${points25.points}`);
+  }
+
+  // 4. Regla 4: Liberación de baldosas al ascender de liga
+  // User B currently owns 25 cells in advanced.
+  // Insert a promotion into user_leagues to elite.
+  await client.query(
+    `INSERT INTO public.user_leagues (user_id, season_id, league_id, ref_pace_s, reason)
+     VALUES ($1, $2, $3, 240, 'promotion')`,
+    [userB, season.id, elite.id],
+  );
+  // Trigger should have liberated User B's cells in advanced!
+  const liberated = await client.query(
+    `SELECT count(*)::int AS n FROM public.cell_ownership
+     WHERE season_id = $1 AND league_id = $2 AND owner_id = $3`,
+    [season.id, advanced.id, userB],
+  );
+  if (asNumber(liberated.rows[0]?.n) !== 0) {
+    throw new Error(`promotion trigger did not liberate cells: ${liberated.rows[0]?.n} remain`);
+  }
 }
 
 async function connect(client: pg.Client): Promise<void> {
