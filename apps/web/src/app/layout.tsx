@@ -18,7 +18,7 @@ const oswald = Oswald({
 export const metadata: Metadata = {
   title: "Territorio · Jumeirah",
   description:
-    "Mapa de celdas de la pista de running entre Jumeirah Beach y Kite Beach. Cada liga compite en su propio territorio.",
+    "Mapa de baldosas de la pista de running entre Jumeirah Beach y Kite Beach. Cada liga compite en su propio territorio.",
   applicationName: "Territorio",
   appleWebApp: {
     capable: true,

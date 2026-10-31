@@ -35,7 +35,7 @@ export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetP
   } else if (isRival && cell.gapSeconds !== null) {
     statusMessage = `Te faltan solo ${cell.gapSeconds} segundos por km para superar a ${cell.owner?.alias ?? "este corredor"}.`;
   } else if (isFree) {
-    statusMessage = "Nadie ha reclamado esta celda en tu liga todavía. ¡Sé el primero!";
+    statusMessage = "Nadie ha reclamado esta baldosa en tu liga todavía. ¡Sé el primero!";
   }
 
   return (

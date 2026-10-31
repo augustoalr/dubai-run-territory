@@ -3,6 +3,7 @@ const SHELL = [
   "/",
   "/manifest.webmanifest",
   "/map/style.json",
+  "/map/style-light.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/apple-touch-icon.png",

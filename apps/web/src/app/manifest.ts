@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Territorio — Jumeirah",
     short_name: "Territorio",
     description:
-      "Celdas de la pista de running entre Jumeirah Beach y Kite Beach. Cada liga tiene su propio mapa.",
+      "Baldosas de la pista de running entre Jumeirah Beach y Kite Beach. Cada liga tiene su propio mapa.",
     start_url: "/",
     scope: "/",
     display: "standalone",

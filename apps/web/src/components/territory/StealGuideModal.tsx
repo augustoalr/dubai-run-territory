@@ -85,11 +85,11 @@ export function StealGuideModal({ cell, isOpen, onClose }: StealGuideModalProps)
           <div className="step-card">
             <div className="step-num">3</div>
             <div className="step-body">
-              <h3 className="step-title">Conquista el hexágono</h3>
+              <h3 className="step-title">Conquista la baldosa</h3>
               <p className="step-desc">
                 {isFree
-                  ? "Al completar 1 km continuo dentro de la pista, el territorio pasará a ser tuyo."
-                  : `Si tu ritmo medio al pasar por aquí supera los ${cell.paceFormatted ?? "anteriores"}, la celda se pintará de tu color de inmediato.`}
+                  ? "Pasa por esa baldosa para conquistarla. Contamos tu ritmo en el kilómetro alrededor de ella."
+                  : "Pasa por esa baldosa más rápido que su dueño. Contamos tu ritmo en el kilómetro alrededor de ella."}
               </p>
             </div>
           </div>

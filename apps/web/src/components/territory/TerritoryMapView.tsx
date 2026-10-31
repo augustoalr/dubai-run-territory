@@ -8,7 +8,7 @@ import {
   Map as MapLibreMap,
   setWorkerUrl,
 } from "maplibre-gl";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 
@@ -40,6 +40,12 @@ type TerritoryMapViewProps = {
   onFatal: (error: string) => void;
 };
 
+const getStyleUrl = (mode: ThemeMode): string =>
+  mode === "dark" ? "/map/style.json" : "/map/style-light.json";
+
+// ~15 fps throttle interval (66.67 ms) for mobile battery conservation
+const FRAME_INTERVAL_MS = 1000 / 15;
+
 export function TerritoryMapView({
   polygon,
   cells,
@@ -50,31 +56,185 @@ export function TerritoryMapView({
 }: TerritoryMapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const polygonRef = useRef(polygon);
   const cellsRef = useRef(cells);
+  const themeRef = useRef(theme);
   const onSelectRef = useRef(onSelect);
   const onReadyRef = useRef(onReady);
   const onFatalRef = useRef(onFatal);
+
+  const appliedStyleUrlRef = useRef<string>(getStyleUrl(theme));
   const animFrameRef = useRef<number | null>(null);
+  const lastTickRef = useRef<number>(0);
 
   useEffect(() => {
+    polygonRef.current = polygon;
     cellsRef.current = cells;
+    themeRef.current = theme;
     onSelectRef.current = onSelect;
     onReadyRef.current = onReady;
     onFatalRef.current = onFatal;
-  }, [cells, onFatal, onReady, onSelect]);
+  }, [cells, onFatal, onReady, onSelect, polygon, theme]);
 
-  const styleUrl =
-    theme === "dark" ? "/map/style.json" : "https://tiles.openfreemap.org/styles/positron";
+  const stopAnimation = useCallback((applyStatic: boolean) => {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (applyStatic) {
+      const map = mapRef.current;
+      if (map && map.getLayer("cells-threatened-pulse")) {
+        try {
+          map.setPaintProperty("cells-threatened-pulse", "line-opacity", 0.85);
+          map.setPaintProperty("cells-threatened-pulse", "line-width", 3.8);
+        } catch {
+          // Layer may not be ready during style switches
+        }
+      }
+    }
+  }, []);
 
+  const startAnimation = useCallback(() => {
+    if (animFrameRef.current !== null) return;
+
+    const tick = (time: number) => {
+      // Pause if tab is hidden
+      if (typeof document !== "undefined" && document.hidden) {
+        animFrameRef.current = null;
+        return;
+      }
+
+      // Stop and set fixed border if reduced motion is requested
+      if (
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
+        stopAnimation(true);
+        return;
+      }
+
+      // Throttle updates to ~15 fps
+      if (time - lastTickRef.current >= FRAME_INTERVAL_MS) {
+        lastTickRef.current = time;
+        const map = mapRef.current;
+        if (map && map.getLayer("cells-threatened-pulse")) {
+          try {
+            const wave = (Math.sin(time / 280) + 1) / 2; // 0 to 1
+            const opacity = 0.35 + wave * 0.6; // 0.35 to 0.95
+            const width = 2.8 + wave * 2.8; // 2.8px to 5.6px
+            map.setPaintProperty("cells-threatened-pulse", "line-opacity", opacity);
+            map.setPaintProperty("cells-threatened-pulse", "line-width", width);
+          } catch {
+            // Layer may not be ready
+          }
+        }
+      }
+
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    animFrameRef.current = requestAnimationFrame(tick);
+  }, [stopAnimation]);
+
+  const updateAnimationState = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded() || !map.getLayer("cells-threatened-pulse")) {
+      return;
+    }
+
+    const hasThreatened = cellsRef.current.features.some((f) => f.properties.isThreatened === 1);
+    const isHidden = typeof document !== "undefined" && document.hidden;
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!hasThreatened || isHidden || prefersReduced) {
+      stopAnimation(prefersReduced || hasThreatened);
+      return;
+    }
+
+    startAnimation();
+  }, [startAnimation, stopAnimation]);
+
+  // Setup custom GeoJSON sources and styling layers
+  const setupLayers = useCallback((map: MapLibreMap, currentTheme: ThemeMode) => {
+    if (!map.getSource("zone")) {
+      map.addSource("zone", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          properties: {},
+          geometry: polygonRef.current,
+        },
+      });
+
+      map.addLayer({
+        id: "zone-track-line",
+        type: "line",
+        source: "zone",
+        paint: {
+          "line-color": currentTheme === "dark" ? "#FF5500" : "#EA580C",
+          "line-opacity": 0.25,
+          "line-width": 1.5,
+          "line-dasharray": [3, 2],
+        },
+      });
+    }
+
+    if (!map.getSource("cells")) {
+      map.addSource("cells", { type: "geojson", data: cellsRef.current });
+
+      // Base polygon fill layer
+      map.addLayer({
+        id: "cells-fill",
+        type: "fill",
+        source: "cells",
+        paint: {
+          "fill-color": ["get", "fillColor"],
+          "fill-opacity": ["get", "fillOpacity"],
+        },
+      });
+
+      // Pulsing border layer for threatened cells
+      map.addLayer({
+        id: "cells-threatened-pulse",
+        type: "line",
+        source: "cells",
+        filter: ["==", ["get", "isThreatened"], 1],
+        paint: {
+          "line-color": "#FFAA00",
+          "line-width": 3.8,
+          "line-opacity": 0.85,
+          "line-blur": 1.5,
+        },
+      });
+
+      // Standard stroke outline layer
+      map.addLayer({
+        id: "cells-line",
+        type: "line",
+        source: "cells",
+        paint: {
+          "line-color": ["get", "strokeColor"],
+          "line-width": ["get", "strokeWidth"],
+        },
+      });
+    }
+  }, []);
+
+  // Initialize MapLibre instance (independent of theme changes)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     setWorkerUrl(new URL("/map/maplibre-gl-worker.mjs", window.location.href).href);
 
+    const initialStyleUrl = getStyleUrl(themeRef.current);
+    appliedStyleUrlRef.current = initialStyleUrl;
+
     const map = new MapLibreMap({
       container,
-      style: styleUrl,
+      style: initialStyleUrl,
       center: [55.21, 25.17],
       zoom: 13,
       fadeDuration: 0,
@@ -91,72 +251,15 @@ export function TerritoryMapView({
     const compact = window.matchMedia("(max-width: 899px)").matches;
     map.addControl(new AttributionControl({ compact }), "top-right");
 
-    const setupLayers = () => {
-      if (!map.getSource("zone")) {
-        map.addSource("zone", {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: polygon,
-          },
-        });
+    // Re-bind layers whenever a style finishes loading (initial load or setStyle)
+    map.on("style.load", () => {
+      setupLayers(map, themeRef.current);
+      updateAnimationState();
+    });
 
-        map.addLayer({
-          id: "zone-track-line",
-          type: "line",
-          source: "zone",
-          paint: {
-            "line-color": theme === "dark" ? "#FF5500" : "#EA580C",
-            "line-opacity": 0.25,
-            "line-width": 1.5,
-            "line-dasharray": [3, 2],
-          },
-        });
-      }
-
-      if (!map.getSource("cells")) {
-        map.addSource("cells", { type: "geojson", data: cellsRef.current });
-
-        // Base polygon fill layer
-        map.addLayer({
-          id: "cells-fill",
-          type: "fill",
-          source: "cells",
-          paint: {
-            "fill-color": ["get", "fillColor"],
-            "fill-opacity": ["get", "fillOpacity"],
-          },
-        });
-
-        // Pulsing border layer for threatened cells
-        map.addLayer({
-          id: "cells-threatened-pulse",
-          type: "line",
-          source: "cells",
-          filter: ["==", ["get", "isThreatened"], 1],
-          paint: {
-            "line-color": "#FFAA00",
-            "line-width": 3.8,
-            "line-opacity": 0.85,
-            "line-blur": 1.5,
-          },
-        });
-
-        // Standard stroke outline layer
-        map.addLayer({
-          id: "cells-line",
-          type: "line",
-          source: "cells",
-          paint: {
-            "line-color": ["get", "strokeColor"],
-            "line-width": ["get", "strokeWidth"],
-          },
-        });
-      }
-
-      // Initial fitBounds
-      const ring = polygon.coordinates[0] ?? [];
+    // Initial map readiness and camera bounds fitting
+    map.on("load", () => {
+      const ring = polygonRef.current.coordinates[0] ?? [];
       const first = ring[0];
       if (first) {
         const bounds = new LngLatBounds(first, first);
@@ -170,45 +273,20 @@ export function TerritoryMapView({
           maxZoom: 15.2,
         });
       }
-
-      // Start the pulsing animation for threatened cells
-      const startPulsing = () => {
-        const animate = (time: number) => {
-          if (!mapRef.current) return;
-          try {
-            if (mapRef.current.getLayer("cells-threatened-pulse")) {
-              const wave = (Math.sin(time / 280) + 1) / 2; // 0 to 1
-              const opacity = 0.35 + wave * 0.6; // 0.35 to 0.95
-              const width = 2.8 + wave * 2.8; // 2.8px to 5.6px
-              mapRef.current.setPaintProperty("cells-threatened-pulse", "line-opacity", opacity);
-              mapRef.current.setPaintProperty("cells-threatened-pulse", "line-width", width);
-            }
-          } catch {
-            // Layer may not be ready during style reload
-          }
-          animFrameRef.current = requestAnimationFrame(animate);
-        };
-        animFrameRef.current = requestAnimationFrame(animate);
-      };
-
-      startPulsing();
       onReadyRef.current();
-    };
-
-    map.on("load", setupLayers);
+    });
 
     map.on("click", (event) => {
+      if (!map.getLayer("cells-fill")) return;
       const hits = map.queryRenderedFeatures(event.point, { layers: ["cells-fill"] });
       const cellId = hits[0]?.properties?.id;
       onSelectRef.current(typeof cellId === "string" ? cellId : null);
     });
 
-    map.on("mouseenter", "cells-fill", () => {
-      map.getCanvas().style.cursor = "pointer";
-    });
-
-    map.on("mouseleave", "cells-fill", () => {
-      map.getCanvas().style.cursor = "";
+    map.on("mousemove", (event) => {
+      if (!map.getLayer("cells-fill")) return;
+      const hits = map.queryRenderedFeatures(event.point, { layers: ["cells-fill"] });
+      map.getCanvas().style.cursor = hits.length > 0 ? "pointer" : "";
     });
 
     map.on("error", (event) => {
@@ -224,22 +302,55 @@ export function TerritoryMapView({
     window.addEventListener("orientationchange", onResize);
 
     return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
+      stopAnimation(false);
       resizeObserver.disconnect();
       window.removeEventListener("orientationchange", onResize);
       map.remove();
       mapRef.current = null;
     };
-  }, [polygon, styleUrl, theme]);
+  }, [setupLayers, stopAnimation, updateAnimationState]);
 
-  // Sync cells GeoJSON updates without re-instantiating the map
+  // Handle theme changes via map.setStyle() without destroying the map instance
   useEffect(() => {
+    themeRef.current = theme;
+    const targetStyle = getStyleUrl(theme);
+    if (appliedStyleUrlRef.current === targetStyle) return;
+    appliedStyleUrlRef.current = targetStyle;
+
     const map = mapRef.current;
-    if (!map?.isStyleLoaded() || !map.getSource("cells")) return;
-    (map.getSource("cells") as GeoJSONSource).setData(cells);
-  }, [cells]);
+    if (!map) return;
+    map.setStyle(targetStyle);
+  }, [theme]);
+
+  // Sync cells GeoJSON updates and adjust animation state
+  useEffect(() => {
+    cellsRef.current = cells;
+    const map = mapRef.current;
+    if (map?.isStyleLoaded() && map.getSource("cells")) {
+      (map.getSource("cells") as GeoJSONSource).setData(cells);
+    }
+    updateAnimationState();
+  }, [cells, updateAnimationState]);
+
+  // Handle visibility changes (pause when tab is hidden) and prefers-reduced-motion changes
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      updateAnimationState();
+    };
+
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onMotionChange = () => {
+      updateAnimationState();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    mediaQuery.addEventListener("change", onMotionChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      mediaQuery.removeEventListener("change", onMotionChange);
+    };
+  }, [updateAnimationState]);
 
   return (
     <div
