@@ -4,6 +4,7 @@ import {
   buildGpx,
   calculateAveragePaceSecondsPerKm,
   calculateCurrentPaceSecondsPerKm,
+  calculateDurationSeconds,
   haversineMeters,
   isValidRecordedPoint,
   type RecordedPoint,
@@ -94,9 +95,7 @@ export function useRunnerRecorder() {
     pointsRef.current = [];
     durationRef.current = 0;
     distanceRef.current = 0;
-
-    const now = Date.now();
-    startTimeRef.current = now;
+    startTimeRef.current = null;
 
     if (!geolocationService.isSupported()) {
       setError("Tu navegador no soporta geolocalización.");
@@ -108,11 +107,6 @@ export function useRunnerRecorder() {
     await wakeLockService.acquire();
 
     setStatus("acquiring");
-
-    // Start 1-second interval timer
-    timerRef.current = setInterval(() => {
-      setDurationSeconds((prev) => prev + 1);
-    }, 1000);
 
     const id = geolocationService.watchPosition(
       (position) => {
@@ -135,10 +129,33 @@ export function useRunnerRecorder() {
           return;
         }
 
+        // Fix race start timestamp on the first valid GPS point
+        if (startTimeRef.current === null) {
+          const raceStartMs = candidate.time || Date.now();
+          startTimeRef.current = raceStartMs;
+          setStatus("recording");
+
+          if (timerRef.current) clearInterval(timerRef.current);
+          timerRef.current = setInterval(() => {
+            if (startTimeRef.current !== null) {
+              const elapsed = calculateDurationSeconds(startTimeRef.current, Date.now());
+              durationRef.current = elapsed;
+              setDurationSeconds(elapsed);
+            }
+          }, 1000);
+        }
+
         // Add valid point
         const nextPoints = [...pointsRef.current, candidate];
         pointsRef.current = nextPoints;
         setPoints(nextPoints);
+
+        // Update elapsed time using wall-clock time
+        if (startTimeRef.current !== null) {
+          const elapsed = calculateDurationSeconds(startTimeRef.current, Date.now());
+          durationRef.current = elapsed;
+          setDurationSeconds(elapsed);
+        }
 
         // Update distance
         if (lastPoint) {
@@ -156,9 +173,6 @@ export function useRunnerRecorder() {
         // Update current pace
         const pace = calculateCurrentPaceSecondsPerKm(nextPoints);
         setCurrentPaceSecondsPerKm(pace);
-
-        // Transition from acquiring to recording on first valid point
-        setStatus("recording");
       },
       (geoError) => {
         const message = geolocationService.getErrorMessage(geoError);
@@ -187,11 +201,12 @@ export function useRunnerRecorder() {
     }
     await wakeLockService.release();
 
-    const finalPoints = pointsRef.current;
-    const finalDuration = durationRef.current;
-    const finalDistance = distanceRef.current;
-    const startTime = startTimeRef.current || Date.now();
     const endTime = Date.now();
+    const startTime = startTimeRef.current || endTime;
+    const finalPoints = pointsRef.current;
+    const finalDuration = calculateDurationSeconds(startTime, endTime);
+    durationRef.current = finalDuration;
+    const finalDistance = distanceRef.current;
 
     const avgPace = calculateAveragePaceSecondsPerKm(finalDistance, finalDuration);
     const gpxString = buildGpx(finalPoints, {

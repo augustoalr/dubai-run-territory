@@ -7,6 +7,17 @@ const MAX_PACE_SECONDS_PER_KM = 1800; // 30:00 /km
 const MIN_PACE_SECONDS_PER_KM = 120; // 2:00 /km
 
 /**
+ * Calculates elapsed duration in whole seconds between two millisecond timestamps.
+ * Guarantees a non-negative integer.
+ */
+export function calculateDurationSeconds(startTimeMs: number, endTimeMs: number): number {
+  if (!Number.isFinite(startTimeMs) || !Number.isFinite(endTimeMs)) {
+    return 0;
+  }
+  return Math.max(0, Math.floor((endTimeMs - startTimeMs) / 1000));
+}
+
+/**
  * Calculates cumulative haversine distance along a sequence of points in metres.
  */
 export function calculateDistanceMeters(points: readonly RecordedPoint[]): number {

@@ -47,7 +47,7 @@ export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
         </div>
         <div>
           <h2 className="summary-title">¡Carrera terminada!</h2>
-          <p className="summary-subtitle">Guardada en este teléfono en formato GPX</p>
+          <p className="summary-subtitle">Guardada en este teléfono</p>
         </div>
       </div>
 
@@ -69,10 +69,8 @@ export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
       </div>
 
       <div className="summary-notice-box">
-        <span className="zone-badge">Privacidad total</span>
-        <p className="summary-notice-text">
-          Tu carrera se guardó únicamente en tu dispositivo. Nadie más puede ver tus recorridos.
-        </p>
+        <span className="zone-badge">Guardado local</span>
+        <p className="summary-notice-text">Por ahora tu carrera se guarda solo en este teléfono.</p>
       </div>
 
       <div className="summary-actions">
@@ -80,7 +78,7 @@ export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
           type="button"
           className="btn-download-gpx"
           onClick={handleDownloadGpx}
-          aria-label="Descargar archivo GPX"
+          aria-label="Descargar archivo de la carrera"
         >
           <svg
             width="18"
@@ -97,7 +95,7 @@ export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          <span>Descargar GPX</span>
+          <span>Descargar archivo de la carrera</span>
         </button>
 
         <div className="summary-nav-row">

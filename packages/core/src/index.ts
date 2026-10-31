@@ -75,6 +75,7 @@ export {
   calculateAveragePaceSecondsPerKm,
   calculateCurrentPaceSecondsPerKm,
   calculateDistanceMeters,
+  calculateDurationSeconds,
   computeRecordingStats,
   filterRecordedPoints,
   formatDisplayDistance,

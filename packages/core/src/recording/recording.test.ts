@@ -6,6 +6,7 @@ import {
   calculateAveragePaceSecondsPerKm,
   calculateCurrentPaceSecondsPerKm,
   calculateDistanceMeters,
+  calculateDurationSeconds,
   computeRecordingStats,
   formatDisplayDistance,
   formatDisplayDuration,
@@ -110,6 +111,14 @@ describe("Recorded point filtering", () => {
 });
 
 describe("Distance and Pace metrics", () => {
+  it("calculates wall-clock duration in seconds correctly", () => {
+    const t0 = 1761920000000;
+    expect(calculateDurationSeconds(t0, t0 + 65_400)).toBe(65);
+    expect(calculateDurationSeconds(t0, t0 + 3600_000)).toBe(3600);
+    expect(calculateDurationSeconds(t0, t0 - 5000)).toBe(0);
+    expect(calculateDurationSeconds(Number.NaN, t0)).toBe(0);
+  });
+
   it("calculates distance correctly", () => {
     const p1: RecordedPoint = { lat: 25.1412, lon: 55.1852, time: 1000 };
     const p2: RecordedPoint = { lat: 25.1412, lon: 55.1852, time: 2000 };
