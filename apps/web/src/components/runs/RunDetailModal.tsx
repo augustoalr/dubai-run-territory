@@ -17,6 +17,7 @@ interface RunDetailModalProps {
 export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDetailModalProps) {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDownload = useCallback(() => {
     if (!run) return;
@@ -31,13 +32,29 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
     URL.revokeObjectURL(url);
   }, [run]);
 
+  const handleOpenDelete = () => {
+    setDeleteError(null);
+    setIsConfirmingDelete(true);
+  };
+
+  const handleCancelDelete = () => {
+    if (isDeleting) return;
+    setDeleteError(null);
+    setIsConfirmingDelete(false);
+  };
+
   const handleConfirmDelete = async () => {
-    if (!run) return;
+    if (!run || isDeleting) return;
     setIsDeleting(true);
+    setDeleteError(null);
     try {
       await onDelete(run.id);
       setIsConfirmingDelete(false);
       onClose();
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "No se pudo borrar la carrera. Inténtalo de nuevo.";
+      setDeleteError(msg);
     } finally {
       setIsDeleting(false);
     }
@@ -140,7 +157,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
             <button
               type="button"
               className="btn-delete-trigger"
-              onClick={() => setIsConfirmingDelete(true)}
+              onClick={handleOpenDelete}
               disabled={isDeleting}
               aria-label="Borrar carrera"
             >
@@ -166,7 +183,9 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
 
       <DeleteConfirmDialog
         isOpen={isConfirmingDelete}
-        onCancel={() => setIsConfirmingDelete(false)}
+        isDeleting={isDeleting}
+        errorMessage={deleteError}
+        onCancel={handleCancelDelete}
         onConfirm={handleConfirmDelete}
       />
     </>

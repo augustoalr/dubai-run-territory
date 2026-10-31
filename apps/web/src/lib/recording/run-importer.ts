@@ -9,7 +9,13 @@ import {
 } from "@dubai-run/core";
 import { localRunStorage, type StoredRun } from "./indexeddb-storage";
 
+export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
 export async function importWatchFile(file: File): Promise<StoredRun> {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    throw new Error("El archivo supera el tamaño máximo permitido de 10 MB.");
+  }
+
   const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
   if (extension !== ".gpx" && extension !== ".fit") {
     throw new Error("Solo se admiten archivos .gpx o .fit de reloj.");

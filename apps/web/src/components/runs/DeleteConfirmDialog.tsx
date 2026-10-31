@@ -2,11 +2,19 @@
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
+  isDeleting?: boolean;
+  errorMessage?: string | null;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
-export function DeleteConfirmDialog({ isOpen, onCancel, onConfirm }: DeleteConfirmDialogProps) {
+export function DeleteConfirmDialog({
+  isOpen,
+  isDeleting = false,
+  errorMessage,
+  onCancel,
+  onConfirm,
+}: DeleteConfirmDialogProps) {
   if (!isOpen) return null;
 
   return (
@@ -15,7 +23,7 @@ export function DeleteConfirmDialog({ isOpen, onCancel, onConfirm }: DeleteConfi
       role="dialog"
       aria-modal="true"
       aria-labelledby="delete-confirm-title"
-      onClick={onCancel}
+      onClick={isDeleting ? undefined : onCancel}
     >
       <div className="modal-card glass delete-modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="delete-modal-icon" aria-hidden="true">
@@ -41,12 +49,28 @@ export function DeleteConfirmDialog({ isOpen, onCancel, onConfirm }: DeleteConfi
           Esta acción no se puede deshacer. Se eliminará la carrera de este teléfono.
         </p>
 
+        {errorMessage && (
+          <div className="delete-modal-error" role="alert">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="delete-modal-actions">
-          <button type="button" className="action-btn-secondary" onClick={onCancel}>
+          <button
+            type="button"
+            className="action-btn-secondary"
+            onClick={onCancel}
+            disabled={isDeleting}
+          >
             Cancelar
           </button>
-          <button type="button" className="btn-destructive" onClick={onConfirm}>
-            Sí, borrar carrera
+          <button
+            type="button"
+            className="btn-destructive"
+            onClick={onConfirm}
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Borrando..." : "Sí, borrar carrera"}
           </button>
         </div>
       </div>

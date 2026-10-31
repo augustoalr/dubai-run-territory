@@ -64,6 +64,8 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
   useEffect(() => {
     if (coordinates.length < 2 || !containerRef.current) return;
 
+    let isMapLoaded = false;
+
     try {
       setWorkerUrl("/map/maplibre-gl-worker.mjs");
       const styleUrl = theme === "dark" ? "/map/style.json" : "/map/style-light.json";
@@ -78,54 +80,64 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
       mapRef.current = map;
 
       map.on("error", () => {
-        setHasWebGlError(true);
+        // Fallback only if the map or its style fails to load.
+        // Partial errors after initial load must not hide the map.
+        if (!isMapLoaded) {
+          setHasWebGlError(true);
+        }
       });
 
       map.on("load", () => {
         if (!mapRef.current) return;
 
-        const bounds = new LngLatBounds();
-        coordinates.forEach((coord) => bounds.extend(coord));
-        map.fitBounds(bounds, { padding: 36, maxZoom: 16, duration: 0 });
+        try {
+          const bounds = new LngLatBounds();
+          coordinates.forEach((coord) => bounds.extend(coord));
+          map.fitBounds(bounds, { padding: 36, maxZoom: 16, duration: 0 });
 
-        map.addSource("run-track", {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            geometry: {
-              type: "LineString",
-              coordinates,
+          map.addSource("run-track", {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              geometry: {
+                type: "LineString",
+                coordinates,
+              },
+              properties: {},
             },
-            properties: {},
-          },
-        });
+          });
 
-        // Glow layer
-        map.addLayer({
-          id: "run-track-glow",
-          type: "line",
-          source: "run-track",
-          paint: {
-            "line-color": "#ff5500",
-            "line-width": 7,
-            "line-opacity": 0.35,
-          },
-        });
+          // Glow layer
+          map.addLayer({
+            id: "run-track-glow",
+            type: "line",
+            source: "run-track",
+            paint: {
+              "line-color": "#ff5500",
+              "line-width": 7,
+              "line-opacity": 0.35,
+            },
+          });
 
-        // Main track line
-        map.addLayer({
-          id: "run-track-line",
-          type: "line",
-          source: "run-track",
-          paint: {
-            "line-color": "#ff5500",
-            "line-width": 3.5,
-          },
-          layout: {
-            "line-cap": "round",
-            "line-join": "round",
-          },
-        });
+          // Main track line
+          map.addLayer({
+            id: "run-track-line",
+            type: "line",
+            source: "run-track",
+            paint: {
+              "line-color": "#ff5500",
+              "line-width": 3.5,
+            },
+            layout: {
+              "line-cap": "round",
+              "line-join": "round",
+            },
+          });
+
+          isMapLoaded = true;
+        } catch {
+          setHasWebGlError(true);
+        }
       });
     } catch {
       setTimeout(() => {
@@ -134,6 +146,7 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
     }
 
     return () => {
+      isMapLoaded = false;
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;

@@ -2518,6 +2518,18 @@ button:disabled {
   margin: 0.75rem 0 0;
 }
 
+.delete-modal-error {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  background: rgba(255, 68, 68, 0.12);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ff6b6b;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .delete-dialog-actions {
   display: flex;
   gap: 0.75rem;
@@ -2536,9 +2548,16 @@ button:disabled {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .btn-destructive:hover:not(:disabled) {
   background: #c53030;
+}
+
+.btn-destructive:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
