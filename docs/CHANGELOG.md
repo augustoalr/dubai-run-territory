@@ -2,8 +2,15 @@
 
 ## 0.10.0 — 2026-10-31
 
-Reglas de conquista según revisión de producto (T-27).
+Pantalla "Mis carreras" local (T-15) y reglas de conquista según revisión de producto (T-27).
 
+- T-15: Nueva pantalla `/carreras` en `apps/web` con la lista de carreras guardadas en el teléfono (IndexedDB), ordenadas cronológicamente (la más reciente primero).
+- Cada tarjeta muestra fecha y hora formateadas, distancia (`km`), duración (`mm:ss`) y ritmo medio en formato `"5:12 /km"`.
+- Al tocar una carrera se despliega un visor modal detallado con mini mapa interactivo de la ruta (MapLibre GL con ajuste automático de vista y respaldo SVG ligero si no hay aceleración gráfica), métricas completas, botón para descargar el archivo de la carrera y acción de borrado con ventana de confirmación previa.
+- Vista de bienvenida para corredores sin actividad registrada con mensaje amable y botón principal hacia `/grabar` ("Grabar mi primera carrera").
+- Opción avanzada al final de la pantalla para importar archivos de reloj deportivo (`.gpx` y `.fit`), validando la integridad con los parsers de `packages/core` y mostrando mensajes de error en lenguaje claro si el archivo está corrupto.
+- Acceso directo a `/carreras` desde el resumen posterior a la grabación en `/grabar` y desde el grupo de botones flotantes sobre el mapa de la pista.
+- Corrección en la descripción de la página `/grabar` eliminando la referencia técnica a "track GPX" y garantizando que no se muestren términos técnicos ("H3", "s/km", ni "GPX" fuera de la opción avanzada).
 - T-27: Nueva migración SQL `supabase/migrations/20261031170000_conquest_rules_review.sql` (no aplicada en base de datos remota) que aplica las cuatro decisiones de la revisión de producto:
   1. El día cierra antes de las 04:00 (hora de Dubái) (en lugar de medianoche) en `snapshot_daily_points`, `apply_run`, `recompute_season` y la función auxiliar `private.zone_day_key`.
   2. Debilitamiento: si el dueño no ha vuelto a correr una baldosa en 7 días, su tiempo empeora 5 s/km por día, hasta un máximo de 60 s/km. Superar ese tiempo debilitado es necesario para robarla (en empate defiende el dueño actual).

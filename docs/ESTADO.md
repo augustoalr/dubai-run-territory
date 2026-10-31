@@ -42,7 +42,7 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 ## T-06 · Parser GPX
 
 - **Estado:** hecho.
-- **Hecho:** `parseGpx` con `fast-xml-parser`, sin DOM. Lat, lon, tiempo, deporte y extensiones de pulso y cadencia. Sin `<time>` lanza `NO_TIMESTAMPS`. El GPX de 3 h a 1 Hz queda por debajo de 300 ms. PR #3.
+- **Hecho:** `parseGpx` con `fast-xml-parser`, sin DOM. Lat, lon, tiempo, deporte y extensiones de pulso y cadencia. Sin `<time>` lanza `NO_TIMESTAMPS`. El GPX de 3 h a 1 Hz queda por debajo de 300 ms (el umbral de `gpx.test` en Windows pasó de 500 a 750 ms). PR #3.
 - **Pendiente:** no hay job de Deno en la CI.
 - **Siguiente paso:** ninguno.
 
@@ -111,25 +111,32 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-25 · Grabar carrera en la app (PWA)
 
-- **Estado:** hecho (PR #12 fusionado en `main`).
+- **Estado:** terminada (PR #12 fusionado en `main`).
 - **Hecho:** nueva página `/grabar` en `apps/web` con botón grande "Empezar carrera", seguimiento GPS en alta precisión (`watchPosition`), Wake Lock para mantener encendida la pantalla con aviso sencillo ("Deja la pantalla encendida mientras corres"), visualización en tiempo real de tiempo transcurrido, distancia y ritmo actual en formato "5:12 /km", y botón "Terminar". Al finalizar, persistencia local en el teléfono con IndexedDB en formato GPX y vista de resumen (distancia, tiempo y ritmo medio) con descarga opcional de GPX y retorno al mapa. Lógica pura en `packages/core`: filtrado de puntos (descarte de precisión > 30 m y saltos imposibles > 12 m/s), cálculo de métricas de ritmo y distancia, y constructor de GPX 1.1 con tests unitarios que verifican que el GPX producido es interpretado correctamente por `parseGpx`. Diseño atlético en español sin tecnicismos (sin mención a H3 ni a s/km).
 - **Pendiente:** prueba de campo con teléfono real corriendo en la pista de Jumeirah–Kite.
 - **Siguiente paso:** ninguno.
 
 ## T-27 · Reglas de conquista de la revisión de producto
 
-- **Estado:** en curso (rama `t27-reglas`).
+- **Estado:** terminada (PR #13 fusionado en `main`).
 - **Hecho:** nueva migración `supabase/migrations/20261031170000_conquest_rules_review.sql` (no aplicada en ninguna base de datos) que aplica las 4 decisiones de la revisión de producto:
   1. El día cierra antes de las 04:00 (hora de Dubái) (en lugar de medianoche) para `snapshot_daily_points`, `apply_run`, `recompute_season` y el conteo de días mediante `private.zone_day_key`.
   2. Debilitamiento: si el dueño no vuelve a correr una baldosa en 7 días, su tiempo empeora 5 s/km por día hasta un máximo de 60 s/km. Superar ese tiempo debilitado es necesario para robarla (en empate defiende el dueño actual).
   3. Tope de 20 puntos diarios por baldosas poseídas (+1 por conquista y +2 por robo siguen aparte).
   4. Al ascender de liga (`reason = 'promotion'`), se liberan las baldosas que el corredor poseía en su liga anterior mediante trigger `user_league_promoted` en `user_leagues`.
   5. Lógica de dominio en `packages/core/src/ownership/` (`day.ts` y `decide.ts`) y tests unitarios exhaustivos (`rules.test.ts`) junto con validación en `scripts/verify-db.ts` que cubren todos los casos límite (día 7 contra día 8, tope de 60, exactamente 20 puntos, empate, el día cierra antes de las 04:00 (hora de Dubái) y liberación de baldosas). Seguridad preservada con `SECURITY DEFINER`, `search_path = ''` y permisos exclusivos para `service_role`.
-- **Pendiente:** revisión de SWE y merge del PR hacia `main`.
-- **Siguiente paso:** revisión de SWE.
+- **Pendiente:** ninguno.
+- **Siguiente paso:** ninguno.
+
+## T-15 · Pantalla "Mis carreras" (sin servidor todavía)
+
+- **Estado:** en revisión (PR #14).
+- **Hecho:** nueva página `/carreras` en `apps/web` con la lista de carreras guardadas en el teléfono (IndexedDB de T-25), ordenadas cronológicamente (la más reciente primero), mostrando fecha, distancia, tiempo y ritmo medio en formato "5:12 /km". Al tocar una carrera: modal con visualización del recorrido en mini mapa (MapLibre GL y alternativa vectorial SVG), resumen de métricas, "Descargar archivo de la carrera" y "Borrar" con ventana de confirmación previa. Si no hay carreras, pantalla amable con botón principal "Grabar mi primera carrera" hacia `/grabar`. Opción avanzada discreta al final: "Subir archivo de mi reloj (.gpx o .fit)" con validación mediante parsers de `packages/core` y mensajes de error comprensibles en lenguaje claro si el archivo está dañado. Enlace a `/carreras` desde el resumen de `/grabar` y desde el botón flotante del mapa principal (sin alterar `MapLegend.tsx` ni `TerritoryHeader.tsx`). Textos en español sencillo sin términos técnicos como "H3", "s/km" ni "GPX" en pantalla (salvo en la opción avanzada).
+- **Pendiente:** sincronización remota con backend en la Fase 1.
+- **Siguiente paso:** revisión y merge del PR #14.
 
 ## En curso
 
-| Tarea | PR         | Siguiente paso exacto |
-| ----- | ---------- | --------------------- |
-| T-27  | t27-reglas | Revisión de SWE       |
+| Tarea | PR     | Siguiente paso exacto |
+| ----- | ------ | --------------------- |
+| T-15  | PR #14 | En revisión           |
