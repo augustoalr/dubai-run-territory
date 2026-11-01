@@ -1732,12 +1732,78 @@ button:disabled {
 
 .gps-acquiring-banner {
   border-radius: 1.15rem;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-threatened);
+}
+
+.gps-acquiring-status {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  font-size: 0.82rem;
-  color: var(--color-threatened);
+}
+
+.gps-acquiring-text {
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.gps-acquiring-actions {
+  display: flex;
+  gap: 0.65rem;
+  width: 100%;
+  padding-top: 0.25rem;
+}
+
+.btn-start-anyway {
+  flex: 1;
+  background: var(--color-threatened);
+  color: #fff;
+  border: none;
+  border-radius: 0.85rem;
+  padding: 0.6rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    transform 0.1s ease;
+}
+
+.btn-start-anyway:hover {
+  opacity: 0.92;
+}
+
+.btn-start-anyway:active {
+  transform: scale(0.98);
+}
+
+.btn-cancel-acquiring {
+  flex: 1;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+  border-radius: 0.85rem;
+  padding: 0.6rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease;
+}
+
+.btn-cancel-acquiring:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.btn-cancel-acquiring:active {
+  transform: scale(0.98);
 }
 
 /* Live Metrics Grid */

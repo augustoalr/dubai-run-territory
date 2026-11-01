@@ -135,8 +135,20 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 - **Pendiente:** sincronización remota con backend en la Fase 1.
 - **Siguiente paso:** revisión y merge del PR #14.
 
+## T-28 · Arreglos en la grabación GPS (/grabar)
+
+- **Estado:** en curso.
+- **Hecho:** en rama `t28-gps-pantalla`:
+  1. Velocidad y ritmo calculados con media móvil de 15 a 20 s (no punto a punto), ignorando movimientos dentro del margen de error del GPS (accuracy) y mostrando "--" si en los últimos 10 s el avance es menor a 5 m (estás quieto).
+  2. Descarte de puntos con velocidad implícita superior a 25 km/h respecto al punto anterior, sin sumarlos a la distancia.
+  3. Banner en búsqueda de señal: "Buscando señal GPS… Sal al aire libre, lejos de edificios altos" y, tras 60 s sin señal precisa, botones "Empezar igual" o "Cancelar".
+  4. Tests unitarios en `packages/core/src/recording`: puntos que saltan alrededor de un mismo sitio (distancia en 0 y ritmo en "--") y salto imposible (> 25 km/h descartado).
+- **Pendiente:** abrir PR desde `t28-gps-pantalla` a `main`.
+- **Siguiente paso:** abrir PR y verificar CI.
+
 ## En curso
 
-| Tarea | PR     | Siguiente paso exacto |
-| ----- | ------ | --------------------- |
-| T-15  | PR #14 | En revisión           |
+| Tarea | PR     | Siguiente paso exacto             |
+| ----- | ------ | --------------------------------- |
+| T-15  | PR #14 | En revisión                       |
+| T-28  | -      | Abrir PR desde `t28-gps-pantalla` |

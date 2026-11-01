@@ -14,7 +14,7 @@ export type RecordedPoint = {
 export type PointFilterConfig = {
   /** Maximum acceptable GPS accuracy in metres (points above this are discarded). Default: 30. */
   maxAccuracyMeters: number;
-  /** Maximum plausible human running speed in m/s (jumps above this are discarded). Default: 12 (43.2 km/h). */
+  /** Maximum plausible human running speed in m/s (jumps above this are discarded). Default: 25 km/h (~6.94 m/s). */
   maxSpeedMps: number;
 };
 
@@ -25,6 +25,8 @@ export type LiveRecordingStats = {
   distanceMeters: number;
   /** Recent pace in seconds per kilometre, or null if stationary / not enough data. */
   currentPaceSecondsPerKm: number | null;
+  /** Recent speed in km/h, or null if stationary / not enough data. */
+  currentSpeedKmh: number | null;
   /** Average pace in seconds per kilometre across the entire run. */
   averagePaceSecondsPerKm: number | null;
 };
