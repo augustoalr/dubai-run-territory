@@ -78,7 +78,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
   return (
     <>
       <div
-        className="modal-backdrop"
+        className="modal-backdrop run-detail-backdrop"
         role="dialog"
         aria-modal="true"
         aria-labelledby="run-detail-title"
@@ -86,8 +86,8 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
       >
         <div className="modal-card glass run-detail-modal" onClick={(e) => e.stopPropagation()}>
           {/* Header */}
-          <div className="modal-header">
-            <div>
+          <div className="modal-header run-detail-header">
+            <div className="run-detail-header-text">
               <span className="zone-badge">{formattedDate}</span>
               <h2 id="run-detail-title" className="modal-title">
                 {run.name || "Resumen de carrera"}
@@ -95,7 +95,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
             </div>
             <button
               type="button"
-              className="modal-close-btn"
+              className="modal-close-btn run-detail-close-btn"
               onClick={onClose}
               aria-label="Cerrar detalle"
             >
@@ -130,7 +130,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
           <div className="run-detail-actions">
             <button
               type="button"
-              className="action-btn-primary"
+              className="action-btn-primary btn-download-run"
               onClick={handleDownload}
               aria-label="Descargar archivo de la carrera"
             >
@@ -144,17 +144,18 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden="true"
+                className="btn-download-icon"
               >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span>Descargar archivo de la carrera</span>
+              <span className="btn-download-text">Descargar archivo de la carrera</span>
             </button>
 
             <button
               type="button"
-              className="btn-delete-trigger"
+              className="btn-delete-run btn-delete-trigger"
               onClick={handleOpenDelete}
               disabled={isDeleting}
               aria-label="Borrar carrera"

@@ -135,8 +135,20 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 - **Pendiente:** sincronización remota con backend en la Fase 1.
 - **Siguiente paso:** revisión y merge del PR #14.
 
+## T-29 · Detalle de carrera en móvil (iPhone Safari)
+
+- **Estado:** en curso (rama `t29-detalle-carrera-movil`).
+- **Hecho:** correcciones en el modal de detalle de carrera en "Mis carreras" (`/carreras`) optimizadas para iPhone con Safari (375 a 430 px):
+  1. Botón de cierre (✕): integrado dentro del encabezado modal, visible con contraste nítido, objetivo táctil ampliado a 44x44 px (Apple HIG) y respeto del área segura superior mediante `padding env(safe-area-inset-top)` para evitar colisiones con la barra del navegador.
+  2. Botón "Borrar carrera": ancho completo, ubicado debajo de "Descargar archivo de la carrera", con estilo de acción peligrosa (fondo sutil y borde/texto rojo `#ef4444`), y espaciado inferior seguro con `padding env(safe-area-inset-bottom)` para que la barra de Safari no lo tape.
+  3. Mini mapa de la carrera: ajustado mediante `fitBounds` con padding adecuado; soporte robusto para carreras cortas (pocos metros o punto único) mostrando punto de inicio destacado; alternativa SVG vectorial en caso de fallo de carga o indisponibilidad de WebGL/red; contenedor `.run-mini-map-canvas` corregido al 100% con `ResizeObserver` para evitar recuadros negros vacíos durante transiciones de apertura.
+  4. Botón "Descargar archivo de la carrera": tamaño de texto y espaciado optimizados para entrar en una sola línea en anchos de 375 a 430 px, o verse bien en dos líneas centradas sin desbordes.
+- **Pendiente:** comprobación en Safari iOS real y merge.
+- **Siguiente paso:** abrir PR desde la rama `t29-detalle-carrera-movil`.
+
 ## En curso
 
-| Tarea | PR     | Siguiente paso exacto |
-| ----- | ------ | --------------------- |
-| T-15  | PR #14 | En revisión           |
+| Tarea | PR     | Siguiente paso exacto                      |
+| ----- | ------ | ------------------------------------------ |
+| T-15  | PR #14 | En revisión                                |
+| T-29  | —      | Abrir PR desde `t29-detalle-carrera-movil` |
