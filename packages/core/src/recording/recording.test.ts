@@ -5,12 +5,14 @@ import { buildGpx } from "./gpx-builder";
 import {
   calculateAveragePaceSecondsPerKm,
   calculateCurrentPaceSecondsPerKm,
+  calculateCurrentSpeedKmh,
   calculateDistanceMeters,
   calculateDurationSeconds,
   computeRecordingStats,
   formatDisplayDistance,
   formatDisplayDuration,
   formatDisplayPace,
+  formatDisplaySpeed,
 } from "./metrics";
 import type { RecordedPoint } from "./types";
 
@@ -24,9 +26,9 @@ describe("Recorded point filtering", () => {
     ele: 4.5,
   };
 
-  it("exposes default filter thresholds of 30 metres accuracy and 12 m/s speed", () => {
+  it("exposes default filter thresholds of 30 metres accuracy and 25 km/h speed", () => {
     expect(DEFAULT_FILTER_CONFIG.maxAccuracyMeters).toBe(30);
-    expect(DEFAULT_FILTER_CONFIG.maxSpeedMps).toBe(12);
+    expect(DEFAULT_FILTER_CONFIG.maxSpeedMps).toBeCloseTo(25 / 3.6, 5);
   });
 
   it("accepts a normal, high-accuracy point", () => {
@@ -59,8 +61,8 @@ describe("Recorded point filtering", () => {
     expect(isValidRecordedPoint(nanAccuracyPoint)).toBe(false);
   });
 
-  it("discards impossible jumps and teleports", () => {
-    // Moved ~500 m in 1 second (~500 m/s > 12 m/s max)
+  it("discards impossible jumps and teleports exceeding 25 km/h", () => {
+    // Moved ~500 m in 1 second (~500 m/s > 25 km/h max)
     const impossibleJumpPoint: RecordedPoint = {
       lat: 25.1455,
       lon: 55.1852,
@@ -69,7 +71,16 @@ describe("Recorded point filtering", () => {
     };
     expect(isValidRecordedPoint(impossibleJumpPoint, startPoint)).toBe(false);
 
-    // Normal running step: ~3 m in 1 second (3 m/s <= 12 m/s)
+    // Speed of ~30 km/h (> 25 km/h limit of ~6.94 m/s): ~8.3 m in 1 s
+    const speed30KmhPoint: RecordedPoint = {
+      lat: 25.141275,
+      lon: 55.1852,
+      time: baseTime + 1000,
+      accuracy: 8,
+    };
+    expect(isValidRecordedPoint(speed30KmhPoint, startPoint)).toBe(false);
+
+    // Normal running step: ~3 m in 1 second (3 m/s = 10.8 km/h <= 25 km/h)
     const normalRunningPoint: RecordedPoint = {
       lat: 25.141227,
       lon: 55.1852,
@@ -77,6 +88,15 @@ describe("Recorded point filtering", () => {
       accuracy: 8,
     };
     expect(isValidRecordedPoint(normalRunningPoint, startPoint)).toBe(true);
+
+    // Fast running step: ~5.5 m in 1 second (~20 km/h <= 25 km/h)
+    const fastRunningPoint: RecordedPoint = {
+      lat: 25.14125,
+      lon: 55.1852,
+      time: baseTime + 1000,
+      accuracy: 8,
+    };
+    expect(isValidRecordedPoint(fastRunningPoint, startPoint)).toBe(true);
   });
 
   it("discards points where time does not advance", () => {
@@ -137,9 +157,9 @@ describe("Distance and Pace metrics", () => {
     expect(pace).toBe(312);
     expect(formatDisplayPace(pace)).toBe("5:12 /km");
 
-    // Negligible distance (< 10m) returns null -> "-:-- /km"
+    // Negligible distance (< 10m) returns null -> "--"
     expect(calculateAveragePaceSecondsPerKm(5, 30)).toBeNull();
-    expect(formatDisplayPace(null)).toBe("-:-- /km");
+    expect(formatDisplayPace(null)).toBe("--");
   });
 
   it("never includes forbidden strings like 's/km' or 'H3'", () => {
@@ -177,6 +197,135 @@ describe("Distance and Pace metrics", () => {
     expect(stats.durationSeconds).toBe(30);
     expect(stats.distanceMeters).toBeGreaterThan(95);
     expect(stats.averagePaceSecondsPerKm).not.toBeNull();
+  });
+
+  it("keeps distance almost in 0 and pace in '--' when points jump around the same site (stationary)", () => {
+    const t0 = 1761920000000;
+    const centerLat = 25.1412;
+    const centerLon = 55.1852;
+    const points: RecordedPoint[] = [];
+
+    // 20 points, one per second, oscillating within 1-2 meters (< 10m accuracy margin)
+    // 0.00001 deg lat is ~1.11 m
+    const jitterOffsets: readonly (readonly [number, number])[] = [
+      [0.0, 0.0],
+      [0.00001, 0.00001],
+      [-0.00001, 0.00001],
+      [0.000015, -0.00001],
+      [-0.000012, -0.000015],
+      [0.000008, 0.000005],
+      [-0.000005, 0.000012],
+      [0.00001, -0.000008],
+      [-0.000015, 0.00001],
+      [0.000005, -0.000015],
+      [0.0, 0.000005],
+      [-0.00001, -0.000005],
+      [0.000012, 0.00001],
+      [-0.000008, 0.000015],
+      [0.000005, -0.000012],
+      [-0.000012, 0.000008],
+      [0.00001, -0.00001],
+      [-0.000005, 0.000012],
+      [0.000008, -0.000005],
+      [0.0, 0.0],
+    ];
+
+    for (let i = 0; i < jitterOffsets.length; i += 1) {
+      const offset = jitterOffsets[i]!;
+      const dLat = offset[0];
+      const dLon = offset[1];
+      points.push({
+        lat: centerLat + dLat,
+        lon: centerLon + dLon,
+        time: t0 + i * 1000,
+        accuracy: 10,
+      });
+    }
+
+    // Distance should remain almost in 0 (< 1m, exactly 0m because within accuracy margin)
+    const distance = calculateDistanceMeters(points);
+    expect(distance).toBeLessThan(1);
+
+    // Current pace should be null (stationary in last 10s and within accuracy margin)
+    const currentPace = calculateCurrentPaceSecondsPerKm(points);
+    expect(currentPace).toBeNull();
+
+    // Formatted pace must display "--"
+    expect(formatDisplayPace(currentPace)).toBe("--");
+
+    // Speed in km/h is null and formatted as "--"
+    const currentSpeed = calculateCurrentSpeedKmh(points);
+    expect(currentSpeed).toBeNull();
+    expect(formatDisplaySpeed(currentSpeed)).toBe("--");
+
+    // Complete snapshot stats
+    const stats = computeRecordingStats(points, 20);
+    expect(stats.distanceMeters).toBeLessThan(1);
+    expect(formatDisplayPace(stats.currentPaceSecondsPerKm)).toBe("--");
+    expect(formatDisplaySpeed(stats.currentSpeedKmh)).toBe("--");
+  });
+
+  it("discards an impossible jump exceeding 25 km/h and does not add it to distance", () => {
+    const t0 = 1761920000000;
+    const start: RecordedPoint = { lat: 25.1412, lon: 55.1852, time: t0, accuracy: 8 };
+
+    // Point with implicit speed of ~50 km/h: ~13.88 m in 1 second
+    // 0.00013 deg lat is ~14.4 m (> 25 km/h limit of ~6.94 m/s)
+    const impossibleJump: RecordedPoint = {
+      lat: 25.14133,
+      lon: 55.1852,
+      time: t0 + 1000,
+      accuracy: 8,
+    };
+
+    // isValidRecordedPoint rejects it
+    expect(isValidRecordedPoint(impossibleJump, start)).toBe(false);
+
+    // filterRecordedPoints discards it
+    const filtered = filterRecordedPoints([start, impossibleJump]);
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0]).toBe(start);
+
+    // Distance of filtered points does not include the jump
+    const distance = calculateDistanceMeters(filtered);
+    expect(distance).toBe(0);
+  });
+
+  it("shows '--' when runner stops and advance in the last 10 seconds is under 5 metres", () => {
+    const t0 = 100_000;
+    const points: RecordedPoint[] = [];
+
+    // Runner running at 12 km/h (~3.33 m/s) for 15 seconds (t = 0 to 15s)
+    // 0.00003 deg lat per second is ~3.33 m
+    for (let s = 0; s <= 15; s += 1) {
+      points.push({
+        lat: 25.14 + s * 0.00003,
+        lon: 55.1852,
+        time: t0 + s * 1000,
+        accuracy: 5,
+      });
+    }
+
+    // Runner is running: pace should be active (~300 s/km = 5:00/km)
+    const activePace = calculateCurrentPaceSecondsPerKm(points);
+    expect(activePace).not.toBeNull();
+    expect(formatDisplayPace(activePace)).toContain("/km");
+
+    // Now runner stops at s=15, and stays still for 11 seconds (up to s=26)
+    const stopLat = 25.14 + 15 * 0.00003;
+    for (let s = 16; s <= 26; s += 1) {
+      points.push({
+        lat: stopLat,
+        lon: 55.1852,
+        time: t0 + s * 1000,
+        accuracy: 5,
+      });
+    }
+
+    // Last 10 seconds (s=16 to s=26) have 0 advance (< 5m) -> must display "--"
+    const stoppedPace = calculateCurrentPaceSecondsPerKm(points);
+    expect(stoppedPace).toBeNull();
+    expect(formatDisplayPace(stoppedPace)).toBe("--");
   });
 
   it("formats display distance and duration", () => {
