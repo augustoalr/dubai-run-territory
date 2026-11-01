@@ -33,11 +33,7 @@ export function LiveMetricsGrid({
         <div className="metric-number-wrap">
           <span className="metric-number hero-number">{currentPaceText}</span>
         </div>
-        <span className="metric-caption">
-          {currentSpeedText !== "--"
-            ? `${currentSpeedText} · media móvil`
-            : "Ritmo estimado en tiempo real"}
-        </span>
+        <span className="metric-caption">{currentSpeedText}</span>
       </div>
 
       {/* Secondary Metrics: Tiempo y Distancia */}

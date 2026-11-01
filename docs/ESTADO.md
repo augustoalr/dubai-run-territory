@@ -137,18 +137,18 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-28 · Arreglos en la grabación GPS (/grabar)
 
-- **Estado:** en curso.
+- **Estado:** en revisión (PR #15).
 - **Hecho:** en rama `t28-gps-pantalla`:
-  1. Velocidad y ritmo calculados con media móvil de 15 a 20 s (no punto a punto), ignorando movimientos dentro del margen de error del GPS (accuracy) y mostrando "--" si en los últimos 10 s el avance es menor a 5 m (estás quieto).
+  1. Velocidad y ritmo calculados con media móvil de 15 a 20 s (no punto a punto), ignorando movimientos dentro del margen de error del GPS (accuracy) y mostrando "--" si en los últimos 10 s el avance es menor a 5 m (estás quieto). Mostrando solo ritmo y velocidad en pantalla sin texto "· media móvil".
   2. Descarte de puntos con velocidad implícita superior a 25 km/h respecto al punto anterior, sin sumarlos a la distancia.
-  3. Banner en búsqueda de señal: "Buscando señal GPS… Sal al aire libre, lejos de edificios altos" y, tras 60 s sin señal precisa, botones "Empezar igual" o "Cancelar".
+  3. Banner en búsqueda de señal: "Buscando señal GPS… Sal al aire libre, lejos de edificios altos" y, tras 60 s sin señal precisa, botones "Empezar igual" o "Cancelar". Aviso visible "No bloquees el teléfono mientras grabas" durante la búsqueda y la grabación.
   4. Tests unitarios en `packages/core/src/recording`: puntos que saltan alrededor de un mismo sitio (distancia en 0 y ritmo en "--") y salto imposible (> 25 km/h descartado).
-- **Pendiente:** abrir PR desde `t28-gps-pantalla` a `main`.
-- **Siguiente paso:** abrir PR y verificar CI.
+- **Pendiente:** revisión y merge del PR #15.
+- **Siguiente paso:** revisión del PR #15.
 
 ## En curso
 
-| Tarea | PR     | Siguiente paso exacto             |
-| ----- | ------ | --------------------------------- |
-| T-15  | PR #14 | En revisión                       |
-| T-28  | -      | Abrir PR desde `t28-gps-pantalla` |
+| Tarea | PR     | Siguiente paso exacto |
+| ----- | ------ | --------------------- |
+| T-15  | PR #14 | En revisión           |
+| T-28  | PR #15 | En revisión           |

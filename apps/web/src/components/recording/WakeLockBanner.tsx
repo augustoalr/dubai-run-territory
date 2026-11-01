@@ -5,12 +5,10 @@ interface WakeLockBannerProps {
 }
 
 export function WakeLockBanner({ isRecording }: WakeLockBannerProps) {
+  if (!isRecording) return null;
+
   return (
-    <div
-      className={`wakelock-banner glass ${isRecording ? "active" : ""}`}
-      role="status"
-      aria-live="polite"
-    >
+    <div className="wakelock-banner glass active" role="status" aria-live="polite">
       <div className="banner-icon-badge" aria-hidden="true">
         <svg
           width="18"
@@ -26,7 +24,7 @@ export function WakeLockBanner({ isRecording }: WakeLockBannerProps) {
           <line x1="12" y1="18" x2="12.01" y2="18" />
         </svg>
       </div>
-      <p className="banner-text">Deja la pantalla encendida mientras corres</p>
+      <p className="banner-text">No bloquees el teléfono mientras grabas</p>
     </div>
   );
 }
