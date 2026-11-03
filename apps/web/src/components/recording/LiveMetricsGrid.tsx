@@ -1,21 +1,29 @@
 "use client";
 
-import { formatDisplayDistance, formatDisplayDuration, formatDisplayPace } from "@dubai-run/core";
+import {
+  formatDisplayDistance,
+  formatDisplayDuration,
+  formatDisplayPace,
+  formatDisplaySpeed,
+} from "@dubai-run/core";
 
 interface LiveMetricsGridProps {
   durationSeconds: number;
   distanceMeters: number;
   currentPaceSecondsPerKm: number | null;
+  currentSpeedKmh?: number | null;
 }
 
 export function LiveMetricsGrid({
   durationSeconds,
   distanceMeters,
   currentPaceSecondsPerKm,
+  currentSpeedKmh,
 }: LiveMetricsGridProps) {
   const durationText = formatDisplayDuration(durationSeconds);
   const distanceText = formatDisplayDistance(distanceMeters);
   const currentPaceText = formatDisplayPace(currentPaceSecondsPerKm);
+  const currentSpeedText = formatDisplaySpeed(currentSpeedKmh);
 
   return (
     <div className="live-metrics-container">
@@ -25,7 +33,7 @@ export function LiveMetricsGrid({
         <div className="metric-number-wrap">
           <span className="metric-number hero-number">{currentPaceText}</span>
         </div>
-        <span className="metric-caption">Ritmo estimado en tiempo real</span>
+        <span className="metric-caption">{currentSpeedText}</span>
       </div>
 
       {/* Secondary Metrics: Tiempo y Distancia */}

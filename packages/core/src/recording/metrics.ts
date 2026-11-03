@@ -19,21 +19,55 @@ export function calculateDurationSeconds(startTimeMs: number, endTimeMs: number)
 
 /**
  * Calculates cumulative haversine distance along a sequence of points in metres.
+ * Ignores movements smaller than the GPS error margin (accuracy) to prevent jitter drift,
+ * and skips segments with impossible speeds (> 25 km/h).
  */
-export function calculateDistanceMeters(points: readonly RecordedPoint[]): number {
-  let totalMeters = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    if (!prev || !curr) continue;
-    totalMeters += haversineMeters([prev.lon, prev.lat], [curr.lon, curr.lat]);
+export function calculateDistanceMeters(
+  points: readonly RecordedPoint[],
+  options?: { maxSpeedMps?: number },
+): number {
+  if (points.length < 2) {
+    return 0;
   }
+
+  let totalMeters = 0;
+  let anchor = points[0]!;
+
+  for (let i = 1; i < points.length; i += 1) {
+    const curr = points[i]!;
+
+    if (options?.maxSpeedMps !== undefined) {
+      const legElapsedSec = (curr.time - anchor.time) / 1000;
+      const legDist = haversineMeters([anchor.lon, anchor.lat], [curr.lon, curr.lat]);
+      if (legElapsedSec > 0 && legDist / legElapsedSec > options.maxSpeedMps) {
+        continue;
+      }
+    }
+
+    const legDist = haversineMeters([anchor.lon, anchor.lat], [curr.lon, curr.lat]);
+    const accuracyThreshold =
+      curr.accuracy !== undefined && Number.isFinite(curr.accuracy) && curr.accuracy > 0
+        ? curr.accuracy
+        : 0;
+
+    if (legDist >= accuracyThreshold) {
+      totalMeters += legDist;
+      anchor = curr;
+    }
+  }
+
   return totalMeters;
 }
 
 /**
- * Calculates instantaneous/current pace (in seconds per km) from recent points
- * within a rolling time window (default 20 seconds). Returns null if stationary or insufficient data.
+ * Calculates current pace (in seconds per km) using a moving average over recent points
+ * within a rolling time window (default 20 seconds, between 15 and 20 s).
+ *
+ * Rules:
+ * 1. If in the last 10 seconds the net advance is less than 5 metres (stationary/quieto), returns null (displays "--").
+ * 2. Movements smaller than the GPS error margin (accuracy) are ignored.
+ * 3. Uses moving average of the last 15-20 seconds, not point-to-point.
+ * 4. Returns null if stationary or insufficient data.
  */
 export function calculateCurrentPaceSecondsPerKm(
   points: readonly RecordedPoint[],
@@ -46,6 +80,28 @@ export function calculateCurrentPaceSecondsPerKm(
   const lastPoint = points[points.length - 1];
   if (!lastPoint) return null;
 
+  // 1. Stillness check: if in the last 10 seconds the net advance is < 5 m, the runner is stationary
+  const tenSecondsAgo = lastPoint.time - 10_000;
+  let tenSecStartIndex = points.length - 1;
+  while (tenSecStartIndex > 0 && points[tenSecStartIndex - 1]!.time >= tenSecondsAgo) {
+    tenSecStartIndex -= 1;
+  }
+  const tenSecStartPoint = points[tenSecStartIndex]!;
+
+  const advanceLast10s = haversineMeters(
+    [tenSecStartPoint.lon, tenSecStartPoint.lat],
+    [lastPoint.lon, lastPoint.lat],
+  );
+  if (advanceLast10s < 5) {
+    return null;
+  }
+
+  const distanceLast10s = calculateDistanceMeters(points.slice(tenSecStartIndex));
+  if (distanceLast10s < 5) {
+    return null;
+  }
+
+  // 2. Rolling window of the last 15 to 20 seconds (default 20_000 ms)
   const windowStartTime = lastPoint.time - windowDurationMs;
   let windowStartIndex = points.length - 1;
 
@@ -83,7 +139,23 @@ export function calculateCurrentPaceSecondsPerKm(
 }
 
 /**
- * Calculates average pace in seconds per kilometre.
+ * Calculates current speed in km/h from recent points using the smoothed moving average.
+ * Returns null if stationary or insufficient data.
+ */
+export function calculateCurrentSpeedKmh(
+  points: readonly RecordedPoint[],
+  windowDurationMs = 20_000,
+): number | null {
+  const pace = calculateCurrentPaceSecondsPerKm(points, windowDurationMs);
+  if (pace === null || pace <= 0) {
+    return null;
+  }
+  const speedKmh = 3600 / pace;
+  return Math.round(speedKmh * 10) / 10;
+}
+
+/**
+ * Calculates average pace in seconds per kilometre across the entire run.
  * Returns null if distance is negligible (< 10 m) or duration is 0.
  */
 export function calculateAveragePaceSecondsPerKm(
@@ -106,25 +178,37 @@ export function computeRecordingStats(
 ): LiveRecordingStats {
   const distanceMeters = calculateDistanceMeters(points);
   const currentPaceSecondsPerKm = calculateCurrentPaceSecondsPerKm(points);
+  const currentSpeedKmh = calculateCurrentSpeedKmh(points);
   const averagePaceSecondsPerKm = calculateAveragePaceSecondsPerKm(distanceMeters, durationSeconds);
 
   return {
     durationSeconds,
     distanceMeters,
     currentPaceSecondsPerKm,
+    currentSpeedKmh,
     averagePaceSecondsPerKm,
   };
 }
 
 /**
- * Formats pace into human-readable runner format: "5:12 /km".
- * Never uses "s/km" or internal codes.
+ * Formats pace into human-readable runner format: "5:12 /km" or "--".
+ * Returns "--" when stationary, null, or out of bounds.
  */
 export function formatDisplayPace(paceSecondsPerKm: number | null | undefined): string {
   if (paceSecondsPerKm == null || !Number.isFinite(paceSecondsPerKm) || paceSecondsPerKm <= 0) {
-    return "-:-- /km";
+    return "--";
   }
   return `${formatPace(paceSecondsPerKm)} /km`;
+}
+
+/**
+ * Formats speed into human-readable runner format: "10.5 km/h" or "--".
+ */
+export function formatDisplaySpeed(speedKmh: number | null | undefined): string {
+  if (speedKmh == null || !Number.isFinite(speedKmh) || speedKmh <= 0) {
+    return "--";
+  }
+  return `${speedKmh.toFixed(1)} km/h`;
 }
 
 /**

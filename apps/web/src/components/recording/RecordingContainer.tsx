@@ -20,12 +20,16 @@ export function RecordingContainer() {
     durationSeconds,
     distanceMeters,
     currentPaceSecondsPerKm,
+    currentSpeedKmh,
     gpsAccuracy,
     error,
     lastSavedRun,
+    acquiringTimeoutReached,
     startRecording,
     finishRecording,
     resetRecording,
+    startAnyway,
+    cancelAcquiring,
   } = useRunnerRecorder();
 
   const isRecording = status === "recording" || status === "acquiring";
@@ -65,8 +69,26 @@ export function RecordingContainer() {
 
               {status === "acquiring" && (
                 <div className="gps-acquiring-banner glass" aria-live="polite">
-                  <span className="spinner-dot" />
-                  <span>Obteniendo señal GPS con alta precisión...</span>
+                  <div className="gps-acquiring-status">
+                    <span className="spinner-dot" />
+                    <span className="gps-acquiring-text">
+                      Buscando señal GPS… Sal al aire libre, lejos de edificios altos
+                    </span>
+                  </div>
+                  {acquiringTimeoutReached && (
+                    <div className="gps-acquiring-actions">
+                      <button type="button" className="btn-start-anyway" onClick={startAnyway}>
+                        Empezar igual
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-cancel-acquiring"
+                        onClick={cancelAcquiring}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -74,6 +96,7 @@ export function RecordingContainer() {
                 durationSeconds={durationSeconds}
                 distanceMeters={distanceMeters}
                 currentPaceSecondsPerKm={currentPaceSecondsPerKm}
+                currentSpeedKmh={currentSpeedKmh}
               />
 
               <RecordingControls

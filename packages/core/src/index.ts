@@ -82,9 +82,12 @@ export {
 export { readZoneGeometry } from "./zones/parse";
 export {
   DEFAULT_FILTER_CONFIG,
+  MAX_RUNNING_SPEED_KMH,
+  MAX_RUNNING_SPEED_MPS,
   buildGpx,
   calculateAveragePaceSecondsPerKm,
   calculateCurrentPaceSecondsPerKm,
+  calculateCurrentSpeedKmh,
   calculateDistanceMeters,
   calculateDurationSeconds,
   computeRecordingStats,
@@ -92,6 +95,7 @@ export {
   formatDisplayDistance,
   formatDisplayDuration,
   formatDisplayPace,
+  formatDisplaySpeed,
   isValidRecordedPoint,
 } from "./recording";
 export type {

@@ -135,20 +135,32 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 - **Pendiente:** sincronización remota con backend en la Fase 1.
 - **Siguiente paso:** revisión y merge del PR #14.
 
+## T-28 · Arreglos en la grabación GPS (/grabar)
+
+- **Estado:** en revisión (PR #15).
+- **Hecho:** en rama `t28-gps-pantalla`:
+  1. Velocidad y ritmo calculados con media móvil de 15 a 20 s (no punto a punto), ignorando movimientos dentro del margen de error del GPS (accuracy) y mostrando "--" si en los últimos 10 s el avance es menor a 5 m (estás quieto). Mostrando solo ritmo y velocidad en pantalla sin texto "· media móvil".
+  2. Descarte de puntos con velocidad implícita superior a 25 km/h respecto al punto anterior, sin sumarlos a la distancia.
+  3. Banner en búsqueda de señal: "Buscando señal GPS… Sal al aire libre, lejos de edificios altos" y, tras 60 s sin señal precisa, botones "Empezar igual" o "Cancelar". Aviso visible "No bloquees el teléfono mientras grabas" durante la búsqueda y la grabación.
+  4. Tests unitarios en `packages/core/src/recording`: puntos que saltan alrededor de un mismo sitio (distancia en 0 y ritmo en "--") y salto imposible (> 25 km/h descartado).
+- **Pendiente:** revisión y merge del PR #15.
+- **Siguiente paso:** revisión del PR #15.
+
 ## T-29 · Detalle de carrera en móvil (iPhone Safari)
 
-- **Estado:** en curso (rama `t29-detalle-carrera-movil`).
+- **Estado:** en revisión (PR #16).
 - **Hecho:** correcciones en el modal de detalle de carrera en "Mis carreras" (`/carreras`) optimizadas para iPhone con Safari (375 a 430 px):
   1. Botón de cierre (✕): integrado dentro del encabezado modal, visible con contraste nítido, objetivo táctil ampliado a 44x44 px (Apple HIG) y respeto del área segura superior mediante `padding env(safe-area-inset-top)` para evitar colisiones con la barra del navegador.
   2. Botón "Borrar carrera": ancho completo, ubicado debajo de "Descargar archivo de la carrera", con estilo de acción peligrosa (fondo sutil y borde/texto rojo `#ef4444`), y espaciado inferior seguro con `padding env(safe-area-inset-bottom)` para que la barra de Safari no lo tape.
-  3. Mini mapa de la carrera: ajustado mediante `fitBounds` con padding adecuado; soporte robusto para carreras cortas (pocos metros o punto único) mostrando punto de inicio destacado; alternativa SVG vectorial en caso de fallo de carga o indisponibilidad de WebGL/red; contenedor `.run-mini-map-canvas` corregido al 100% con `ResizeObserver` para evitar recuadros negros vacíos durante transiciones de apertura.
+  3. Mini mapa de la carrera: ajustado mediante `fitBounds` con padding adecuado; soporte robusto para carreras cortas (pocos metros o punto único) mostrando punto de inicio destacado; alternativa SVG vectorial solo en caso de fallo real de WebGL o de carga del estilo; contenedor `.run-mini-map-canvas` corregido al 100% con `ResizeObserver` para evitar recuadros negros vacíos durante transiciones de apertura.
   4. Botón "Descargar archivo de la carrera": tamaño de texto y espaciado optimizados para entrar en una sola línea en anchos de 375 a 430 px, o verse bien en dos líneas centradas sin desbordes.
-- **Pendiente:** comprobación en Safari iOS real y merge.
-- **Siguiente paso:** abrir PR desde la rama `t29-detalle-carrera-movil`.
+- **Pendiente:** revisión y merge del PR #16.
+- **Siguiente paso:** revisión del PR #16.
 
 ## En curso
 
-| Tarea | PR     | Siguiente paso exacto                      |
-| ----- | ------ | ------------------------------------------ |
-| T-15  | PR #14 | En revisión                                |
-| T-29  | —      | Abrir PR desde `t29-detalle-carrera-movil` |
+| Tarea | PR     | Siguiente paso exacto |
+| ----- | ------ | --------------------- |
+| T-15  | PR #14 | En revisión           |
+| T-28  | PR #15 | En revisión           |
+| T-29  | PR #16 | En revisión           |

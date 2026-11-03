@@ -132,13 +132,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
     let isMapLoaded = false;
     let resizeObserver: ResizeObserver | null = null;
 
-    // Timeout fallback: if MapLibre fails or hangs loading tiles/style
-    const timeoutId = setTimeout(() => {
-      if (!isMapLoaded) {
-        setHasMapError(true);
-      }
-    }, 2500);
-
     try {
       setWorkerUrl("/map/maplibre-gl-worker.mjs");
       const styleUrl = theme === "dark" ? "/map/style.json" : "/map/style-light.json";
@@ -157,8 +150,14 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
 
       mapRef.current = map;
 
-      map.on("error", () => {
-        if (!isMapLoaded) {
+      map.on("error", (event) => {
+        const message = event.error?.message ?? "";
+        // Only switch to SVG fallback on genuine fatal errors (WebGL or style failure)
+        const isFatal =
+          /webgl|context|style|failed to initialize|worker failed to load/i.test(message) ||
+          (!isMapLoaded && !/tile/i.test(message));
+
+        if (isFatal) {
           setHasMapError(true);
         }
       });
@@ -166,7 +165,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
       map.on("load", () => {
         if (!mapRef.current) return;
         isMapLoaded = true;
-        clearTimeout(timeoutId);
 
         try {
           map.resize();
@@ -313,7 +311,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
 
     return () => {
       isMapLoaded = false;
-      clearTimeout(timeoutId);
       if (resizeObserver) {
         resizeObserver.disconnect();
       }

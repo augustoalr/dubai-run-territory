@@ -1,14 +1,17 @@
 import { haversineMeters } from "../geo/measure";
 import type { PointFilterConfig, RecordedPoint } from "./types";
 
+export const MAX_RUNNING_SPEED_KMH = 25;
+export const MAX_RUNNING_SPEED_MPS = MAX_RUNNING_SPEED_KMH / 3.6; // 25 km/h ≈ 6.944 m/s
+
 export const DEFAULT_FILTER_CONFIG: PointFilterConfig = {
   maxAccuracyMeters: 30,
-  maxSpeedMps: 12, // 12 m/s = 43.2 km/h
+  maxSpeedMps: MAX_RUNNING_SPEED_MPS,
 };
 
 /**
  * Validates whether an incoming GPS point satisfies accuracy and speed constraints.
- * Discards points with accuracy worse than 30 m or speeds representing impossible jumps.
+ * Discards points with accuracy worse than 30 m or speeds representing impossible jumps (> 25 km/h).
  */
 export function isValidRecordedPoint(
   current: RecordedPoint,
