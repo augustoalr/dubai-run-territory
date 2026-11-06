@@ -8,6 +8,22 @@ Cada carrera marca celdas del mapa. Las ligas se asignan por ritmo, así compite
 
 ![Mapa de territorios en Jumeirah–Kite Beach](docs/progress/desktop-home-map.png)
 
+Pantallas reales de la app en el arranque. Grabar aún no ha empezado y Mis carreras no tiene registros: en estas capturas no hay datos de usuario.
+
+<p>
+  <img src="docs/progress/01-grabar-listo.png" width="49%" alt="Grabar carrera en la pista Jumeirah · Kite, estado listo: ritmo sin dato, tiempo 00:00 y distancia 0,00 km" />
+  <img src="docs/progress/04-mis-carreras-vacio.png" width="49%" alt="Mis carreras vacía: el aviso dice que aún no hay carreras guardadas; no aparece ningún registro ni dato de usuario" />
+</p>
+
+Grabar está en **listo** (tiempo 00:00, distancia 0,00 km, ritmo sin dato). Mis carreras muestra «Aún no tienes carreras guardadas».
+
+<p>
+  <img src="docs/progress/02-privacidad.png" width="49%" alt="Política de privacidad, fase 0, con el aviso de borrador pendiente de revisión legal" />
+  <img src="docs/progress/03-terminos.png" width="49%" alt="Términos y condiciones de uso, fase 0, con el aviso de borrador pendiente de revisión legal" />
+</p>
+
+Privacidad y términos, con el aviso de borrador pendiente de revisión legal.
+
 ## Estado actual
 
 MVP web/PWA en validación sobre la zona Jumeirah Beach → Kite Beach. Repo público. Sin métricas de usuarios publicadas todavía: el foco ahora es probar en la pista real.
