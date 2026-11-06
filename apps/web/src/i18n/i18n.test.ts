@@ -90,6 +90,10 @@ describe("i18n dictionaries key completeness and symmetry", () => {
   it("run detail displays 'Sin recorrido GPS' in Spanish and 'No GPS track' in English", () => {
     expect(es.noGpsTrack).toBe("Sin recorrido GPS");
     expect(en.noGpsTrack).toBe("No GPS track");
+    expect(es.startPointBadge).toBe("PUNTO DE INICIO");
+    expect(en.startPointBadge).toBe("START POINT");
+    expect(es.shortRunNotice).toBe("Carrera de pocos metros");
+    expect(en.shortRunNotice).toBe("Run of a few metres");
   });
 });
 

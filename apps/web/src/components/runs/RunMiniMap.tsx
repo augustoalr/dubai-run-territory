@@ -397,7 +397,7 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
                 fontWeight="700"
                 letterSpacing="0.06em"
               >
-                PUNTO DE INICIO
+                {t.startPointBadge}
               </text>
               <text
                 x={svgData.startPt.x}
@@ -406,7 +406,7 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
                 fill="var(--text-muted)"
                 fontSize="9.5"
               >
-                Carrera de pocos metros
+                {t.shortRunNotice}
               </text>
             </g>
           ) : (

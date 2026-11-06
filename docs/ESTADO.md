@@ -159,13 +159,13 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-30 · La app en español e inglés
 
-- **Estado:** en curso.
-- **Hecho:** sistema de traducción (i18n) propio, sin dependencias de pago y compatible con `output: "export"`. Textos visibles de `apps/web` extraídos a diccionarios `es` y `en`. Detección automática del idioma del dispositivo (`navigator.language`) con fallback a inglés para idiomas distintos de español e inglés, y almacenamiento de la selección en el teléfono (`localStorage`). Selector de idioma ES/EN accesible en cabecera principal, menú y páginas legales. Traducción de `/privacidad` y `/terminos`. Formateo localizado de fechas, distancias y ritmos. En detalle de carrera con menos de 2 puntos GPS se muestra "Sin recorrido GPS" / "No GPS track" evitando recuadros vacíos. Pruebas unitarias de completitud y simetría de claves entre `es` y `en`.
-- **Pendiente:** validación final de tests y cierre.
-- **Siguiente paso:** verificar `pnpm test` y hacer push.
+- **Estado:** en revisión (PR #17).
+- **Hecho:** sistema de traducción (i18n) propio, sin dependencias de pago y compatible con `output: "export"`. Textos visibles de `apps/web` extraídos a diccionarios `es` y `en`. Detección automática del idioma del dispositivo (`navigator.language`) con fallback a inglés para idiomas distintos de español e inglés, y almacenamiento de la selección en el teléfono (`localStorage`). Selector de idioma ES/EN accesible en cabecera principal, menú y páginas legales. Traducción de `/privacidad` y `/terminos`. Formateo localizado de fechas, distancias y ritmos. En detalle de carrera con menos de 2 puntos GPS se muestra "Sin recorrido GPS" / "No GPS track" evitando recuadros vacíos. Textos de fallback en SVG de recorridos cortos internacionalizados (`startPointBadge`, `shortRunNotice`). Pruebas unitarias de completitud y simetría de claves entre `es` y `en`.
+- **Pendiente:** revisión y fusión del PR #17.
+- **Siguiente paso:** fusionar en `main`.
 
 ## En curso
 
-| Tarea | PR  | Siguiente paso exacto |
-| ----- | --- | --------------------- |
-| T-30  | -   | En curso              |
+| Tarea | PR     | Siguiente paso exacto |
+| ----- | ------ | --------------------- |
+| T-30  | PR #17 | En revisión           |

@@ -174,6 +174,8 @@ export const es = {
   deleteRunError: "No se pudo borrar la carrera. Inténtalo de nuevo.",
   noGpsTrack: "Sin recorrido GPS",
   mapTrackAria: "Recorrido de la carrera",
+  startPointBadge: "PUNTO DE INICIO",
+  shortRunNotice: "Carrera de pocos metros",
 
   // Delete Confirm Dialog
   deleteModalTitle: "¿Borrar carrera?",
@@ -396,6 +398,8 @@ export const en: Dictionary = {
   deleteRunError: "Could not delete the run. Please try again.",
   noGpsTrack: "No GPS track",
   mapTrackAria: "Run track",
+  startPointBadge: "START POINT",
+  shortRunNotice: "Run of a few metres",
 
   // Delete Confirm Dialog
   deleteModalTitle: "Delete run?",
