@@ -1,8 +1,41 @@
-# Territorio
+# Dubai Run Territory
 
-PWA para corredores de Dubái. Cada carrera conquista celdas hexagonales del mapa y cada liga tiene el suyo. Esta base muestra la pista de Jumeirah Beach a Kite Beach, con dueños de ejemplo. Las reglas están en [`docs/PRODUCTO.md`](docs/PRODUCTO.md) y el stack en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md).
+PWA para corredores de Dubái: conquista territorio hexagonal por ritmo en la pista de Jumeirah–Kite Beach.
 
-Costo cero: Next.js, MapLibre, OpenFreeMap, h3-js y, más adelante, Supabase Free. El hosting de la validación es Vercel Hobby. El build es un sitio estático, así que se puede mover a Cloudflare Pages cuando el proyecto empiece a cobrar.
+Cada carrera marca celdas del mapa. Las ligas se asignan por ritmo, así compites contra gente de tu nivel. El MVP ya está en vivo como web/PWA.
+
+**App en vivo:** [https://dubai-run-territory.vercel.app](https://dubai-run-territory.vercel.app)
+
+![Mapa de territorios en Jumeirah–Kite Beach](docs/progress/desktop-home-map.png)
+
+## Estado actual
+
+MVP web/PWA en validación sobre la zona Jumeirah Beach → Kite Beach. Repo público. Sin métricas de usuarios publicadas todavía: el foco ahora es probar en la pista real.
+
+| Área                               | Estado                                                                            |
+| ---------------------------------- | --------------------------------------------------------------------------------- |
+| Mapa de territorios (99 celdas H3) | En producción                                                                     |
+| Ligas por ritmo                    | En producción                                                                     |
+| Grabar carrera con GPS (`/grabar`) | En producción                                                                     |
+| Mis carreras + detalle móvil       | En producción                                                                     |
+| Español / English                  | En revisión ([PR #17](https://github.com/augustoalr/dubai-run-territory/pull/17)) |
+
+## Qué hace hoy
+
+- **Territorio hexagonal:** la pista se parte en celdas; la conquista va por el mejor ritmo en una ventana de 1 km.
+- **Ligas por ritmo:** cuatro ligas; la primera carrera te sitúa y puedes ascender.
+- **Grabación GPS en la app:** seguimiento en el teléfono, ritmo y velocidad estables, aviso de no bloquear el teléfono.
+- **Mis carreras:** lista local, resumen, mini mapa del recorrido y borrado seguro (ajustado para iPhone Safari).
+- **ES / EN:** `/privacidad` y `/terminos` ya están en español e inglés. El resto de la interfaz sigue en revisión ([PR #17](https://github.com/augustoalr/dubai-run-territory/pull/17)).
+- **Páginas legales:** `/privacidad` y `/terminos` (borrador pendiente de revisión legal).
+
+## Stack
+
+- **Frontend:** Next.js (export estático), PWA, MapLibre GL, OpenFreeMap
+- **Dominio:** TypeScript monorepo (`apps/web`, `packages/core`), H3 res 10, parsers GPX/FIT
+- **Backend previsto:** Supabase Free (Postgres + RLS + Edge Functions)
+- **Hosting de validación:** Vercel Hobby → portable a Cloudflare Pages cuando haya ingresos
+- **Costo de fase 0:** pensado para quedarse en cero (sin APIs de mapas de pago)
 
 ## Cómo correrlo
 
@@ -13,7 +46,7 @@ pnpm install
 pnpm dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000). La interfaz sale en español; el botón EN cambia los textos.
+Abre [http://localhost:3000](http://localhost:3000).
 
 ```bash
 pnpm lint
@@ -33,15 +66,15 @@ python3 -m http.server 3000 --directory apps/web/out
 ## Estructura
 
 ```
-apps/web/                 PWA (Next.js, mapa, textos es/en)
-packages/core/            Zonas, celdas H3, ligas y el tipo CellEffort. Sin DOM
+apps/web/                 PWA (Next.js, mapa, textos)
+packages/core/            Zonas, celdas H3, ligas, parsers y antitrampas. Sin DOM
 supabase/migrations/      Esquema, RLS y seed de Jumeirah · Kite
 supabase/seed/zones/      GeoJSON de la zona y la lista de celdas
-scripts/                  Regenera la zona, el seed SQL y la prueba de RLS
-docs/                     PRODUCTO, ARQUITECTURA, TAREAS, DEPLOY
+scripts/                  Regenera la zona, el seed SQL y la verificación de DB
+docs/                     PRODUCTO, ARQUITECTURA, TAREAS, ESTADO, DEPLOY
 ```
 
-Marina, Al Qudra y Downtown ya están en el catálogo de `packages/core`, en borrador y sin polígono. Añadir una zona es meter su geometría en ese catálogo y volver a cortar las celdas. No hace falta tocar el mapa.
+Marina, Al Qudra y Downtown ya están en el catálogo de `packages/core`, en borrador y sin polígono. Añadir una zona es meter su geometría en ese catálogo y volver a cortar las celdas.
 
 ## Mapa y celdas
 
@@ -51,16 +84,16 @@ Marina, Al Qudra y Downtown ya están en el catálogo de `packages/core`, en bor
 
 ## Variables
 
-Copia `.env.example` a `apps/web/.env.local` cuando haya anon key. Sin esa clave la app abre igual: el mapa no llama a Supabase todavía.
+Copia `.env.example` a `apps/web/.env.local` cuando haya anon key. Sin esa clave la app abre igual: el mapa puede usar datos locales de demostración.
 
-El proyecto es `dubai-run-territory` (`usduksotdecgusaxeyva`, `ap-south-1`).
+No guardes service role keys ni secretos en el repo. Las variables públicas van documentadas en [`docs/DEPLOY.md`](docs/DEPLOY.md). El nombre y el ref del proyecto de validación están en `.env.example`.
 
 ## Base de datos
 
 Las migraciones están en `supabase/migrations/`. Para aplicarlas al proyecto real, con el CLI de Supabase y sin guardar claves en el repo:
 
 ```bash
-supabase link --project-ref usduksotdecgusaxeyva
+supabase link --project-ref <tu-project-ref>
 supabase db push
 ```
 
@@ -68,6 +101,23 @@ Eso crea el esquema, el RLS y el seed de Jumeirah · Kite (zona en borrador, 99 
 
 `pnpm db:verify` comprueba las migraciones contra un Postgres local. No usa el proyecto hospedado.
 
-## Próximos pasos
+## Roadmap breve
 
-El backlog está en [`docs/TAREAS.md`](docs/TAREAS.md). El esquema y el seed de la zona ya están en el repo. Augusto tiene que aplicar las migraciones y aprobar el polígono. Siguen los parsers, el antitrampas y la Edge Function (T-05 a T-13), y después el login y la subida (T-14 en adelante). Garmin y Polar podrán conectar cuentas; Strava no entra en la fase 0.
+1. Cerrar ES/EN (PR #17) y seguir validando en la pista de Jumeirah–Kite.
+2. Login y sincronización remota de carreras.
+3. Desplegar `process-run` y conectar conquista real en Supabase.
+4. Conexión Garmin / Polar (Strava fuera de fase 0).
+5. Más zonas de Dubái (y más adelante Caracas / Lechería) cuando el MVP se valide con corredores reales.
+
+El backlog detallado está en [`docs/TAREAS.md`](docs/TAREAS.md). El estado por tarea está en [`docs/ESTADO.md`](docs/ESTADO.md). Las reglas del producto están en [`docs/PRODUCTO.md`](docs/PRODUCTO.md).
+
+## Privacidad y legal
+
+- Páginas `/privacidad` y `/terminos` en la app (borrador pendiente de revisión legal).
+- La grabación GPS vive primero en el teléfono; no se publican horarios ni puntos de inicio/fin de rutas personales.
+- Edad mínima prevista: 16 años.
+- Contacto de privacidad: pendiente de un correo real del proyecto (hoy aparece un placeholder en la app).
+
+## Contribuir
+
+Lee [`AGENTS.md`](AGENTS.md) antes de abrir un PR. Una tarea = una rama = un PR. Actualiza `docs/ESTADO.md` en el mismo cambio. No trabajes directo en `main`.
