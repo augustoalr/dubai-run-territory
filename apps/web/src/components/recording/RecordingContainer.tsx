@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/i18n";
 import { useRunnerRecorder } from "@/lib/recording/use-runner-recorder";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 import { LiveMetricsGrid } from "./LiveMetricsGrid";
@@ -10,6 +11,7 @@ import { RunSummaryCard } from "./RunSummaryCard";
 import { WakeLockBanner } from "./WakeLockBanner";
 
 export function RecordingContainer() {
+  const { t } = useI18n();
   const [theme] = useState<ThemeMode>(() => {
     if (typeof document === "undefined") return "dark";
     return (document.documentElement.getAttribute("data-theme") as ThemeMode) || "dark";
@@ -54,7 +56,7 @@ export function RecordingContainer() {
                     ⚠️
                   </div>
                   <div>
-                    <h3 className="error-title">No se pudo acceder al GPS</h3>
+                    <h3 className="error-title">{t.gpsErrorTitle}</h3>
                     <p className="error-desc">{error}</p>
                   </div>
                   <button
@@ -62,7 +64,7 @@ export function RecordingContainer() {
                     className="action-btn-primary error-retry-btn"
                     onClick={startRecording}
                   >
-                    Reintentar
+                    {t.retry}
                   </button>
                 </div>
               )}
@@ -71,21 +73,19 @@ export function RecordingContainer() {
                 <div className="gps-acquiring-banner glass" aria-live="polite">
                   <div className="gps-acquiring-status">
                     <span className="spinner-dot" />
-                    <span className="gps-acquiring-text">
-                      Buscando señal GPS… Sal al aire libre, lejos de edificios altos
-                    </span>
+                    <span className="gps-acquiring-text">{t.gpsAcquiringNotice}</span>
                   </div>
                   {acquiringTimeoutReached && (
                     <div className="gps-acquiring-actions">
                       <button type="button" className="btn-start-anyway" onClick={startAnyway}>
-                        Empezar igual
+                        {t.startAnyway}
                       </button>
                       <button
                         type="button"
                         className="btn-cancel-acquiring"
                         onClick={cancelAcquiring}
                       >
-                        Cancelar
+                        {t.cancel}
                       </button>
                     </div>
                   )}

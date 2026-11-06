@@ -1,7 +1,7 @@
 "use client";
 
-import { formatDisplayDistance, formatDisplayDuration, formatDisplayPace } from "@dubai-run/core";
 import { useCallback, useState } from "react";
+import { useI18n } from "@/i18n";
 import type { StoredRun } from "@/lib/recording/indexeddb-storage";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
@@ -15,6 +15,7 @@ interface RunDetailModalProps {
 }
 
 export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDetailModalProps) {
+  const { t, formatDate, formatDistance, formatDuration, formatPace } = useI18n();
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -52,7 +53,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
       setIsConfirmingDelete(false);
       onClose();
     } catch {
-      setDeleteError("No se pudo borrar la carrera. Inténtalo de nuevo.");
+      setDeleteError(t.deleteRunError);
     } finally {
       setIsDeleting(false);
     }
@@ -60,20 +61,17 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
 
   if (!run) return null;
 
-  const startDate = new Date(run.startedAt);
-  const formattedDate = !Number.isNaN(startDate.getTime())
-    ? startDate.toLocaleDateString("es-ES", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "Fecha no disponible";
+  const formattedDate = formatDate(run.startedAt, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-  const distanceText = formatDisplayDistance(run.distanceMeters);
-  const durationText = formatDisplayDuration(run.durationSeconds);
-  const avgPaceText = formatDisplayPace(run.avgPaceSecondsPerKm);
+  const distanceText = formatDistance(run.distanceMeters);
+  const durationText = formatDuration(run.durationSeconds);
+  const avgPaceText = formatPace(run.avgPaceSecondsPerKm);
 
   return (
     <>
@@ -90,14 +88,14 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
             <div className="run-detail-header-text">
               <span className="zone-badge">{formattedDate}</span>
               <h2 id="run-detail-title" className="modal-title">
-                {run.name || "Resumen de carrera"}
+                {run.name || t.runSummaryDefaultTitle}
               </h2>
             </div>
             <button
               type="button"
               className="modal-close-btn run-detail-close-btn"
               onClick={onClose}
-              aria-label="Cerrar detalle"
+              aria-label={t.closeRunDetail}
             >
               ✕
             </button>
@@ -111,17 +109,17 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
           {/* Metrics summary */}
           <div className="run-detail-metrics-grid">
             <div className="metric-box glass">
-              <span className="metric-label">Distancia</span>
+              <span className="metric-label">{t.distance}</span>
               <span className="metric-value">{distanceText}</span>
             </div>
 
             <div className="metric-box glass">
-              <span className="metric-label">Tiempo</span>
+              <span className="metric-label">{t.time}</span>
               <span className="metric-value">{durationText}</span>
             </div>
 
             <div className="metric-box glass col-span-full">
-              <span className="metric-label">Ritmo medio</span>
+              <span className="metric-label">{t.avgPace}</span>
               <span className="metric-value pace-hero">{avgPaceText}</span>
             </div>
           </div>
@@ -132,7 +130,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
               type="button"
               className="action-btn-primary btn-download-run"
               onClick={handleDownload}
-              aria-label="Descargar archivo de la carrera"
+              aria-label={t.downloadRunFile}
             >
               <svg
                 width="18"
@@ -150,7 +148,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span className="btn-download-text">Descargar archivo de la carrera</span>
+              <span className="btn-download-text">{t.downloadRunFile}</span>
             </button>
 
             <button
@@ -158,7 +156,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
               className="btn-delete-run btn-delete-trigger"
               onClick={handleOpenDelete}
               disabled={isDeleting}
-              aria-label="Borrar carrera"
+              aria-label={t.deleteRun}
             >
               <svg
                 width="16"
@@ -174,7 +172,7 @@ export function RunDetailModal({ run, theme = "dark", onClose, onDelete }: RunDe
                 <path d="M3 6h18" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
-              <span>Borrar carrera</span>
+              <span>{t.deleteRun}</span>
             </button>
           </div>
         </div>

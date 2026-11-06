@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/i18n";
 import type { TerritoryCell } from "@/lib/territory/types";
 
 type StealGuideModalProps = {
@@ -9,25 +10,26 @@ type StealGuideModalProps = {
 };
 
 export function StealGuideModal({ cell, isOpen, onClose }: StealGuideModalProps) {
+  const { t } = useI18n();
+
   if (!isOpen || !cell) return null;
 
   const isMine = cell.status === "mine";
   const isThreatened = cell.status === "threatened";
   const isFree = cell.status === "free";
 
-  let title = "Cómo robar este territorio";
-  let subtitle = `Supera el ritmo de ${cell.paceFormatted ?? "la zona"} para adueñarte de este sector.`;
+  let title = t.guideTitleSteal;
+  let subtitle = t.guideSubtitleSteal(cell.paceFormatted ?? t.zoneEyebrow);
 
   if (isThreatened) {
-    title = "Cómo defender tu territorio";
-    subtitle = `Un rival está a solo ${cell.threat?.gapSeconds ?? 2} segundos. Corre más rápido para afianzar tu liderato.`;
+    title = t.guideTitleDefend;
+    subtitle = t.guideSubtitleDefend(cell.threat?.gapSeconds ?? 2);
   } else if (isMine) {
-    title = "Cómo mejorar tu marca";
-    subtitle =
-      "Cuanto más rápido corras este tramo, más difícil será que otro corredor te lo robe.";
+    title = t.guideTitleImprove;
+    subtitle = t.guideSubtitleImprove;
   } else if (isFree) {
-    title = "Cómo conquistar este territorio";
-    subtitle = "Este sector no tiene dueño en tu liga. Cualquier carrera válida lo hace tuyo.";
+    title = t.guideTitleConquer;
+    subtitle = t.guideSubtitleConquer;
   }
 
   return (
@@ -53,7 +55,7 @@ export function StealGuideModal({ cell, isOpen, onClose }: StealGuideModalProps)
             type="button"
             className="modal-close-btn"
             onClick={onClose}
-            aria-label="Cerrar guía"
+            aria-label={t.guideCloseAria}
           >
             ✕
           </button>
@@ -63,41 +65,31 @@ export function StealGuideModal({ cell, isOpen, onClose }: StealGuideModalProps)
           <div className="step-card">
             <div className="step-num">1</div>
             <div className="step-body">
-              <h3 className="step-title">Sal a correr</h3>
-              <p className="step-desc">
-                Pasa por la pista de running de Jumeirah Beach / Kite Beach durante tu
-                entrenamiento.
-              </p>
+              <h3 className="step-title">{t.step1Title}</h3>
+              <p className="step-desc">{t.step1Desc}</p>
             </div>
           </div>
 
           <div className="step-card">
             <div className="step-num">2</div>
             <div className="step-body">
-              <h3 className="step-title">Tus carreras entran solas</h3>
-              <p className="step-desc">
-                Conecta tu reloj <strong>Garmin</strong> o <strong>Polar</strong>, o graba
-                directamente con la app. Tu actividad se procesará automáticamente al terminar.
-              </p>
+              <h3 className="step-title">{t.step2Title}</h3>
+              <p className="step-desc">{t.step2Desc}</p>
             </div>
           </div>
 
           <div className="step-card">
             <div className="step-num">3</div>
             <div className="step-body">
-              <h3 className="step-title">Conquista la baldosa</h3>
-              <p className="step-desc">
-                {isFree
-                  ? "Pasa por esa baldosa para conquistarla. Contamos tu ritmo en el kilómetro alrededor de ella."
-                  : "Pasa por esa baldosa más rápido que su dueño. Contamos tu ritmo en el kilómetro alrededor de ella."}
-              </p>
+              <h3 className="step-title">{t.step3Title}</h3>
+              <p className="step-desc">{isFree ? t.step3DescFree : t.step3DescBeat}</p>
             </div>
           </div>
         </div>
 
         <div className="modal-footer">
           <button type="button" className="action-btn-primary" onClick={onClose}>
-            ¡Entendido, a correr!
+            {t.guideUnderstood}
           </button>
         </div>
       </div>

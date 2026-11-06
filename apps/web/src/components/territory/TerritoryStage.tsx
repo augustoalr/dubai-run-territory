@@ -3,6 +3,7 @@
 import { cellPolygon, jumeirahKiteZone, type LeagueCode } from "@dubai-run/core";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useI18n } from "@/i18n";
 import { getCellPaint, type ThemeMode } from "@/lib/territory/cell-paint";
 import { territoryRepository } from "@/lib/territory/territory-repository";
 import type { TerritoryCell } from "@/lib/territory/types";
@@ -13,6 +14,7 @@ import { TerritoryHeader } from "./TerritoryHeader";
 import { TerritoryMapView, type CellFeatureCollection } from "./TerritoryMapView";
 
 export function TerritoryStage() {
+  const { t } = useI18n();
   const userProfile = useMemo(() => territoryRepository.getUserProfile(), []);
   const [currentLeague, setCurrentLeague] = useState<LeagueCode>(userProfile.league);
   const [theme, setTheme] = useState<ThemeMode>("dark");
@@ -71,7 +73,7 @@ export function TerritoryStage() {
   if (!polygon) {
     return (
       <div className="territory-error-state">
-        <p>No se pudo cargar la geometría de la zona Jumeirah · Kite.</p>
+        <p>{t.mapGeometryError}</p>
       </div>
     );
   }
@@ -109,7 +111,7 @@ export function TerritoryStage() {
       {/* Floating Action Buttons: Mis carreras y Grabar */}
       {!selectedCell && (
         <div className="territory-fab-cluster">
-          <Link href="/carreras" className="territory-runs-fab" aria-label="Mis carreras">
+          <Link href="/carreras" className="territory-runs-fab" aria-label={t.runs}>
             <svg
               width="18"
               height="18"
@@ -124,13 +126,13 @@ export function TerritoryStage() {
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
-            <span>Mis carreras</span>
+            <span>{t.runs}</span>
           </Link>
-          <Link href="/grabar" className="territory-record-fab" aria-label="Grabar carrera">
+          <Link href="/grabar" className="territory-record-fab" aria-label={t.record}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
-            <span>Grabar</span>
+            <span>{t.record}</span>
           </Link>
         </div>
       )}
@@ -153,17 +155,15 @@ export function TerritoryStage() {
       {!isReady && !fatalError && (
         <div className="territory-loading-pill" aria-live="polite">
           <span className="spinner-dot" />
-          <span>Cargando mapa de territorios...</span>
+          <span>{t.mapLoading}</span>
         </div>
       )}
 
       {/* Error state */}
       {fatalError && (
         <div className="territory-fatal-error" role="alert">
-          <p className="fatal-title">No se pudo iniciar el mapa 3D</p>
-          <p className="fatal-desc">
-            Se requiere WebGL y conexión a internet para renderizar los mapas de OpenFreeMap.
-          </p>
+          <p className="fatal-title">{t.mapFatalTitle}</p>
+          <p className="fatal-desc">{t.mapFatalDesc}</p>
         </div>
       )}
     </main>

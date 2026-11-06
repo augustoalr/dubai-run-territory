@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { LeagueCode } from "@dubai-run/core";
+import { LocaleToggle } from "@/components/common/LocaleToggle";
+import { useI18n } from "@/i18n";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 import type { TerritoryStats } from "@/lib/territory/types";
 import { AppMenuModal } from "./AppMenuModal";
@@ -27,6 +29,7 @@ export function TerritoryHeader({
   onToggleTheme,
 }: TerritoryHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { t } = useI18n();
 
   return (
     <>
@@ -34,10 +37,10 @@ export function TerritoryHeader({
         <div className="header-top-row">
           <div>
             <div className="brand-zone-row">
-              <span className="zone-badge">Jumeirah · Kite Beach</span>
-              <span className="season-pill">Temporada 1</span>
+              <span className="zone-badge">{t.zoneName}</span>
+              <span className="season-pill">{t.season}</span>
             </div>
-            <h1 className="brand-wordmark">Territorio</h1>
+            <h1 className="brand-wordmark">{t.appName}</h1>
           </div>
 
           <div className="header-actions">
@@ -45,8 +48,8 @@ export function TerritoryHeader({
               type="button"
               className="header-menu-button"
               onClick={() => setIsMenuOpen(true)}
-              aria-label="Abrir menú y enlaces legales"
-              title="Menú y términos legales"
+              aria-label={t.openMenu}
+              title={t.openMenu}
             >
               <svg
                 width="19"
@@ -63,9 +66,10 @@ export function TerritoryHeader({
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
-              <span className="header-menu-label">Menú</span>
+              <span className="header-menu-label">{t.menu}</span>
             </button>
 
+            <LocaleToggle />
             <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           </div>
         </div>
