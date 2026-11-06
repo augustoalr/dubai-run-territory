@@ -8,6 +8,10 @@ Cada carrera marca celdas del mapa. Las ligas se asignan por ritmo, así compite
 
 ![Mapa de territorios en Jumeirah–Kite Beach](docs/progress/desktop-home-map.png)
 
+Al pulsar una baldosa se abre de quién es y las marcas de ritmo. Esta es una baldosa propia, sin nombre: la etiqueta dice «Tú», se muestra el alias público y la ficha enseña la fecha de la marca, el ritmo actual (4:51 /km) y tu mejor ritmo en esa sección (4:51 /km).
+
+![Detalle al pulsar una baldosa propia: etiqueta Tú, alias público, marca del 28 oct 2026, ritmo actual 4:51 /km y tu mejor ritmo 4:51 /km](docs/progress/06-detalle-baldosa.png)
+
 Pantallas reales de la app en el arranque. Grabar aún no ha empezado y Mis carreras no tiene registros: en estas capturas no hay datos de usuario.
 
 <p>
