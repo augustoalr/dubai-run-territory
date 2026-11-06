@@ -9,11 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacidadPage() {
-  return (
-    <LegalPageLayout
-      docEs={privacyPolicyContent.es}
-      docEn={privacyPolicyContent.en}
-      initialLocale="es"
-    />
-  );
+  return <LegalPageLayout docEs={privacyPolicyContent.es} docEn={privacyPolicyContent.en} />;
 }

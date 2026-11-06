@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useI18n } from "@/i18n";
 import { importWatchFile } from "@/lib/recording/run-importer";
 import type { StoredRun } from "@/lib/recording/indexeddb-storage";
 
@@ -9,6 +10,7 @@ interface UploadWatchFileCardProps {
 }
 
 export function UploadWatchFileCard({ onRunImported }: UploadWatchFileCardProps) {
+  const { t } = useI18n();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -25,14 +27,19 @@ export function UploadWatchFileCard({ onRunImported }: UploadWatchFileCardProps)
     try {
       const stored = await importWatchFile(file);
       setSuccessMessage(
-        `Carrera guardada con éxito (${(stored.distanceMeters / 1000).toFixed(2)} km).`,
+        t.fileSaveSuccess(
+          (stored.distanceMeters / 1000).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
+        ),
       );
       onRunImported(stored);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "No se pudo leer el archivo.";
+      const msg = err instanceof Error ? err.message : t.fileReadError;
       setErrorMessage(msg);
     } finally {
       setIsProcessing(false);
@@ -44,13 +51,10 @@ export function UploadWatchFileCard({ onRunImported }: UploadWatchFileCardProps)
   };
 
   return (
-    <section className="glass upload-watch-card" aria-label="Opciones avanzadas">
+    <section className="glass upload-watch-card" aria-label={t.advancedOption}>
       <div className="upload-watch-header">
-        <span className="upload-watch-badge">Opción avanzada</span>
-        <p className="upload-watch-desc">
-          Si ya grabaste con tu reloj deportivo, puedes importar el archivo para ver tu recorrido
-          aquí.
-        </p>
+        <span className="upload-watch-badge">{t.advancedOption}</span>
+        <p className="upload-watch-desc">{t.uploadWatchDesc}</p>
       </div>
 
       <input
@@ -70,7 +74,7 @@ export function UploadWatchFileCard({ onRunImported }: UploadWatchFileCardProps)
           disabled={isProcessing}
           className="btn btn-secondary upload-watch-btn"
         >
-          {isProcessing ? "Leyendo archivo..." : "Subir archivo de mi reloj (.gpx o .fit)"}
+          {isProcessing ? t.readingFile : t.uploadWatchBtn}
         </button>
       </div>
 

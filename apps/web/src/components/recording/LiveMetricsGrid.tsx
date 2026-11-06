@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  formatDisplayDistance,
-  formatDisplayDuration,
-  formatDisplayPace,
-  formatDisplaySpeed,
-} from "@dubai-run/core";
+import { useI18n } from "@/i18n";
 
 interface LiveMetricsGridProps {
   durationSeconds: number;
@@ -20,16 +15,18 @@ export function LiveMetricsGrid({
   currentPaceSecondsPerKm,
   currentSpeedKmh,
 }: LiveMetricsGridProps) {
-  const durationText = formatDisplayDuration(durationSeconds);
-  const distanceText = formatDisplayDistance(distanceMeters);
-  const currentPaceText = formatDisplayPace(currentPaceSecondsPerKm);
-  const currentSpeedText = formatDisplaySpeed(currentSpeedKmh);
+  const { t, formatDistance, formatDuration, formatPace, formatSpeed } = useI18n();
+
+  const durationText = formatDuration(durationSeconds);
+  const distanceText = formatDistance(distanceMeters);
+  const currentPaceText = formatPace(currentPaceSecondsPerKm);
+  const currentSpeedText = formatSpeed(currentSpeedKmh);
 
   return (
     <div className="live-metrics-container">
       {/* Primary Hero: Ritmo Actual */}
       <div className="metric-card metric-hero glass">
-        <span className="metric-tag">Ritmo actual</span>
+        <span className="metric-tag">{t.currentPace}</span>
         <div className="metric-number-wrap">
           <span className="metric-number hero-number">{currentPaceText}</span>
         </div>
@@ -39,14 +36,14 @@ export function LiveMetricsGrid({
       {/* Secondary Metrics: Tiempo y Distancia */}
       <div className="secondary-metrics-grid">
         <div className="metric-card glass">
-          <span className="metric-tag">Tiempo</span>
+          <span className="metric-tag">{t.time}</span>
           <div className="metric-number-wrap">
             <span className="metric-number">{durationText}</span>
           </div>
         </div>
 
         <div className="metric-card glass">
-          <span className="metric-tag">Distancia</span>
+          <span className="metric-tag">{t.distance}</span>
           <div className="metric-number-wrap">
             <span className="metric-number">{distanceText}</span>
           </div>

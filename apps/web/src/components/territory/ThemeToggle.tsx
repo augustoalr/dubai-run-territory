@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/i18n";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 
 type ThemeToggleProps = {
@@ -8,6 +9,7 @@ type ThemeToggleProps = {
 };
 
 export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
+  const { t } = useI18n();
   const isDark = theme === "dark";
 
   return (
@@ -15,8 +17,8 @@ export function ThemeToggle({ theme, onToggle }: ThemeToggleProps) {
       type="button"
       onClick={onToggle}
       className="theme-toggle-btn"
-      aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+      aria-label={t.themeToggle}
+      title={t.themeToggle}
     >
       {isDark ? (
         <svg

@@ -2,7 +2,7 @@
 
 Actualizado el 29 oct 2026, con main en `3955f66` (PR #7).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El trabajo de código en curso es **T-16**.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El trabajo de código en curso es **T-30**.
 
 ## T-01 · Scaffolding
 
@@ -20,10 +20,10 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-03 · Deploy
 
-- **Estado:** parcial.
+- **Estado:** terminada.
 - **Hecho:** export estático. `docs/DEPLOY.md` deja Vercel Hobby como destino mientras no haya ingresos, y Cloudflare Pages para cuando se cobre. Variables `NEXT_PUBLIC_SUPABASE_*` documentadas, sin claves en git.
-- **Pendiente:** no hay una URL pública comprobada desde este repo, ni preview por PR.
-- **Siguiente paso:** importar el repo en Vercel Hobby (Root Directory `apps/web`) y anotar aquí la URL cuando responda. No hace falta cuenta de Cloudflare todavía.
+- **Pendiente:** ninguno.
+- **Siguiente paso:** ninguno.
 
 ## T-04 · Zona y seed
 
@@ -130,37 +130,42 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-15 · Pantalla "Mis carreras" (sin servidor todavía)
 
-- **Estado:** en revisión (PR #14).
+- **Estado:** terminada (PR #14 fusionado en `main`).
 - **Hecho:** nueva página `/carreras` en `apps/web` con la lista de carreras guardadas en el teléfono (IndexedDB de T-25), ordenadas cronológicamente (la más reciente primero), mostrando fecha, distancia, tiempo y ritmo medio en formato "5:12 /km". Al tocar una carrera: modal con visualización del recorrido en mini mapa (MapLibre GL y alternativa vectorial SVG), resumen de métricas, "Descargar archivo de la carrera" y "Borrar" con ventana de confirmación previa. Si no hay carreras, pantalla amable con botón principal "Grabar mi primera carrera" hacia `/grabar`. Opción avanzada discreta al final: "Subir archivo de mi reloj (.gpx o .fit)" con validación mediante parsers de `packages/core` y mensajes de error comprensibles en lenguaje claro si el archivo está dañado. Enlace a `/carreras` desde el resumen de `/grabar` y desde el botón flotante del mapa principal (sin alterar `MapLegend.tsx` ni `TerritoryHeader.tsx`). Textos en español sencillo sin términos técnicos como "H3", "s/km" ni "GPX" en pantalla (salvo en la opción avanzada).
 - **Pendiente:** sincronización remota con backend en la Fase 1.
-- **Siguiente paso:** revisión y merge del PR #14.
+- **Siguiente paso:** ninguno.
 
 ## T-28 · Arreglos en la grabación GPS (/grabar)
 
-- **Estado:** en revisión (PR #15).
+- **Estado:** terminada (PR #15 fusionado en `main`).
 - **Hecho:** en rama `t28-gps-pantalla`:
   1. Velocidad y ritmo calculados con media móvil de 15 a 20 s (no punto a punto), ignorando movimientos dentro del margen de error del GPS (accuracy) y mostrando "--" si en los últimos 10 s el avance es menor a 5 m (estás quieto). Mostrando solo ritmo y velocidad en pantalla sin texto "· media móvil".
   2. Descarte de puntos con velocidad implícita superior a 25 km/h respecto al punto anterior, sin sumarlos a la distancia.
   3. Banner en búsqueda de señal: "Buscando señal GPS… Sal al aire libre, lejos de edificios altos" y, tras 60 s sin señal precisa, botones "Empezar igual" o "Cancelar". Aviso visible "No bloquees el teléfono mientras grabas" durante la búsqueda y la grabación.
   4. Tests unitarios en `packages/core/src/recording`: puntos que saltan alrededor de un mismo sitio (distancia en 0 y ritmo en "--") y salto imposible (> 25 km/h descartado).
-- **Pendiente:** revisión y merge del PR #15.
-- **Siguiente paso:** revisión del PR #15.
+- **Pendiente:** ninguno.
+- **Siguiente paso:** ninguno.
 
 ## T-29 · Detalle de carrera en móvil (iPhone Safari)
 
-- **Estado:** en revisión (PR #16).
+- **Estado:** terminada (PR #16 fusionado en `main`).
 - **Hecho:** correcciones en el modal de detalle de carrera en "Mis carreras" (`/carreras`) optimizadas para iPhone con Safari (375 a 430 px):
   1. Botón de cierre (✕): integrado dentro del encabezado modal, visible con contraste nítido, objetivo táctil ampliado a 44x44 px (Apple HIG) y respeto del área segura superior mediante `padding env(safe-area-inset-top)` para evitar colisiones con la barra del navegador.
   2. Botón "Borrar carrera": ancho completo, ubicado debajo de "Descargar archivo de la carrera", con estilo de acción peligrosa (fondo sutil y borde/texto rojo `#ef4444`), y espaciado inferior seguro con `padding env(safe-area-inset-bottom)` para que la barra de Safari no lo tape.
   3. Mini mapa de la carrera: ajustado mediante `fitBounds` con padding adecuado; soporte robusto para carreras cortas (pocos metros o punto único) mostrando punto de inicio destacado; alternativa SVG vectorial solo en caso de fallo real de WebGL o de carga del estilo; contenedor `.run-mini-map-canvas` corregido al 100% con `ResizeObserver` para evitar recuadros negros vacíos durante transiciones de apertura.
   4. Botón "Descargar archivo de la carrera": tamaño de texto y espaciado optimizados para entrar en una sola línea en anchos de 375 a 430 px, o verse bien en dos líneas centradas sin desbordes.
-- **Pendiente:** revisión y merge del PR #16.
-- **Siguiente paso:** revisión del PR #16.
+- **Pendiente:** ninguno.
+- **Siguiente paso:** ninguno.
+
+## T-30 · La app en español e inglés
+
+- **Estado:** en revisión (PR #17).
+- **Hecho:** sistema de traducción (i18n) propio, sin dependencias de pago y compatible con `output: "export"`. Textos visibles de `apps/web` extraídos a diccionarios `es` y `en`. Detección automática del idioma del dispositivo (`navigator.language`) con fallback a inglés para idiomas distintos de español e inglés, y almacenamiento de la selección en el teléfono (`localStorage`). Selector de idioma ES/EN accesible en cabecera principal, menú y páginas legales. Traducción de `/privacidad` y `/terminos`. Formateo localizado de fechas, distancias y ritmos. En detalle de carrera con menos de 2 puntos GPS se muestra "Sin recorrido GPS" / "No GPS track" evitando recuadros vacíos. Textos de fallback en SVG de recorridos cortos internacionalizados (`startPointBadge`, `shortRunNotice`). Pruebas unitarias de completitud y simetría de claves entre `es` y `en`.
+- **Pendiente:** revisión y fusión del PR #17.
+- **Siguiente paso:** fusionar en `main`.
 
 ## En curso
 
 | Tarea | PR     | Siguiente paso exacto |
 | ----- | ------ | --------------------- |
-| T-15  | PR #14 | En revisión           |
-| T-28  | PR #15 | En revisión           |
-| T-29  | PR #16 | En revisión           |
+| T-30  | PR #17 | En revisión           |

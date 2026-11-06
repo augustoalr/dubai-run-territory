@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useI18n } from "@/i18n";
 
 export function EmptyRunsView() {
+  const { t } = useI18n();
+
   return (
     <div className="empty-runs-card glass">
       <div className="empty-runs-icon-badge" aria-hidden="true">
@@ -22,18 +25,15 @@ export function EmptyRunsView() {
       </div>
 
       <div className="empty-runs-text">
-        <h2 className="empty-runs-title">Aún no tienes carreras guardadas</h2>
-        <p className="empty-runs-desc">
-          Sal a correr a la pista de Jumeirah Beach o Kite Beach, registra tu actividad y guárdala
-          en tu teléfono.
-        </p>
+        <h2 className="empty-runs-title">{t.emptyRunsTitle}</h2>
+        <p className="empty-runs-desc">{t.emptyRunsDesc}</p>
       </div>
 
       <Link href="/grabar" className="action-btn-primary empty-runs-btn">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <polygon points="5 3 19 12 5 21 5 3" />
         </svg>
-        <span>Grabar mi primera carrera</span>
+        <span>{t.recordFirstRun}</span>
       </Link>
     </div>
   );
