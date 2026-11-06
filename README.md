@@ -26,7 +26,7 @@ MVP web/PWA en validación sobre la zona Jumeirah Beach → Kite Beach. Repo pú
 - **Ligas por ritmo:** cuatro ligas; la primera carrera te sitúa y puedes ascender.
 - **Grabación GPS en la app:** seguimiento en el teléfono, ritmo y velocidad estables, aviso de no bloquear el teléfono.
 - **Mis carreras:** lista local, resumen, mini mapa del recorrido y borrado seguro (ajustado para iPhone Safari).
-- **ES / EN:** `/privacidad` y `/terminos` ya están en español e inglés. El resto de la interfaz sigue en revisión ([PR #17](https://github.com/augustoalr/dubai-run-territory/pull/17)).
+- **Español / English:** en revisión ([PR #17](https://github.com/augustoalr/dubai-run-territory/pull/17)).
 - **Páginas legales:** `/privacidad` y `/terminos` (borrador pendiente de revisión legal).
 
 ## Stack
