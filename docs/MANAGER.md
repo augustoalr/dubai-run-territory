@@ -130,11 +130,14 @@ Cuando te peguen `Manager: revisa el PR #N (T-XX)`, buscas la fila y sabes de qu
 Antes de fusionar, en este orden:
 
 1. Lee el **diff completo** del PR (archivos tocados y parches).
-2. Comprueba que cada punto pedido en el prompt está hecho de verdad (no solo "parece hecho").
+2. Comprueba que cada punto pedido en el prompt está hecho de verdad (no solo "parece hecho"). Si hubo una revisión previa pidiendo arreglos, **solo se fusiona con un commit nuevo y comprobando cada arreglo en el diff** (el CI en verde no basta).
 3. CI check **`verify` en verde**.
 4. `docs/ESTADO.md` actualizado en el mismo PR (estado de la tarea + tabla de conversaciones).
 5. No hay secretos nuevos, ni service role en frontend, ni dependencias de pago.
-6. El alcance es solo esa tarea (no mezclar T-grandes).
+6. El alcance es solo esa tarea (no mezclar T-grandes). **No tocar `supabase/migrations` ni la base de datos** salvo que la tarea lo pida explícitamente.
+7. **Textos de pantalla simples para corredores:** lenguaje accesible (baldosa, 5:12 /km; nunca H3, celda hexagonal ni s/km).
+8. **Textos legales exactos:** mantener fidelidad exacta en `/privacidad` y `/terminos`.
+9. **Rendimiento móvil:** que la app vaya fluida en iPhone Safari.
 
 Si falta algo: **no fusionas**. Das un prompt nuevo para la conversación existente con la lista exacta de arreglos, y de nuevo la línea `Manager: revisa el PR #N (T-XX)`.
 

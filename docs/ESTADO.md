@@ -161,8 +161,15 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. No 
 
 - **Estado:** terminada (PR #17 fusionado en `main`, squash `079afac`).
 - **Hecho:** sistema de traducción (i18n) propio, sin dependencias de pago y compatible con `output: "export"`. Textos visibles de `apps/web` extraídos a diccionarios `es` y `en`. Detección automática del idioma del dispositivo (`navigator.language`) con fallback a inglés, y almacenamiento en `localStorage` (`dubai_run_locale`). Selector ES/EN. Traducción de `/privacidad` y `/terminos`. Formateo localizado. Mensaje «Sin recorrido GPS» / «No GPS track» con menos de 2 puntos GPS. Tests de paridad de claves `es`/`en`. Umbral del test GPX: 300 ms en local, 500 ms solo si `process.env.CI` está definido (documentado; 750 ms en Windows si aplica).
-- **Pendiente:** línea del README que aún diga «en revisión» para ES/EN (docs menor, opcional).
+- **Pendiente:** nada.
 - **Siguiente paso:** ninguno de código de T-30.
+
+## T-31 · Traspaso del manager a Antigravity
+
+- **Estado:** en revisión (PR #20).
+- **Hecho:** creación de `docs/MANAGER.md` con el playbook operativo para el manager en Antigravity (rol, límites, producto, seguridad, stack, flujo de trabajo, prompts, criterios de revisión detallados y backlog). Enlace al manager en `AGENTS.md`. Actualización de `docs/ESTADO.md` (cierre de T-30, sección T-31 y tabla de conversaciones). Actualización de `README.md` marcando soporte bilingüe como disponible/en producción.
+- **Pendiente:** revisión y fusión del PR #20.
+- **Siguiente paso:** fusionar.
 
 ## En curso
 
@@ -170,11 +177,11 @@ Ninguna tarea de producto en código activo tras T-30. Siguiente: T-31 (traspaso
 
 ### Tabla de conversaciones Antigravity
 
-| Tarea | Conversación Antigravity | Rama                                           | PR        | Estado    |
-| ----- | ------------------------ | ---------------------------------------------- | --------- | --------- |
-| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14       | fusionado |
-| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15       | fusionado |
-| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16       | fusionado |
-| T-30  | T-30 Inglés              | t30-ingles                                     | #17       | fusionado |
-| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19 | fusionado |
-| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | (abrir)   | en curso  |
+| Tarea | Conversación Antigravity | Rama                                           | PR        | Estado      |
+| ----- | ------------------------ | ---------------------------------------------- | --------- | ----------- |
+| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14       | fusionado   |
+| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15       | fusionado   |
+| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16       | fusionado   |
+| T-30  | T-30 Inglés              | t30-ingles                                     | #17       | fusionado   |
+| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19 | fusionado   |
+| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20       | en revisión |
