@@ -33,3 +33,7 @@ Reglas para que un corte de créditos no deje el repo a medias. Están en españ
 1. Lee `docs/ESTADO.md` antes de escribir código.
 2. `git fetch origin main` y actualiza tu rama con `main`.
 3. Sigue el siguiente paso exacto de la tarea en curso. No reabras trabajo que el estado marque como hecho.
+
+## Manager del proyecto
+
+El rol de manager / jefe (quién decide la siguiente tarea, escribe los prompts para los programadores y revisa los PR) está documentado en [`docs/MANAGER.md`](docs/MANAGER.md). Quien retome ese rol debe leer ese archivo junto con este `AGENTS.md` y `docs/ESTADO.md`.

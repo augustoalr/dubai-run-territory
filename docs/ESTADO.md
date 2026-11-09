@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 29 oct 2026, con main en `3955f66` (PR #7).
+Actualizado el 9 nov 2026, con main en `079afac` (PR #17 T-30 fusionado; también #15, #16, #18, #19).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El trabajo de código en curso es **T-30**.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. No hay tarea de código en curso salvo el traspaso del manager (T-31) si su PR aún no está fusionado. El playbook del manager está en `docs/MANAGER.md`.
 
 ## T-01 · Scaffolding
 
@@ -159,13 +159,22 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. El 
 
 ## T-30 · La app en español e inglés
 
-- **Estado:** en revisión (PR #17).
-- **Hecho:** sistema de traducción (i18n) propio, sin dependencias de pago y compatible con `output: "export"`. Textos visibles de `apps/web` extraídos a diccionarios `es` y `en`. Detección automática del idioma del dispositivo (`navigator.language`) con fallback a inglés para idiomas distintos de español e inglés, y almacenamiento de la selección en el teléfono (`localStorage`). Selector de idioma ES/EN accesible en cabecera principal, menú y páginas legales. Traducción de `/privacidad` y `/terminos`. Formateo localizado de fechas, distancias y ritmos. En detalle de carrera con menos de 2 puntos GPS se muestra "Sin recorrido GPS" / "No GPS track" evitando recuadros vacíos. Textos de fallback en SVG de recorridos cortos internacionalizados (`startPointBadge`, `shortRunNotice`). Pruebas unitarias de completitud y simetría de claves entre `es` y `en`.
-- **Pendiente:** revisión y fusión del PR #17.
-- **Siguiente paso:** fusionar en `main`.
+- **Estado:** terminada (PR #17 fusionado en `main`, squash `079afac`).
+- **Hecho:** sistema de traducción (i18n) propio, sin dependencias de pago y compatible con `output: "export"`. Textos visibles de `apps/web` extraídos a diccionarios `es` y `en`. Detección automática del idioma del dispositivo (`navigator.language`) con fallback a inglés, y almacenamiento en `localStorage` (`dubai_run_locale`). Selector ES/EN. Traducción de `/privacidad` y `/terminos`. Formateo localizado. Mensaje «Sin recorrido GPS» / «No GPS track» con menos de 2 puntos GPS. Tests de paridad de claves `es`/`en`. Umbral del test GPX: 300 ms en local, 500 ms solo si `process.env.CI` está definido (documentado; 750 ms en Windows si aplica).
+- **Pendiente:** línea del README que aún diga «en revisión» para ES/EN (docs menor, opcional).
+- **Siguiente paso:** ninguno de código de T-30.
 
 ## En curso
 
-| Tarea | PR     | Siguiente paso exacto |
-| ----- | ------ | --------------------- |
-| T-30  | PR #17 | En revisión           |
+Ninguna tarea de producto en código activo tras T-30. Siguiente: T-31 (traspaso del manager a Antigravity) y luego bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + Auth T-14 + desplegar `process-run`.
+
+### Tabla de conversaciones Antigravity
+
+| Tarea | Conversación Antigravity | Rama                                           | PR        | Estado    |
+| ----- | ------------------------ | ---------------------------------------------- | --------- | --------- |
+| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14       | fusionado |
+| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15       | fusionado |
+| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16       | fusionado |
+| T-30  | T-30 Inglés              | t30-ingles                                     | #17       | fusionado |
+| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19 | fusionado |
+| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | (abrir)   | en curso  |
