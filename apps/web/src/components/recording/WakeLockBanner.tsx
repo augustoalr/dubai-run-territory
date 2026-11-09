@@ -1,10 +1,14 @@
 "use client";
 
+import { useI18n } from "@/i18n";
+
 interface WakeLockBannerProps {
   isRecording: boolean;
 }
 
 export function WakeLockBanner({ isRecording }: WakeLockBannerProps) {
+  const { t } = useI18n();
+
   if (!isRecording) return null;
 
   return (
@@ -24,7 +28,7 @@ export function WakeLockBanner({ isRecording }: WakeLockBannerProps) {
           <line x1="12" y1="18" x2="12.01" y2="18" />
         </svg>
       </div>
-      <p className="banner-text">No bloquees el teléfono mientras grabas</p>
+      <p className="banner-text">{t.wakeLockNotice}</p>
     </div>
   );
 }

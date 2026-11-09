@@ -1,18 +1,18 @@
 "use client";
 
 import type { LeagueCode } from "@dubai-run/core";
+import { useI18n } from "@/i18n";
 
-type LeagueMeta = {
+type LeagueDefinition = {
   code: LeagueCode;
-  label: string;
   paceRange: string;
 };
 
-const LEAGUES: LeagueMeta[] = [
-  { code: "starter", label: "Inicial", paceRange: "6:15+ /km" },
-  { code: "intermediate", label: "Intermedio", paceRange: "5:15 – 6:14 /km" },
-  { code: "advanced", label: "Avanzado", paceRange: "4:15 – 5:14 /km" },
-  { code: "elite", label: "Élite", paceRange: "< 4:15 /km" },
+const LEAGUES: LeagueDefinition[] = [
+  { code: "starter", paceRange: "6:15+ /km" },
+  { code: "intermediate", paceRange: "5:15 – 6:14 /km" },
+  { code: "advanced", paceRange: "4:15 – 5:14 /km" },
+  { code: "elite", paceRange: "< 4:15 /km" },
 ];
 
 type LeagueSelectorProps = {
@@ -22,12 +22,15 @@ type LeagueSelectorProps = {
 };
 
 export function LeagueSelector({ currentLeague, userLeague, onSelectLeague }: LeagueSelectorProps) {
+  const { t } = useI18n();
+
   return (
-    <div className="league-selector-wrap" role="group" aria-label="Selector de ligas de carrera">
+    <div className="league-selector-wrap" role="group" aria-label={t.leagueSelectorLabel}>
       <div className="league-chips-scroll">
         {LEAGUES.map((item) => {
           const isSelected = currentLeague === item.code;
           const isUserHomeLeague = userLeague === item.code;
+          const label = t.leagues[item.code];
 
           return (
             <button
@@ -39,8 +42,10 @@ export function LeagueSelector({ currentLeague, userLeague, onSelectLeague }: Le
             >
               <div className="chip-content">
                 <span className="chip-title">
-                  {item.label}
-                  {isUserHomeLeague && <span className="home-league-dot" title="Tu liga actual" />}
+                  {label}
+                  {isUserHomeLeague && (
+                    <span className="home-league-dot" title={t.yourCurrentLeague} />
+                  )}
                 </span>
                 <span className="chip-pace">{item.paceRange}</span>
               </div>

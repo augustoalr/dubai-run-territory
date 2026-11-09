@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/i18n";
+
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
   isDeleting?: boolean;
@@ -15,6 +17,8 @@ export function DeleteConfirmDialog({
   onCancel,
   onConfirm,
 }: DeleteConfirmDialogProps) {
+  const { t } = useI18n();
+
   if (!isOpen) return null;
 
   return (
@@ -43,11 +47,9 @@ export function DeleteConfirmDialog({
         </div>
 
         <h3 id="delete-confirm-title" className="delete-modal-title">
-          ¿Borrar carrera?
+          {t.deleteModalTitle}
         </h3>
-        <p className="delete-modal-desc">
-          Esta acción no se puede deshacer. Se eliminará la carrera de este teléfono.
-        </p>
+        <p className="delete-modal-desc">{t.deleteModalDesc}</p>
 
         {errorMessage && (
           <div className="delete-modal-error" role="alert">
@@ -62,7 +64,7 @@ export function DeleteConfirmDialog({
             onClick={onCancel}
             disabled={isDeleting}
           >
-            Cancelar
+            {t.cancel}
           </button>
           <button
             type="button"
@@ -70,7 +72,7 @@ export function DeleteConfirmDialog({
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? "Borrando..." : "Sí, borrar carrera"}
+            {isDeleting ? t.deleteModalDeleting : t.deleteModalConfirm}
           </button>
         </div>
       </div>

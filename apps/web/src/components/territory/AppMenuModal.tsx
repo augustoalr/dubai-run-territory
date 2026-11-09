@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { LocaleToggle } from "@/components/common/LocaleToggle";
+import { useI18n } from "@/i18n";
 
 interface AppMenuModalProps {
   isOpen: boolean;
@@ -9,6 +11,8 @@ interface AppMenuModalProps {
 }
 
 export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
+  const { t } = useI18n();
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -49,18 +53,23 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
           </div>
           <div>
             <h2 id="app-menu-title" className="modal-title">
-              Menú de la App
+              {t.menuTitle}
             </h2>
-            <p className="modal-subtitle">Jumeirah Beach · Kite Beach</p>
+            <p className="modal-subtitle">{t.menuSubtitle}</p>
           </div>
           <button
             type="button"
             className="modal-close-btn"
             onClick={onClose}
-            aria-label="Cerrar menú"
+            aria-label={t.menuCloseAria}
           >
             ✕
           </button>
+        </div>
+
+        <div className="app-menu-lang-row flex items-center justify-between py-2 px-1 border-b border-border-glass">
+          <span className="text-sm font-medium text-text-secondary">{t.menuLanguage}</span>
+          <LocaleToggle />
         </div>
 
         <nav className="app-menu-nav" aria-label="Navegación legal y normas">
@@ -85,10 +94,8 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
               </svg>
             </div>
             <div className="menu-item-content">
-              <span className="menu-item-title">Términos y Condiciones</span>
-              <span className="menu-item-desc">
-                Juego gratuito, normas de tráfico en Dubái y juego limpio sin trampas.
-              </span>
+              <span className="menu-item-title">{t.menuTermsTitle}</span>
+              <span className="menu-item-desc">{t.menuTermsDesc}</span>
             </div>
             <span className="menu-item-arrow" aria-hidden="true">
               →
@@ -113,10 +120,8 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
               </svg>
             </div>
             <div className="menu-item-content">
-              <span className="menu-item-title">Política de Privacidad</span>
-              <span className="menu-item-desc">
-                Qué datos guardamos, protección de horarios/rutas y borrado de cuenta.
-              </span>
+              <span className="menu-item-title">{t.menuPrivacyTitle}</span>
+              <span className="menu-item-desc">{t.menuPrivacyDesc}</span>
             </div>
             <span className="menu-item-arrow" aria-hidden="true">
               →
@@ -125,16 +130,13 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
         </nav>
 
         <div className="app-menu-info-box">
-          <span className="zone-badge">Fase 0 · MVP</span>
-          <p className="app-menu-info-text">
-            Territorio es un juego de conquista de baldosas para la pista de running de Jumeirah
-            Beach a Kite Beach. Compite en tu liga de ritmo y defiende tus sectores.
-          </p>
+          <span className="zone-badge">{t.mvpBadge}</span>
+          <p className="app-menu-info-text">{t.menuInfoText}</p>
         </div>
 
         <div className="modal-footer">
           <button type="button" className="action-btn-primary" onClick={onClose}>
-            Volver al mapa
+            {t.backToMap}
           </button>
         </div>
       </div>

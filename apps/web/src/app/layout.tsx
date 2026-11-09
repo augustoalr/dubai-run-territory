@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Oswald, Outfit } from "next/font/google";
 import { RegisterSw } from "@/components/RegisterSw";
+import { I18nProvider } from "@/i18n";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -47,7 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="es" className={`${outfit.variable} ${oswald.variable} h-full`}>
       <body className="h-full bg-ink text-paper antialiased">
-        {children}
+        <I18nProvider>{children}</I18nProvider>
         <RegisterSw />
       </body>
     </html>

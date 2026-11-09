@@ -23,6 +23,7 @@ export type TerritoryCell = {
   paceFormatted: string | null; // e.g. "5:12 /km"
   paceSeconds: number | null;
   achievedAtFormatted: string | null; // e.g. "24 oct 2026"
+  achievedAtIso?: string | null;
   userBestPaceFormatted: string | null; // e.g. "5:25 /km"
   userBestPaceSeconds: number | null;
   gapSeconds: number | null; // Seconds difference needed to beat the current mark

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useI18n } from "@/i18n";
 import { localRunStorage, type StoredRun } from "@/lib/recording/indexeddb-storage";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 import { EmptyRunsView } from "./EmptyRunsView";
@@ -10,6 +11,7 @@ import { RunsHeader } from "./RunsHeader";
 import { UploadWatchFileCard } from "./UploadWatchFileCard";
 
 export function RunsPageContainer() {
+  const { t } = useI18n();
   const [runs, setRuns] = useState<StoredRun[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRun, setSelectedRun] = useState<StoredRun | null>(null);
@@ -62,7 +64,7 @@ export function RunsPageContainer() {
           {isLoading ? (
             <div className="runs-loading glass" role="status">
               <div className="runs-spinner" aria-hidden="true" />
-              <span>Cargando tus carreras...</span>
+              <span>{t.runsLoading}</span>
             </div>
           ) : runs.length === 0 ? (
             <EmptyRunsView />

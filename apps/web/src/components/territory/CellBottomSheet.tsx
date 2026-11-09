@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/i18n";
 import type { TerritoryCell } from "@/lib/territory/types";
 
 type CellBottomSheetProps = {
@@ -9,6 +10,8 @@ type CellBottomSheetProps = {
 };
 
 export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetProps) {
+  const { t, formatDate } = useI18n();
+
   if (!cell) return null;
 
   const isMine = cell.status === "mine";
@@ -16,34 +19,38 @@ export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetP
   const isRival = cell.status === "rival";
   const isFree = cell.status === "free";
 
+  const achievedDateText = cell.achievedAtIso
+    ? formatDate(cell.achievedAtIso, { day: "numeric", month: "short", year: "numeric" })
+    : cell.achievedAtFormatted;
+
   // Action button label
-  let actionLabel = "Cómo robarla";
+  let actionLabel = t.actionHowToSteal;
   if (isThreatened) {
-    actionLabel = "Cómo defenderla";
+    actionLabel = t.actionHowToDefend;
   } else if (isMine) {
-    actionLabel = "Cómo mejorar tu marca";
+    actionLabel = t.actionHowToImprove;
   } else if (isFree) {
-    actionLabel = "Cómo conquistarla";
+    actionLabel = t.actionHowToConquer;
   }
 
   // Friendly status message
   let statusMessage = "";
   if (isThreatened && cell.threat) {
-    statusMessage = `⚠️ ¡En peligro! ${cell.threat.rivalAlias} corrió a ${cell.threat.rivalPaceFormatted} (a solo ${cell.threat.gapSeconds} seg/km de robarte).`;
+    statusMessage = t.statusDanger(
+      cell.threat.rivalAlias,
+      cell.threat.rivalPaceFormatted,
+      cell.threat.gapSeconds,
+    );
   } else if (isMine) {
-    statusMessage = "¡Eres el dueño actual de esta sección de la pista!";
+    statusMessage = t.statusMine;
   } else if (isRival && cell.gapSeconds !== null) {
-    statusMessage = `Te faltan solo ${cell.gapSeconds} segundos por km para superar a ${cell.owner?.alias ?? "este corredor"}.`;
+    statusMessage = t.statusRival(cell.gapSeconds, cell.owner?.alias ?? t.owner.toLowerCase());
   } else if (isFree) {
-    statusMessage = "Nadie ha reclamado esta baldosa en tu liga todavía. ¡Sé el primero!";
+    statusMessage = t.statusFree;
   }
 
   return (
-    <section
-      className="bottom-sheet glass"
-      role="dialog"
-      aria-label="Detalles del territorio seleccionado"
-    >
+    <section className="bottom-sheet glass" role="dialog" aria-label={t.sheetAriaLabel}>
       <div className="sheet-handle" onClick={onClose} aria-hidden="true" />
 
       <div className="sheet-header">
@@ -53,16 +60,14 @@ export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetP
           </div>
           <div className="owner-meta">
             <div className="owner-alias-row">
-              <span className="owner-alias">{isFree ? "Territorio libre" : cell.owner?.alias}</span>
-              {isMine && <span className="status-tag tag-you">Tú</span>}
-              {isThreatened && <span className="status-tag tag-threatened">En peligro</span>}
-              {isRival && <span className="status-tag tag-rival">Rival</span>}
-              {isFree && <span className="status-tag tag-free">Disponible</span>}
+              <span className="owner-alias">{isFree ? t.freeTerritory : cell.owner?.alias}</span>
+              {isMine && <span className="status-tag tag-you">{t.tagYou}</span>}
+              {isThreatened && <span className="status-tag tag-threatened">{t.tagThreatened}</span>}
+              {isRival && <span className="status-tag tag-rival">{t.tagRival}</span>}
+              {isFree && <span className="status-tag tag-free">{t.tagFree}</span>}
             </div>
             <p className="owner-subtitle">
-              {cell.achievedAtFormatted
-                ? `Marca del ${cell.achievedAtFormatted}`
-                : "Sin dueño registrado"}
+              {achievedDateText ? t.markFromDate(achievedDateText) : t.noOwnerRegistered}
             </p>
           </div>
         </div>
@@ -71,7 +76,7 @@ export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetP
           type="button"
           className="sheet-close-btn"
           onClick={onClose}
-          aria-label="Cerrar detalles"
+          aria-label={t.closeDetails}
         >
           ✕
         </button>
@@ -79,13 +84,13 @@ export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetP
 
       <div className="sheet-metrics-grid">
         <div className="metric-box">
-          <span className="metric-label">{isFree ? "Ritmo de corte" : "Ritmo actual"}</span>
-          <span className="metric-value pace-hero">{cell.paceFormatted ?? "Libre"}</span>
+          <span className="metric-label">{isFree ? t.cutoffPace : t.currentPaceMetric}</span>
+          <span className="metric-value pace-hero">{cell.paceFormatted ?? t.legendFree}</span>
         </div>
 
         <div className="metric-box">
-          <span className="metric-label">Tu mejor ritmo</span>
-          <span className="metric-value">{cell.userBestPaceFormatted ?? "Sin registro"}</span>
+          <span className="metric-label">{t.yourBestPace}</span>
+          <span className="metric-value">{cell.userBestPaceFormatted ?? t.noRecord}</span>
         </div>
       </div>
 

@@ -2,18 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LocaleToggle } from "@/components/common/LocaleToggle";
+import { useI18n } from "@/i18n";
+import type { LegalDocument } from "@/lib/legal/legal-content";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
-import type { LegalDocument, LegalLocale } from "@/lib/legal/legal-content";
 import { ThemeToggle } from "@/components/territory/ThemeToggle";
 
 interface LegalPageLayoutProps {
   docEs: LegalDocument;
   docEn: LegalDocument;
-  initialLocale?: LegalLocale;
 }
 
-export function LegalPageLayout({ docEs, docEn, initialLocale = "es" }: LegalPageLayoutProps) {
-  const [locale, setLocale] = useState<LegalLocale>(initialLocale);
+export function LegalPageLayout({ docEs, docEn }: LegalPageLayoutProps) {
+  const { locale, t } = useI18n();
   const [theme, setTheme] = useState<ThemeMode>("dark");
 
   // Sync html data-theme for CSS tokens
@@ -38,11 +39,7 @@ export function LegalPageLayout({ docEs, docEn, initialLocale = "es" }: LegalPag
       <header className="legal-topbar glass">
         <div className="legal-topbar-inner">
           <div className="legal-topbar-left">
-            <Link
-              href="/"
-              className="legal-back-button"
-              aria-label={locale === "es" ? "Volver al mapa" : "Back to map"}
-            >
+            <Link href="/" className="legal-back-button" aria-label={t.backToMap}>
               <svg
                 width="18"
                 height="18"
@@ -56,41 +53,17 @@ export function LegalPageLayout({ docEs, docEn, initialLocale = "es" }: LegalPag
               >
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
-              <span>{locale === "es" ? "Mapa" : "Map"}</span>
+              <span>{t.map}</span>
             </Link>
 
             <div className="legal-brand-group">
-              <span className="zone-badge">Jumeirah · Kite</span>
-              <span className="legal-app-title">Territorio</span>
+              <span className="zone-badge">{t.zoneTrack}</span>
+              <span className="legal-app-title">{t.appName}</span>
             </div>
           </div>
 
           <div className="legal-topbar-actions">
-            {/* Language toggle pill */}
-            <div
-              className="legal-lang-toggle"
-              role="group"
-              aria-label={locale === "es" ? "Seleccionar idioma" : "Select language"}
-            >
-              <button
-                type="button"
-                className={`lang-option ${locale === "es" ? "active" : ""}`}
-                onClick={() => setLocale("es")}
-                aria-pressed={locale === "es"}
-              >
-                ES
-              </button>
-              <button
-                type="button"
-                className={`lang-option ${locale === "en" ? "active" : ""}`}
-                onClick={() => setLocale("en")}
-                aria-pressed={locale === "en"}
-              >
-                EN
-              </button>
-            </div>
-
-            {/* Theme toggle */}
+            <LocaleToggle />
             <ThemeToggle theme={theme} onToggle={handleToggleTheme} />
           </div>
         </div>
@@ -126,9 +99,7 @@ export function LegalPageLayout({ docEs, docEn, initialLocale = "es" }: LegalPag
           {/* Document Header */}
           <header className="legal-doc-header">
             <div className="legal-doc-eyebrow">
-              <span className="season-pill">
-                {locale === "es" ? "Fase 0 · MVP" : "Phase 0 · MVP"}
-              </span>
+              <span className="season-pill">{t.mvpBadge}</span>
               <time className="legal-date-badge">{doc.lastUpdated}</time>
             </div>
             <h1 className="legal-doc-title">{doc.title}</h1>

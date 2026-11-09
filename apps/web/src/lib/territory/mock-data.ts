@@ -166,6 +166,7 @@ export function buildTerritoryData(
         paceFormatted: `${formatPace(paceS)} /km`,
         paceSeconds: paceS,
         achievedAtFormatted: dateStr,
+        achievedAtIso: dateIsoAgo(daysAgo),
         userBestPaceFormatted: `${formatPace(paceS)} /km`,
         userBestPaceSeconds: paceS,
         gapSeconds: null,
@@ -198,6 +199,7 @@ export function buildTerritoryData(
       paceFormatted: `${formatPace(paceS)} /km`,
       paceSeconds: paceS,
       achievedAtFormatted: dateStr,
+      achievedAtIso: dateIsoAgo(daysAgo),
       userBestPaceFormatted: userBestS ? `${formatPace(userBestS)} /km` : null,
       userBestPaceSeconds: userBestS,
       gapSeconds,
@@ -263,6 +265,12 @@ function hash(value: string): number {
     h = Math.imul(h, 16_777_619);
   }
   return h >>> 0;
+}
+
+function dateIsoAgo(daysAgo: number): string {
+  const d = new Date("2026-10-31T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() - daysAgo);
+  return d.toISOString();
 }
 
 function formatDateAgo(daysAgo: number): string {

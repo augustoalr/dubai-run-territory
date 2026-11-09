@@ -4,6 +4,7 @@ import { parseGpx, type RawPoint } from "@dubai-run/core";
 import { LngLatBounds, Map as MapLibreMap, setWorkerUrl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useI18n } from "@/i18n";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 
 interface RunMiniMapProps {
@@ -25,6 +26,7 @@ function checkWebGLSupport(): boolean {
 }
 
 export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [hasMapError, setHasMapError] = useState(false);
@@ -120,7 +122,7 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
   }, [coordinates, trackBounds]);
 
   useEffect(() => {
-    if (coordinates.length === 0 || !containerRef.current) return;
+    if (coordinates.length < 2 || !containerRef.current) return;
 
     if (!checkWebGLSupport()) {
       const timer = setTimeout(() => {
@@ -321,11 +323,28 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
     };
   }, [coordinates, theme, trackBounds]);
 
-  if (coordinates.length === 0) {
+  if (coordinates.length < 2) {
     return (
       <div className="run-mini-map-wrap glass">
-        <div className="run-mini-map-empty">
-          <span>Sin datos de mapa disponibles</span>
+        <div className="run-mini-map-empty flex flex-col items-center justify-center gap-2">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="opacity-50"
+            aria-hidden="true"
+          >
+            <line x1="2" y1="2" x2="22" y2="22" />
+            <path d="M10.45 10.45a3 3 0 1 0 4.24 4.24" />
+            <path d="M18.88 17.65A9 9 0 0 0 21 12a9 9 0 0 0-14.86-6.86" />
+            <path d="M5.11 5.11A9 9 0 0 0 3 12a9 9 0 0 0 13.78 7.68" />
+          </svg>
+          <span>{t.noGpsTrack}</span>
         </div>
       </div>
     );
@@ -347,7 +366,7 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
           viewBox={`0 0 ${svgData.width} ${svgData.height}`}
           preserveAspectRatio="xMidYMid meet"
           role="img"
-          aria-label="Recorrido de la carrera"
+          aria-label={t.mapTrackAria}
         >
           {svgData.isVeryShort ? (
             // Single point or very short race SVG rendering
@@ -378,7 +397,7 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
                 fontWeight="700"
                 letterSpacing="0.06em"
               >
-                PUNTO DE INICIO
+                {t.startPointBadge}
               </text>
               <text
                 x={svgData.startPt.x}
@@ -387,7 +406,7 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
                 fill="var(--text-muted)"
                 fontSize="9.5"
               >
-                Carrera de pocos metros
+                {t.shortRunNotice}
               </text>
             </g>
           ) : (

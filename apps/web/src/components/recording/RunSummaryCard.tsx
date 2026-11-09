@@ -1,8 +1,8 @@
 "use client";
 
-import { formatDisplayDistance, formatDisplayDuration, formatDisplayPace } from "@dubai-run/core";
 import Link from "next/link";
 import { useCallback } from "react";
+import { useI18n } from "@/i18n";
 import type { StoredRun } from "@/lib/recording/indexeddb-storage";
 
 interface RunSummaryCardProps {
@@ -11,9 +11,10 @@ interface RunSummaryCardProps {
 }
 
 export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
-  const durationText = formatDisplayDuration(run.durationSeconds);
-  const distanceText = formatDisplayDistance(run.distanceMeters);
-  const avgPaceText = formatDisplayPace(run.avgPaceSecondsPerKm);
+  const { t, formatDistance, formatDuration, formatPace } = useI18n();
+  const durationText = formatDuration(run.durationSeconds);
+  const distanceText = formatDistance(run.distanceMeters);
+  const avgPaceText = formatPace(run.avgPaceSecondsPerKm);
 
   const handleDownloadGpx = useCallback(() => {
     const blob = new Blob([run.gpx], { type: "application/gpx+xml;charset=utf-8" });
@@ -46,31 +47,31 @@ export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
           </svg>
         </div>
         <div>
-          <h2 className="summary-title">¡Carrera terminada!</h2>
-          <p className="summary-subtitle">Guardada en este teléfono</p>
+          <h2 className="summary-title">{t.runCompletedTitle}</h2>
+          <p className="summary-subtitle">{t.savedOnPhoneSubtitle}</p>
         </div>
       </div>
 
       <div className="summary-metrics-grid">
         <div className="summary-metric-box glass">
-          <span className="summary-metric-label">Distancia</span>
+          <span className="summary-metric-label">{t.distance}</span>
           <span className="summary-metric-value">{distanceText}</span>
         </div>
 
         <div className="summary-metric-box glass">
-          <span className="summary-metric-label">Tiempo</span>
+          <span className="summary-metric-label">{t.time}</span>
           <span className="summary-metric-value">{durationText}</span>
         </div>
 
         <div className="summary-metric-box glass col-span-full">
-          <span className="summary-metric-label">Ritmo medio</span>
+          <span className="summary-metric-label">{t.avgPace}</span>
           <span className="summary-metric-value pace-highlight">{avgPaceText}</span>
         </div>
       </div>
 
       <div className="summary-notice-box">
-        <span className="zone-badge">Guardado local</span>
-        <p className="summary-notice-text">Por ahora tu carrera se guarda solo en este teléfono.</p>
+        <span className="zone-badge">{t.localSavedBadge}</span>
+        <p className="summary-notice-text">{t.localSavedNotice}</p>
       </div>
 
       <div className="summary-actions">
@@ -78,7 +79,7 @@ export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
           type="button"
           className="btn-download-gpx"
           onClick={handleDownloadGpx}
-          aria-label="Descargar archivo de la carrera"
+          aria-label={t.downloadRunFile}
         >
           <svg
             width="18"
@@ -95,7 +96,7 @@ export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          <span>Descargar archivo de la carrera</span>
+          <span>{t.downloadRunFile}</span>
         </button>
 
         <Link href="/carreras" className="action-btn-secondary summary-runs-btn">
@@ -113,15 +114,15 @@ export function RunSummaryCard({ run, onReset }: RunSummaryCardProps) {
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
           </svg>
-          <span>Mis carreras</span>
+          <span>{t.runs}</span>
         </Link>
 
         <div className="summary-nav-row">
           <button type="button" className="action-btn-secondary" onClick={onReset}>
-            Grabar otra carrera
+            {t.recordAnotherRun}
           </button>
           <Link href="/" className="action-btn-primary">
-            Volver al mapa
+            {t.backToMap}
           </Link>
         </div>
       </div>

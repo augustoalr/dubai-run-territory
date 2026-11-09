@@ -9,11 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function TerminosPage() {
-  return (
-    <LegalPageLayout
-      docEs={termsOfServiceContent.es}
-      docEn={termsOfServiceContent.en}
-      initialLocale="es"
-    />
-  );
+  return <LegalPageLayout docEs={termsOfServiceContent.es} docEn={termsOfServiceContent.en} />;
 }
