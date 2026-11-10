@@ -2,7 +2,7 @@
 
 Actualizado el 10 nov 2026, con main en `f8fc6bf` (T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-33 (Checklist de calidad del Manager) en rama `t33-checklist-manager`. El playbook del manager está en `docs/MANAGER.md`.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-33 (Checklist de calidad del Manager) en revisión (PR #22, rama `t33-checklist-manager`). El playbook del manager está en `docs/MANAGER.md`.
 
 ## T-01 · Scaffolding
 
@@ -207,7 +207,7 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 ## T-33 · Checklist de calidad del Manager
 
-- **Estado:** en curso en rama `t33-checklist-manager`.
+- **Estado:** en revisión (PR #22 en rama `t33-checklist-manager`).
 - **Hecho:**
   1. Formalización en `docs/MANAGER.md` (§7) de la "Checklist obligatoria de calidad del Manager antes de aprobar cualquier PR", publicada obligatoriamente como comentario en el PR con `gh pr comment`.
   2. Definición exhaustiva de los 10 puntos de control: verificación con GitHub CLI (`gh pr view` y `gh pr checks`), CI `verify` completo en verde, comprobación de arreglos en el diff, prohibición estricta de datos ficticios/mocks en producción (empty state o error state con reintento), coherencia con esquema y RLS de BD, eficiencia de consultas (`.in("id", ...)` o paginación), cero hardcoding de usuario o datos de temporada, cumplimiento de las 7 reglas técnicas permanentes de `AGENTS.md`, textos comprensibles para corredores y veracidad documental en `ESTADO.md`.
@@ -217,12 +217,12 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
   6. Internacionalización de `aria-label="Navegación principal y legal"` en `AppMenuModal.tsx` mediante clave `menuNavAria` en los diccionarios `es` y `en`.
   7. Actualización de `docs/GUIA-AUGUSTO.md`: regla "main está protegida: todo entra por PR con verify en verde", instrucción para el Revisor y sección final "¿Pego o no el prompt del Manager?".
   8. Corrección documental de T-14 y T-32 en `docs/ESTADO.md`.
-- **Pendiente:** revisión y aprobación del PR por el Manager.
-- **Siguiente paso:** abrir PR en GitHub, revisión del Manager y fusión con `gh pr merge`.
+- **Pendiente:** revisión y aprobación del PR #22 por el Manager.
+- **Siguiente paso:** revisión del Manager y fusión con `gh pr merge`.
 
 ## En curso
 
-T-33 · Checklist de calidad del Manager en curso en rama `t33-checklist-manager`. Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
+T-33 · Checklist de calidad del Manager en revisión (PR #22, rama `t33-checklist-manager`). Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
 
 ### Tabla de conversaciones Antigravity
 
@@ -237,4 +237,4 @@ T-33 · Checklist de calidad del Manager en curso en rama `t33-checklist-manager
 | T-14  | T-14 Auth                | t14-auth                                       | - (push directo a main) | fusionado |
 | T-32  | T-32 Reglas              | t32-reglas-tecnicas                            | - (push directo a main) | fusionado |
 | T-17  | T-17 Ranking             | t17-ranking                                    | #21                     | fusionado |
-| T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | (abierto)               | en curso  |
+| T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | #22                     | en curso  |
