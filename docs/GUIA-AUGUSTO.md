@@ -27,10 +27,12 @@ Dame el informe del día: qué se fusionó, qué quedó pendiente y qué me toca
 
 ## Reglas de oro
 
+- main está protegida: todo entra por PR con verify en verde.
 - Una tarea = una conversación, con el número en el nombre (ej. "T-14 Auth").
 - Usa la conversación que diga el encabezado del prompt (NUEVA o existente).
 - Antes de dar un prompt, el Manager revisará la tabla de conversaciones de ESTADO.md. Si la tarea ya existe, te dará un prompt marcado como `EXISTENTE: <nombre>` para que lo pegues en la misma conversación.
 - Cada vez que abras una conversación nueva, el Manager la registrará de inmediato en la tabla de conversaciones de ESTADO.md.
+- Tareas grandes (base de datos, login, pagos): antes de fusionar, el Manager te pedirá abrir una conversación "Revisor" y pegar: `Revisa el PR #N como un revisor estricto y desconfiado, contra AGENTS.md y docs/MANAGER.md. No fusiones; solo dime qué está mal.`
 - Si el veredicto es APROBADO y el CI está en verde, el Manager fusiona él mismo con `gh pr merge <N> --squash --delete-branch`, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione.
 - Si el Manager habla de algo que ya está hecho, dile: "Haz git pull en main y vuelve a leer ESTADO.md".
 - Si sale un error 503 o "No capacity", es Google: espera unos minutos y escribe "continúa".
@@ -45,3 +47,10 @@ Dame el informe del día: qué se fusionó, qué quedó pendiente y qué me toca
 - Si dice "aprobado" pero no fusionó, escríbele: `Fusiónalo tú con gh y confírmame que quedó en main.`
 - Si pide arreglos, copia el prompt de arreglos y pégalo en la MISMA conversación de la tarea (por ejemplo "T-14 Auth").
 - Si no entiendes la respuesta, escríbele: `Explícame en 3 frases qué tengo que hacer yo ahora.`
+
+## ¿Pego o no el prompt del Manager?
+
+- Si el programador de esa tarea ya terminó y te dio "Manager: revisa el PR…", NO pegues el prompt: lleva primero esa línea al Manager.
+- Si el programador sigue trabajando, espera a que termine.
+- Si el Manager revisó y pidió arreglos, entonces SÍ pégalo en la conversación de la tarea.
+- Si dudas, pregúntale: ¿Este prompt sigue haciendo falta o el programador ya lo hizo? Revisa el último commit del PR con gh.
