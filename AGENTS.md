@@ -34,6 +34,16 @@ Reglas para que un corte de créditos no deje el repo a medias. Están en españ
 2. `git fetch origin main` y actualiza tu rama con `main`.
 3. Sigue el siguiente paso exacto de la tarea en curso. No reabras trabajo que el estado marque como hecho.
 
+## Reglas técnicas permanentes
+
+- **Sitio estático puro:** La app usa `output: "export"`. Nada de rutas de servidor (`/api`), Server Actions, middleware de Next.js ni `@supabase/ssr`. Todo lo que requiera backend o secretos se ejecuta exclusivamente en Supabase (Postgres/RLS o Edge Functions en Deno).
+- **Austeridad de dependencias:** Antes de instalar una librería externa, revisa si ya está en `package.json` y reutiliza lo existente. Nunca dupliques clientes ni funciones de utilidad.
+- **Resiliencia y funcionamiento offline/degradado:** Grabar una carrera y visualizar el mapa nunca pueden depender del inicio de sesión ni de servicios externos sin configurar. Si falta una clave o configuración, la app debe seguir funcionando en modo local/degradado sin romperse.
+- **Internacionalización estricta:** Todo texto visible en pantalla debe residir en los diccionarios `es` y `en` (`apps/web/src/i18n/dictionaries.ts`), manteniendo simetría total de claves.
+- **Seguridad y secretos:** Jamás incluir secretos en git. La `service_role` key nunca debe llegar al frontend ni a variables `NEXT_PUBLIC_*`.
+- **Agnosticismo de base de datos:** No tocar `supabase/migrations/` ni alterar esquemas a menos que la tarea lo exija expresamente.
+- **Experiencia móvil:** Toda la interfaz debe ser completamente fluida y usable en iPhone con Safari en orientación vertical (375 a 430 px).
+
 ## Manager del proyecto
 
 El rol de manager / jefe (quién decide la siguiente tarea, escribe los prompts para los programadores y revisa los PR) está documentado en [`docs/MANAGER.md`](docs/MANAGER.md). Quien retome ese rol debe leer ese archivo junto con este `AGENTS.md` y `docs/ESTADO.md`.

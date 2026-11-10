@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 9 nov 2026, con main en `079afac` (PR #17 T-30 fusionado; también #15, #16, #18, #19).
+Actualizado el 10 nov 2026, con main en `4298309` (PR #21 T-14 fusionado; también #20, #17, #18, #19).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. No hay tarea de código en curso salvo el traspaso del manager (T-31) si su PR aún no está fusionado. El playbook del manager está en `docs/MANAGER.md`.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-32 (Reglas técnicas permanentes y Guía de Augusto) en rama `t32-reglas-tecnicas`. El playbook del manager está en `docs/MANAGER.md`.
 
 ## T-01 · Scaffolding
 
@@ -173,7 +173,7 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. No 
 
 ## T-14 · Autenticación y perfil
 
-- **Estado:** en curso (rama `t14-auth`).
+- **Estado:** terminada (PR #21 fusionado en `main`, squash `4298309`).
 - **Hecho:**
   1. Integración de Supabase Auth en `apps/web` con cliente y wrapper desacoplado en `src/lib/supabase/` leyendo `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` de forma segura.
   2. Flujo de login con Google mediante `signInWithOAuth` con redirección adecuada hacia `/auth/callback` y soporte PKCE (`detectSessionInUrl: true`) compatible con exportación estática (`output: "export"`).
@@ -182,21 +182,29 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. No 
   5. Punto de acceso en la UI: estado de usuario (alias y avatar con iniciales o botón "Iniciar sesión") en la cabecera `TerritoryHeader` y en `AppMenuModal`, con opción visible de "Cerrar sesión" para usuarios autenticados.
   6. Soporte bilingüe en `es` y `en` con paridad total de claves en `apps/web/src/i18n/dictionaries.ts`.
   7. Documentación `docs/AUTH.md` con variables de entorno, configuración gratuita de Google Cloud OAuth en Supabase y conexión de SMTP (Resend / Brevo) para dominio propio.
-- **Pendiente:** revisión y aprobación del PR.
-- **Siguiente paso:** abrir y revisar el PR.
+- **Pendiente:** ninguno.
+- **Siguiente paso:** ninguno.
+
+## T-32 · Reglas técnicas permanentes
+
+- **Estado:** en revisión (PR #22).
+- **Hecho:** definición de las 7 reglas técnicas permanentes en `AGENTS.md` (sitio estático puro, austeridad de dependencias, resiliencia offline/degradado, i18n estricta, seguridad y secretos, agnosticismo de base de datos y experiencia móvil). Creación de `docs/GUIA-AUGUSTO.md` para estandarizar la interacción entre Augusto y el Manager. Integración del paso de verificación obligatoria contra reglas permanentes y adición continua de reglas en `docs/MANAGER.md` (§6, §7 y §11), además de estipular `git pull` en `main` al iniciar, gestión de prompts con prefijo `EXISTENTE:`, fusión autónoma por parte del manager y enlace a la guía rápida.
+- **Pendiente:** revisión y fusión del PR #22.
+- **Siguiente paso:** fusión en `main`.
 
 ## En curso
 
-T-14 · Autenticación y perfil en rama `t14-auth`. Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
+T-32 · Reglas técnicas permanentes y Guía de Augusto en rama `t32-reglas-tecnicas`. Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
 
 ### Tabla de conversaciones Antigravity
 
-| Tarea | Conversación Antigravity | Rama                                           | PR        | Estado    |
-| ----- | ------------------------ | ---------------------------------------------- | --------- | --------- |
-| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14       | fusionado |
-| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15       | fusionado |
-| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16       | fusionado |
-| T-30  | T-30 Inglés              | t30-ingles                                     | #17       | fusionado |
-| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19 | fusionado |
-| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20       | fusionado |
-| T-14  | T-14 Auth                | t14-auth                                       | #21       | en curso  |
+| Tarea | Conversación Antigravity | Rama                                           | PR        | Estado      |
+| ----- | ------------------------ | ---------------------------------------------- | --------- | ----------- |
+| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14       | fusionado   |
+| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15       | fusionado   |
+| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16       | fusionado   |
+| T-30  | T-30 Inglés              | t30-ingles                                     | #17       | fusionado   |
+| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19 | fusionado   |
+| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20       | fusionado   |
+| T-14  | T-14 Auth                | t14-auth                                       | #21       | fusionado   |
+| T-32  | T-32 Reglas              | t32-reglas-tecnicas                            | #22       | en revisión |

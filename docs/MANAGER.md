@@ -68,9 +68,13 @@ Docs de verdad: `docs/PRODUCTO.md`, `docs/ARQUITECTURA.md`, `docs/CONQUISTA.md`.
 
 1. Lees `docs/ESTADO.md` y eliges la siguiente tarea.
 2. Escribes un **prompt autocontenido** para un agente programador de Antigravity.
+   - **Paso obligatorio antes de formular o entregar cualquier prompt:** Antes de entregar un prompt, compáralo con las Reglas técnicas permanentes de `AGENTS.md` y con `ESTADO.md`, y agrega lo que falte.
+   - **Indicación operativa:** Cuando agregues una regla nueva por un error que pase, añádela también a esa lista de `AGENTS.md`.
+   - **Gestión de conversaciones y ramas:** Antes de dar un prompt, el Manager mira la tabla de conversaciones de `ESTADO.md`. Si la tarea ya tiene conversación o rama, el encabezado dice `EXISTENTE: <nombre>` y el prompt empieza con `Esto reemplaza y amplía el prompt anterior; continúa sobre tu misma rama`.
+   - **Registro de conversaciones:** Cada vez que Augusto abre una conversación nueva, el Manager la anota de inmediato en esa tabla (tarea, nombre de la conversación, rama).
 3. Augusto lo pega en la conversación que tú indiques.
 4. El programador hace push, abre el PR y cierra con la línea de revisión.
-5. Augusto te pega esa línea. Tú revisas el PR. Si falta algo, das otro prompt para la **misma** conversación. Si todo está bien, fusionas (squash) y confirmas el deploy de Vercel.
+5. Augusto te pega esa línea. Tú revisas el PR. Si falta algo, das otro prompt para la **misma** conversación. Si el veredicto es APROBADO y el CI está en verde, el Manager fusiona él mismo con `gh pr merge <N> --squash --delete-branch`, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione. Luego confirma el deploy de Vercel.
 6. Tras cada revisión, dices la **siguiente tarea** y si otra puede ir en paralelo (con su prompt).
 
 ### 6.1 Formato obligatorio de cada prompt de programador
@@ -90,7 +94,8 @@ Pega esto en una conversación NUEVA llamada "T-XX <nombre corto>" (New worktree
 o, si es un arreglo sobre un PR ya abierto:
 
 ```
-Pega esto en la conversación existente "T-XX <nombre corto>"
+EXISTENTE: "T-XX <nombre corto>"
+Esto reemplaza y amplía el prompt anterior; continúa sobre tu misma rama
 ```
 
 **Dentro del cuerpo**, cuando el programador vaya a leer GitHub o el remoto:
@@ -143,7 +148,7 @@ Si falta algo: **no fusionas**. Das un prompt nuevo para la conversación existe
 
 Si todo está bien:
 
-- Fusiona con **squash** (en la PC de Augusto: `gh pr merge <N> --squash --delete-branch`, o dile a Augusto que pulse Merge en GitHub con squash).
+- Si el veredicto es APROBADO y el CI está en verde, el Manager fusiona él mismo con `gh pr merge <N> --squash --delete-branch`, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione.
 - Confirma que Vercel desplegó producción (auto-deploy de `main`) y que la app responde.
 - Actualiza mentalmente el backlog y di la siguiente tarea + si cabe otra en paralelo.
 
@@ -190,7 +195,8 @@ Pendiente de Augusto (humano, no del programador):
 
 ## 11. Al arrancar cada sesión de Manager
 
-1. `git fetch` / actualiza el checkout con `main` (o pide a Augusto que lo haga).
-2. Lee `AGENTS.md`, este `docs/MANAGER.md`, `docs/ESTADO.md`.
+1. Haz siempre `git pull` en `main` (o pide a Augusto que lo haga) antes de iniciar cualquier revisión o tarea para tener el checkout local sincronizado con el remoto.
+2. Lee `AGENTS.md` (especialmente las Reglas técnicas permanentes), este `docs/MANAGER.md`, `docs/ESTADO.md` y [`docs/GUIA-AUGUSTO.md`](GUIA-AUGUSTO.md).
 3. Mira PRs abiertos en el repo.
-4. Responde con: estado en una frase + siguiente tarea + prompt listo para pegar (con el encabezado y la línea `Manager: revisa…`).
+4. Antes de entregar un prompt, compáralo con las Reglas técnicas permanentes de `AGENTS.md` y con `ESTADO.md`, y agrega lo que falte. Cuando agregues una regla nueva por un error que pase, añádela también a esa lista de `AGENTS.md`.
+5. Responde con: estado en una frase + siguiente tarea + prompt listo para pegar (con el encabezado y la línea `Manager: revisa…`).
