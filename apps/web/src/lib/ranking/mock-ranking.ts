@@ -22,7 +22,7 @@ export function calculateDaysRemaining(endsAt: string): {
 }
 
 /**
- * Creates dynamic mock season metadata with 11-12 days remaining for active display.
+ * Creates sample season metadata with an active range.
  */
 export function getMockSeason(): SeasonInfo {
   const now = Date.now();
@@ -269,7 +269,7 @@ const MOCK_ROSTERS: Record<LeagueCode, RankingCandidate[]> = {
 };
 
 /**
- * Returns realistic mock ranking data for any league.
+ * Returns sample ranking data for offline/unconfigured environments.
  */
 export function getMockLeagueRanking(league: LeagueCode): LeagueRankingData {
   const candidates = MOCK_ROSTERS[league] ?? [];
@@ -280,5 +280,7 @@ export function getMockLeagueRanking(league: LeagueCode): LeagueRankingData {
     league,
     season,
     runners,
+    isSampleData: true,
+    error: null,
   };
 }

@@ -7,10 +7,9 @@ import { getInitials } from "@/lib/territory/mock-data";
 interface RankingPodiumProps {
   runners: RankedRunner[];
   currentUserId?: string | null;
-  currentUserAlias?: string | null;
 }
 
-export function RankingPodium({ runners, currentUserId, currentUserAlias }: RankingPodiumProps) {
+export function RankingPodium({ runners, currentUserId }: RankingPodiumProps) {
   const { t } = useI18n();
 
   const first = runners.length > 0 ? runners[0] : null;
@@ -21,21 +20,14 @@ export function RankingPodium({ runners, currentUserId, currentUserAlias }: Rank
     return null;
   }
 
+  // Item 5: Identify the user strictly by userId
   const isCurrentUser = (runner: RankedRunner | null): boolean => {
-    if (!runner) return false;
-    if (currentUserId && runner.userId === currentUserId) return true;
-    if (
-      currentUserAlias &&
-      runner.alias &&
-      runner.alias.toLowerCase() === currentUserAlias.toLowerCase()
-    ) {
-      return true;
-    }
-    return false;
+    if (!runner || !currentUserId) return false;
+    return runner.userId === currentUserId;
   };
 
   return (
-    <section className="ranking-podium-section" aria-label="Podio de la liga">
+    <section className="ranking-podium-section" aria-label={t.rankingPodiumAria}>
       <div className="ranking-podium-container">
         {/* 2nd Place (Silver) */}
         {second ? (

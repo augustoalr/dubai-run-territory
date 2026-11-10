@@ -27,25 +27,29 @@ describe("Ranking repository and mock data (apps/web)", () => {
     expect(season.isFinished).toBe(false);
   });
 
-  it("getMockLeagueRanking returns ordered runners for all leagues", () => {
+  it("getMockLeagueRanking returns ordered runners with isSampleData=true for all leagues", () => {
     for (const league of ["starter", "intermediate", "advanced", "elite"] as const) {
       const data = getMockLeagueRanking(league);
       expect(data.league).toBe(league);
+      expect(data.isSampleData).toBe(true);
+      expect(data.error).toBeNull();
       expect(data.runners.length).toBeGreaterThanOrEqual(3);
 
       // Verify runners are ordered by rank
       for (let i = 0; i < data.runners.length - 1; i += 1) {
-        expect(data.runners[i].rank).toBeLessThanOrEqual(data.runners[i + 1].rank);
-        expect(data.runners[i].points).toBeGreaterThanOrEqual(data.runners[i + 1].points);
+        expect(data.runners[i]!.rank).toBeLessThanOrEqual(data.runners[i + 1]!.rank);
+        expect(data.runners[i]!.points).toBeGreaterThanOrEqual(data.runners[i + 1]!.points);
       }
     }
   });
 
-  it("rankingRepository degrades gracefully when Supabase is not configured", async () => {
-    const ranking = await rankingRepository.getLeagueRanking("advanced");
-    expect(ranking.league).toBe("advanced");
+  it("rankingRepository marks sample data when Supabase is not configured", async () => {
+    const ranking = await rankingRepository.getLeagueRanking("starter");
+    expect(ranking.league).toBe("starter");
+    expect(ranking.isSampleData).toBe(true);
+    expect(ranking.error).toBeNull();
     expect(ranking.runners.length).toBeGreaterThan(0);
-    expect(ranking.runners[0].rank).toBe(1);
-    expect(ranking.runners[0].points).toBeGreaterThan(0);
+    expect(ranking.runners[0]!.rank).toBe(1);
+    expect(ranking.runners[0]!.points).toBeGreaterThan(0);
   });
 });

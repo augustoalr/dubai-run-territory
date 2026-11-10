@@ -11,6 +11,8 @@ export interface SeasonInfo {
 
 export interface LeagueRankingData {
   league: LeagueCode;
-  season: SeasonInfo;
+  season: SeasonInfo | null;
   runners: RankedRunner[];
+  isSampleData: boolean;
+  error?: "network_error" | null;
 }

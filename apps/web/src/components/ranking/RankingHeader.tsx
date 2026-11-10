@@ -7,11 +7,17 @@ import { useAuth } from "@/lib/supabase";
 
 interface RankingHeaderProps {
   seasonName: string;
-  daysRemaining: number;
+  daysRemaining: number | null;
   isFinished: boolean;
+  isSampleData: boolean;
 }
 
-export function RankingHeader({ seasonName, daysRemaining, isFinished }: RankingHeaderProps) {
+export function RankingHeader({
+  seasonName,
+  daysRemaining,
+  isFinished,
+  isSampleData,
+}: RankingHeaderProps) {
   const { t } = useI18n();
   const { user, profile, openAuthModal } = useAuth();
 
@@ -36,6 +42,7 @@ export function RankingHeader({ seasonName, daysRemaining, isFinished }: Ranking
         </Link>
 
         <div className="flex items-center gap-2">
+          {isSampleData && <span className="ranking-sample-badge">{t.sampleDataBadge}</span>}
           <LocaleToggle />
           {user ? (
             <div className="ranking-user-pill" title={profile?.alias ?? t.userAccount}>
@@ -81,25 +88,27 @@ export function RankingHeader({ seasonName, daysRemaining, isFinished }: Ranking
           <p className="ranking-subtitle">{t.rankingSubtitle}</p>
         </div>
 
-        <div className="ranking-countdown-badge">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <span>
-            {isFinished ? t.rankingSeasonFinished : t.rankingDaysRemaining(daysRemaining)}
-          </span>
-        </div>
+        {daysRemaining !== null && (
+          <div className="ranking-countdown-badge">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>
+              {isFinished ? t.rankingSeasonFinished : t.rankingDaysRemaining(daysRemaining)}
+            </span>
+          </div>
+        )}
       </div>
     </header>
   );

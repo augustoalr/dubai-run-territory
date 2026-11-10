@@ -5,7 +5,6 @@ import {
   type RankingCellOwnership,
   type RankingDailyPoint,
   type RankingProfile,
-  type RankingValidRun,
 } from "@dubai-run/core";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { calculateDaysRemaining, getMockLeagueRanking } from "./mock-ranking";
@@ -13,11 +12,41 @@ import type { LeagueRankingData, SeasonInfo } from "./types";
 
 export interface RankingRepository {
   getLeagueRanking(league: LeagueCode): Promise<LeagueRankingData>;
+  getUserLeague(userId: string): Promise<LeagueCode | null>;
 }
 
 export class HybridRankingRepository implements RankingRepository {
+  async getUserLeague(userId: string): Promise<LeagueCode | null> {
+    if (!isSupabaseConfigured()) return null;
+    try {
+      const supabase = getSupabase();
+      if (!supabase) return null;
+      const { data, error } = await supabase
+        .from("user_leagues")
+        .select("leagues(code)")
+        .eq("user_id", userId)
+        .order("valid_from", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error || !data) return null;
+      const leagueCode = (data.leagues as { code?: string } | null)?.code;
+      if (
+        leagueCode === "starter" ||
+        leagueCode === "intermediate" ||
+        leagueCode === "advanced" ||
+        leagueCode === "elite"
+      ) {
+        return leagueCode as LeagueCode;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async getLeagueRanking(league: LeagueCode): Promise<LeagueRankingData> {
-    // 1. Degraded / offline resilience: if Supabase is not configured, return realistic sample data
+    // 1. Unconfigured environment: provide realistic sample data with sample badge
     if (!isSupabaseConfigured()) {
       return getMockLeagueRanking(league);
     }
@@ -25,36 +54,85 @@ export class HybridRankingRepository implements RankingRepository {
     try {
       const supabase = getSupabase();
       if (!supabase) {
-        return getMockLeagueRanking(league);
+        return {
+          league,
+          season: null,
+          runners: [],
+          isSampleData: false,
+          error: "network_error",
+        };
       }
 
-      // Fetch active season
+      // 2. Fetch the active season (Item 4: status = 'active')
       const { data: seasonData, error: seasonError } = await supabase
         .from("seasons")
         .select("id, name, starts_at, ends_at, status")
-        .order("starts_at", { ascending: false })
+        .eq("status", "active")
         .limit(1)
         .maybeSingle();
 
-      if (seasonError || !seasonData) {
-        return getMockLeagueRanking(league);
+      if (seasonError) {
+        return {
+          league,
+          season: null,
+          runners: [],
+          isSampleData: false,
+          error: "network_error",
+        };
       }
 
-      // Fetch league record for the given code
+      // If no active season exists, return empty state (no fake season or fake runners)
+      if (!seasonData) {
+        return {
+          league,
+          season: null,
+          runners: [],
+          isSampleData: false,
+          error: null,
+        };
+      }
+
+      const { daysRemaining, isFinished } = calculateDaysRemaining(seasonData.ends_at);
+      const season: SeasonInfo = {
+        id: seasonData.id,
+        name: seasonData.name,
+        startsAt: seasonData.starts_at,
+        endsAt: seasonData.ends_at,
+        daysRemaining,
+        isFinished,
+      };
+
+      // 3. Fetch league record for the given code
       const { data: leagueData, error: leagueError } = await supabase
         .from("leagues")
         .select("id, code")
         .eq("code", league)
         .maybeSingle();
 
-      if (leagueError || !leagueData) {
-        return getMockLeagueRanking(league);
+      if (leagueError) {
+        return {
+          league,
+          season,
+          runners: [],
+          isSampleData: false,
+          error: "network_error",
+        };
+      }
+
+      if (!leagueData) {
+        return {
+          league,
+          season,
+          runners: [],
+          isSampleData: false,
+          error: null,
+        };
       }
 
       const leagueId = leagueData.id;
       const seasonId = seasonData.id;
 
-      // Fetch daily points for this season & league
+      // 4. Fetch daily points for this season & league
       const { data: rawDailyPoints, error: dpError } = await supabase
         .from("daily_points")
         .select("user_id, points, day, cells_owned")
@@ -62,26 +140,31 @@ export class HybridRankingRepository implements RankingRepository {
         .eq("league_id", leagueId);
 
       if (dpError) {
-        return getMockLeagueRanking(league);
+        return {
+          league,
+          season,
+          runners: [],
+          isSampleData: false,
+          error: "network_error",
+        };
       }
 
-      // Fetch current cell ownerships
-      const { data: rawOwnerships } = await supabase
+      // 5. Fetch current cell ownerships
+      const { data: rawOwnerships, error: ownError } = await supabase
         .from("cell_ownership")
         .select("owner_id, h3")
         .eq("season_id", seasonId)
         .eq("league_id", leagueId);
 
-      // Fetch valid runs for this season & league
-      const { data: rawRuns } = await supabase
-        .from("runs")
-        .select("user_id, distance_in_zone_m, status")
-        .eq("season_id", seasonId)
-        .eq("league_id", leagueId)
-        .eq("status", "accepted");
-
-      // Fetch profiles
-      const { data: rawProfiles } = await supabase.from("profiles").select("id, alias");
+      if (ownError) {
+        return {
+          league,
+          season,
+          runners: [],
+          isSampleData: false,
+          error: "network_error",
+        };
+      }
 
       const dailyPoints: RankingDailyPoint[] = (rawDailyPoints || []).map((row) => ({
         userId: row.user_id,
@@ -95,47 +178,73 @@ export class HybridRankingRepository implements RankingRepository {
         h3: row.h3,
       }));
 
-      const validRuns: RankingValidRun[] = (rawRuns || []).map((row) => ({
-        userId: row.user_id,
-        distanceInZoneMeters: row.distance_in_zone_m || 0,
-      }));
-
-      const profiles: RankingProfile[] = (rawProfiles || []).map((row) => ({
-        id: row.id,
-        alias: row.alias,
-      }));
-
-      // If there are no daily points or runs at all in the database, fallback to realistic mock
-      if (dailyPoints.length === 0 && validRuns.length === 0 && cellOwnerships.length === 0) {
-        return getMockLeagueRanking(league);
+      // Item 2: If there are no daily points or cell ownerships, return empty list (never invent runners!)
+      if (dailyPoints.length === 0 && cellOwnerships.length === 0) {
+        return {
+          league,
+          season,
+          runners: [],
+          isSampleData: false,
+          error: null,
+        };
       }
 
+      // Item 7: Filter profiles with .in("id", userIds) of runners in this ranking only
+      const userIds = Array.from(
+        new Set([...dailyPoints.map((dp) => dp.userId), ...cellOwnerships.map((co) => co.ownerId)]),
+      );
+
+      let profiles: RankingProfile[] = [];
+      if (userIds.length > 0) {
+        const { data: rawProfiles, error: profError } = await supabase
+          .from("profiles")
+          .select("id, alias")
+          .in("id", userIds);
+
+        if (profError) {
+          return {
+            league,
+            season,
+            runners: [],
+            isSampleData: false,
+            error: "network_error",
+          };
+        }
+
+        if (rawProfiles) {
+          profiles = rawProfiles.map((p) => ({
+            id: p.id,
+            alias: p.alias,
+          }));
+        }
+      }
+
+      // Item 3: Do not query runs table from client (runs has no league_id and RLS restricts to self).
+      // Valid runs empty array passed to domain logic; server view/RPC pending in future task.
       const runners: RankedRunner[] = aggregateRankingData({
         dailyPoints,
         cellOwnerships,
-        validRuns,
+        validRuns: [],
         profiles,
         seasonStartsAt: seasonData.starts_at,
       });
-
-      const { daysRemaining, isFinished } = calculateDaysRemaining(seasonData.ends_at);
-      const season: SeasonInfo = {
-        id: seasonData.id,
-        name: seasonData.name,
-        startsAt: seasonData.starts_at,
-        endsAt: seasonData.ends_at,
-        daysRemaining,
-        isFinished,
-      };
 
       return {
         league,
         season,
         runners,
+        isSampleData: false,
+        error: null,
       };
     } catch {
-      // Catch any unexpected network / Supabase exception and degrade gracefully
-      return getMockLeagueRanking(league);
+      // Network/client exception: return network_error so the UI offers a retry button
+      return {
+        league,
+        season: null,
+        runners: [],
+        isSampleData: false,
+        error: "network_error",
+      };
     }
   }
 }

@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 10 nov 2026, con main en `76b2bdf` (PR #22 T-32 fusionado; también #21, #20, #17, #18, #19).
+Actualizado el 10 nov 2026, con main en `76b2bdf` (T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main; también PR #20, #17, #18, #19).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-17 (Puntos diarios y ranking de temporada) en rama `t17-ranking`. El playbook del manager está en `docs/MANAGER.md`.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-17 (Puntos diarios y ranking de temporada) en revisión (PR #21). El playbook del manager está en `docs/MANAGER.md`.
 
 ## T-01 · Scaffolding
 
@@ -173,7 +173,7 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 ## T-14 · Autenticación y perfil
 
-- **Estado:** terminada (PR #21 fusionado en `main`, squash `4298309`).
+- **Estado:** terminada (push directo a main en `4298309`).
 - **Hecho:**
   1. Integración de Supabase Auth en `apps/web` con cliente y wrapper desacoplado en `src/lib/supabase/` leyendo `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` de forma segura.
   2. Flujo de login con Google mediante `signInWithOAuth` con redirección adecuada hacia `/auth/callback` y soporte PKCE (`detectSessionInUrl: true`) compatible con exportación estática (`output: "export"`).
@@ -187,38 +187,38 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 ## T-32 · Reglas técnicas permanentes
 
-- **Estado:** terminada (PR #22 fusionado en main, squash `76b2bdf`).
+- **Estado:** terminada (push directo a main en `76b2bdf`).
 - **Hecho:** definición de las 7 reglas técnicas permanentes en `AGENTS.md` (sitio estático puro, austeridad de dependencias, resiliencia offline/degradado, i18n estricta, seguridad y secretos, agnosticismo de base de datos y experiencia móvil). Creación de `docs/GUIA-AUGUSTO.md` para estandarizar la interacción entre Augusto y el Manager. Integración del paso de verificación obligatoria contra reglas permanentes y adición continua de reglas en `docs/MANAGER.md` (§6, §7 y §11), además de estipular `git pull` en `main` al iniciar, gestión de prompts con prefijo `EXISTENTE:`, fusión autónoma por parte del manager y enlace a la guía rápida.
 - **Pendiente:** ninguno.
 - **Siguiente paso:** ninguno.
 
 ## T-17 · Puntos diarios y ranking de temporada
 
-- **Estado:** en curso (rama `t17-ranking`).
+- **Estado:** en revisión (PR #21).
 - **Hecho:**
   1. Módulo de dominio `packages/core/src/ranking/` para calcular y ordenar el ranking de liga según los 4 criterios oficiales: Criterio 1: Total de puntos acumulados en la temporada (`daily_points.points`), Desempate 1: Número de celdas poseídas al cierre/actuales (`cell_ownership`), Desempate 2: Kilómetros acumulados en carreras válidas dentro de la zona durante la temporada, Desempate 3: Antigüedad (quien alcanzó primero la puntuación). Tests unitarios exhaustivos en Vitest (`ranking.test.ts`).
   2. Página `/ranking` en `apps/web`: bilingüe (español e inglés), selector superior por liga (Starter, Intermediate, Advanced, Elite), podio de los 3 primeros puestos con estilo atlético y tarjetas para el resto de posiciones, indicador de días restantes de la temporada y posición del corredor actual (si está logueado).
   3. Enlace a `/ranking` en el menú principal (`AppMenuModal`).
-  4. Resiliencia / degradación elegante con datos de muestra realistas en caso de que Supabase no esté configurado (`!isSupabaseConfigured()`) o la consulta no devuelva filas.
+  4. Resiliencia / degradación elegante: en entorno sin Supabase (`!isSupabaseConfigured()`) se muestran datos de muestra con etiqueta visible "Datos de ejemplo" / "Sample data". Con Supabase configurado, la interfaz maneja estados de borde reales: sin filas muestra "Sin clasificados aún" sin inventar datos, y ante errores de red ofrece reintento con mensaje traducido.
   5. Simetría total de claves i18n en `apps/web/src/i18n/dictionaries.ts`.
   6. Directrices de gobernanza agregadas en `docs/MANAGER.md` (§7 y §8).
-- **Pendiente:** abrir PR y verificar checks de CI.
-- **Siguiente paso:** revisión y fusión en `main`.
+- **Pendiente:** El desempate por km acumulados en zona está implementado y probado en `packages/core`, pero la tabla `runs` no tiene columna `league_id` y su RLS limita la lectura a carreras propias; se necesita una vista o RPC de servidor en una tarea futura para alimentar los km acumulados de todos los corredores sin exponer datos privados.
+- **Siguiente paso:** revisión y fusión del PR #21.
 
 ## En curso
 
-T-17 · Puntos diarios y ranking de temporada en rama `t17-ranking`. Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
+T-17 · Puntos diarios y ranking de temporada en revisión (PR #21). Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
 
 ### Tabla de conversaciones Antigravity
 
-| Tarea | Conversación Antigravity | Rama                                           | PR        | Estado    |
-| ----- | ------------------------ | ---------------------------------------------- | --------- | --------- |
-| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14       | fusionado |
-| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15       | fusionado |
-| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16       | fusionado |
-| T-30  | T-30 Inglés              | t30-ingles                                     | #17       | fusionado |
-| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19 | fusionado |
-| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20       | fusionado |
-| T-14  | T-14 Auth                | t14-auth                                       | #21       | fusionado |
-| T-32  | T-32 Reglas              | t32-reglas-tecnicas                            | #22       | fusionado |
-| T-17  | T-17 Ranking             | t17-ranking                                    | (abierto) | en curso  |
+| Tarea | Conversación Antigravity | Rama                                           | PR                      | Estado      |
+| ----- | ------------------------ | ---------------------------------------------- | ----------------------- | ----------- |
+| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14                     | fusionado   |
+| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15                     | fusionado   |
+| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16                     | fusionado   |
+| T-30  | T-30 Inglés              | t30-ingles                                     | #17                     | fusionado   |
+| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19               | fusionado   |
+| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20                     | fusionado   |
+| T-14  | T-14 Auth                | t14-auth                                       | - (push directo a main) | fusionado   |
+| T-32  | T-32 Reglas              | t32-reglas-tecnicas                            | - (push directo a main) | fusionado   |
+| T-17  | T-17 Ranking             | t17-ranking                                    | #21                     | en revisión |

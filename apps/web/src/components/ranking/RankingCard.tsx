@@ -15,7 +15,7 @@ export function RankingCard({ runner, isCurrentUser }: RankingCardProps) {
   return (
     <article
       className={`ranking-runner-card glass ${isCurrentUser ? "is-current-user" : ""}`}
-      aria-label={`Posición ${runner.rank}: ${runner.alias ?? t.anonymousRunner}`}
+      aria-label={t.rankingPositionAria(runner.rank, runner.alias ?? t.anonymousRunner)}
     >
       <div className="card-left">
         <div className="card-rank-badge">

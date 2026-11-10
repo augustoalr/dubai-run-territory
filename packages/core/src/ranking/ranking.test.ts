@@ -40,9 +40,27 @@ describe("Ranking domain logic (T-17)", () => {
 
     it("orders multiple runners descending by points", () => {
       const candidates: RankingCandidate[] = [
-        { userId: "u1", points: 50, cellsOwned: 0, distanceInZoneMeters: 0, achievedAt: "2026-11-01" },
-        { userId: "u2", points: 120, cellsOwned: 0, distanceInZoneMeters: 0, achievedAt: "2026-11-01" },
-        { userId: "u3", points: 85, cellsOwned: 0, distanceInZoneMeters: 0, achievedAt: "2026-11-01" },
+        {
+          userId: "u1",
+          points: 50,
+          cellsOwned: 0,
+          distanceInZoneMeters: 0,
+          achievedAt: "2026-11-01",
+        },
+        {
+          userId: "u2",
+          points: 120,
+          cellsOwned: 0,
+          distanceInZoneMeters: 0,
+          achievedAt: "2026-11-01",
+        },
+        {
+          userId: "u3",
+          points: 85,
+          cellsOwned: 0,
+          distanceInZoneMeters: 0,
+          achievedAt: "2026-11-01",
+        },
       ];
 
       const ranked = calculateRanking(candidates);
@@ -235,8 +253,20 @@ describe("Ranking domain logic (T-17)", () => {
 
     it("does not mutate the input array", () => {
       const original: RankingCandidate[] = [
-        { userId: "u1", points: 10, cellsOwned: 1, distanceInZoneMeters: 1000, achievedAt: "2026-11-01" },
-        { userId: "u2", points: 50, cellsOwned: 2, distanceInZoneMeters: 2000, achievedAt: "2026-11-01" },
+        {
+          userId: "u1",
+          points: 10,
+          cellsOwned: 1,
+          distanceInZoneMeters: 1000,
+          achievedAt: "2026-11-01",
+        },
+        {
+          userId: "u2",
+          points: 50,
+          cellsOwned: 2,
+          distanceInZoneMeters: 2000,
+          achievedAt: "2026-11-01",
+        },
       ];
       const snapshot = JSON.stringify(original);
       calculateRanking(original);
