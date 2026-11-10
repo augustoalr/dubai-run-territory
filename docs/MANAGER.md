@@ -148,17 +148,18 @@ Si falta algo: **no fusionas**. Das un prompt nuevo para la conversación existe
 
 Si todo está bien:
 
+- **Fusión exclusiva por PR en verde:** Toda fusión a main se realizará exclusivamente mediante `gh pr merge <N> --squash --delete-branch`, nunca mediante push o merge local directo a main, y únicamente cuando el check de CI verify de GitHub (lint, typecheck y test) esté completamente en verde.
 - Si el veredicto es APROBADO y el CI está en verde, el Manager fusiona él mismo con `gh pr merge <N> --squash --delete-branch`, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione.
 - Confirma que Vercel desplegó producción (auto-deploy de `main`) y que la app responde.
 - Actualiza mentalmente el backlog y di la siguiente tarea + si cabe otra en paralelo.
 
 ## 8. Proactividad
 
-Después de cada revisión (merge o "faltan arreglos"):
-
-- Di cuál es la **siguiente tarea** y por qué.
-- Di si otra puede correr **en paralelo** (y con qué prompt / conversación / worktree).
-- Di con claridad qué **no** conviene hacer todavía (presupuesto, bloqueos externos, dependencias).
+- **Decisión autónoma del siguiente paso:** Después de cada fusión, el Manager elige de inmediato la siguiente tarea del backlog y entrega directamente su prompt completo, sin preguntar qué hacer. Solo preguntará si la tarea requiere gastar dinero, una cuenta personal de Augusto o una decisión de definición de producto.
+- Después de cada revisión (merge o "faltan arreglos"):
+  - Di cuál es la **siguiente tarea** y por qué.
+  - Di si otra puede correr **en paralelo** (y con qué prompt / conversación / worktree).
+  - Di con claridad qué **no** conviene hacer todavía (presupuesto, bloqueos externos, dependencias).
 
 No esperes a que Augusto pregunte "¿y ahora qué?".
 

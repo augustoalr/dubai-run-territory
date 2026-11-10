@@ -150,7 +150,37 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
           <LocaleToggle />
         </div>
 
-        <nav className="app-menu-nav" aria-label="Navegación legal y normas">
+        <nav className="app-menu-nav" aria-label="Navegación principal y legal">
+          <Link href="/ranking" className="menu-nav-item" onClick={onClose}>
+            <div className="menu-item-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55-.45 1-1 1H7" />
+                <path d="M14 14.66V17c0 .55.45 1 1 1h2" />
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+              </svg>
+            </div>
+            <div className="menu-item-content">
+              <span className="menu-item-title">{t.menuRankingTitle}</span>
+              <span className="menu-item-desc">{t.menuRankingDesc}</span>
+            </div>
+            <span className="menu-item-arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
+
           <Link href="/terminos" className="menu-nav-item" onClick={onClose}>
             <div className="menu-item-icon">
               <svg
