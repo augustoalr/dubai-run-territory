@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 10 nov 2026, con main en `76b2bdf` (T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main; también PR #20, #17, #18, #19).
+Actualizado el 10 nov 2026, con main en `f8fc6bf` (T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-17 (Puntos diarios y ranking de temporada) en revisión (PR #21). El playbook del manager está en `docs/MANAGER.md`.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-33 (Checklist de calidad del Manager) en revisión (PR #22, rama `t33-checklist-manager`). El playbook del manager está en `docs/MANAGER.md`.
 
 ## T-01 · Scaffolding
 
@@ -173,7 +173,7 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 ## T-14 · Autenticación y perfil
 
-- **Estado:** terminada (push directo a main en `4298309`).
+- **Estado:** terminada (push directo a main en commit `4298309` sin PR; el número `#21` en el commit no es un PR real).
 - **Hecho:**
   1. Integración de Supabase Auth en `apps/web` con cliente y wrapper desacoplado en `src/lib/supabase/` leyendo `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` de forma segura.
   2. Flujo de login con Google mediante `signInWithOAuth` con redirección adecuada hacia `/auth/callback` y soporte PKCE (`detectSessionInUrl: true`) compatible con exportación estática (`output: "export"`).
@@ -187,14 +187,14 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 ## T-32 · Reglas técnicas permanentes
 
-- **Estado:** terminada (push directo a main en `76b2bdf`).
+- **Estado:** terminada (push directo a main en commit `76b2bdf` sin PR; el número `#22` en el commit no es un PR real).
 - **Hecho:** definición de las 7 reglas técnicas permanentes en `AGENTS.md` (sitio estático puro, austeridad de dependencias, resiliencia offline/degradado, i18n estricta, seguridad y secretos, agnosticismo de base de datos y experiencia móvil). Creación de `docs/GUIA-AUGUSTO.md` para estandarizar la interacción entre Augusto y el Manager. Integración del paso de verificación obligatoria contra reglas permanentes y adición continua de reglas en `docs/MANAGER.md` (§6, §7 y §11), además de estipular `git pull` en `main` al iniciar, gestión de prompts con prefijo `EXISTENTE:`, fusión autónoma por parte del manager y enlace a la guía rápida.
 - **Pendiente:** ninguno.
 - **Siguiente paso:** ninguno.
 
 ## T-17 · Puntos diarios y ranking de temporada
 
-- **Estado:** en revisión (PR #21).
+- **Estado:** terminada (PR #21 fusionado en main, squash `f8fc6bf`).
 - **Hecho:**
   1. Módulo de dominio `packages/core/src/ranking/` para calcular y ordenar el ranking de liga según los 4 criterios oficiales: Criterio 1: Total de puntos acumulados en la temporada (`daily_points.points`), Desempate 1: Número de celdas poseídas al cierre/actuales (`cell_ownership`), Desempate 2: Kilómetros acumulados en carreras válidas dentro de la zona durante la temporada, Desempate 3: Antigüedad (quien alcanzó primero la puntuación). Tests unitarios exhaustivos en Vitest (`ranking.test.ts`).
   2. Página `/ranking` en `apps/web`: bilingüe (español e inglés), selector superior por liga (Starter, Intermediate, Advanced, Elite), podio de los 3 primeros puestos con estilo atlético y tarjetas para el resto de posiciones, indicador de días restantes de la temporada y posición del corredor actual (si está logueado).
@@ -203,22 +203,38 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
   5. Simetría total de claves i18n en `apps/web/src/i18n/dictionaries.ts`.
   6. Directrices de gobernanza agregadas en `docs/MANAGER.md` (§7 y §8).
 - **Pendiente:** El desempate por km acumulados en zona está implementado y probado en `packages/core`, pero la tabla `runs` no tiene columna `league_id` y su RLS limita la lectura a carreras propias; se necesita una vista o RPC de servidor en una tarea futura para alimentar los km acumulados de todos los corredores sin exponer datos privados.
-- **Siguiente paso:** revisión y fusión del PR #21.
+- **Siguiente paso:** ninguno de código de T-17.
+
+## T-33 · Checklist de calidad del Manager
+
+- **Estado:** en revisión (PR #22 en rama `t33-checklist-manager`).
+- **Hecho:**
+  1. Formalización en `docs/MANAGER.md` (§7) de la "Checklist obligatoria de calidad del Manager antes de aprobar cualquier PR", publicada obligatoriamente como comentario en el PR con `gh pr comment`.
+  2. Definición exhaustiva de los 10 puntos de control: verificación con GitHub CLI (`gh pr view` y `gh pr checks`), CI `verify` completo en verde, comprobación de arreglos en el diff, prohibición estricta de datos ficticios/mocks en producción (empty state o error state con reintento), coherencia con esquema y RLS de BD, eficiencia de consultas (`.in("id", ...)` o paginación), cero hardcoding de usuario o datos de temporada, cumplimiento de las 7 reglas técnicas permanentes de `AGENTS.md`, textos comprensibles para corredores y veracidad documental en `ESTADO.md`.
+  3. Regla en `docs/MANAGER.md` (§6) de revisar con `gh` el último commit del PR antes de emitir un prompt de arreglos.
+  4. Protocolo para tareas grandes (base de datos, login, pagos) con apertura de conversación 'Revisor' antes de fusionar.
+  5. Reafirmación de fusión exclusiva con `gh pr merge <N> --squash --delete-branch` y autonomía del Manager para elegir la siguiente tarea en §8.
+  6. Internacionalización de `aria-label="Navegación principal y legal"` en `AppMenuModal.tsx` mediante clave `menuNavAria` en los diccionarios `es` y `en`.
+  7. Actualización de `docs/GUIA-AUGUSTO.md`: regla "main está protegida: todo entra por PR con verify en verde", instrucción para el Revisor y sección final "¿Pego o no el prompt del Manager?".
+  8. Corrección documental de T-14 y T-32 en `docs/ESTADO.md`.
+- **Pendiente:** revisión y aprobación del PR #22 por el Manager.
+- **Siguiente paso:** revisión del Manager y fusión con `gh pr merge`.
 
 ## En curso
 
-T-17 · Puntos diarios y ranking de temporada en revisión (PR #21). Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
+T-33 · Checklist de calidad del Manager en revisión (PR #22, rama `t33-checklist-manager`). Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
 
 ### Tabla de conversaciones Antigravity
 
-| Tarea | Conversación Antigravity | Rama                                           | PR                      | Estado      |
-| ----- | ------------------------ | ---------------------------------------------- | ----------------------- | ----------- |
-| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14                     | fusionado   |
-| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15                     | fusionado   |
-| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16                     | fusionado   |
-| T-30  | T-30 Inglés              | t30-ingles                                     | #17                     | fusionado   |
-| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19               | fusionado   |
-| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20                     | fusionado   |
-| T-14  | T-14 Auth                | t14-auth                                       | - (push directo a main) | fusionado   |
-| T-32  | T-32 Reglas              | t32-reglas-tecnicas                            | - (push directo a main) | fusionado   |
-| T-17  | T-17 Ranking             | t17-ranking                                    | #21                     | en revisión |
+| Tarea | Conversación Antigravity | Rama                                           | PR                      | Estado    |
+| ----- | ------------------------ | ---------------------------------------------- | ----------------------- | --------- |
+| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14                     | fusionado |
+| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15                     | fusionado |
+| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16                     | fusionado |
+| T-30  | T-30 Inglés              | t30-ingles                                     | #17                     | fusionado |
+| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19               | fusionado |
+| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20                     | fusionado |
+| T-14  | T-14 Auth                | t14-auth                                       | - (push directo a main) | fusionado |
+| T-32  | T-32 Reglas              | t32-reglas-tecnicas                            | - (push directo a main) | fusionado |
+| T-17  | T-17 Ranking             | t17-ranking                                    | #21                     | fusionado |
+| T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | #22                     | en curso  |

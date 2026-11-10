@@ -74,7 +74,10 @@ Docs de verdad: `docs/PRODUCTO.md`, `docs/ARQUITECTURA.md`, `docs/CONQUISTA.md`.
    - **Registro de conversaciones:** Cada vez que Augusto abre una conversación nueva, el Manager la anota de inmediato en esa tabla (tarea, nombre de la conversación, rama).
 3. Augusto lo pega en la conversación que tú indiques.
 4. El programador hace push, abre el PR y cierra con la línea de revisión.
-5. Augusto te pega esa línea. Tú revisas el PR. Si falta algo, das otro prompt para la **misma** conversación. Si el veredicto es APROBADO y el CI está en verde, el Manager fusiona él mismo con `gh pr merge <N> --squash --delete-branch`, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione. Luego confirma el deploy de Vercel.
+5. Augusto te pega esa línea. Tú revisas el PR.
+   - **Verificación previa del último commit:** Antes de dar un prompt de arreglos, revisa con `gh` el último commit del PR (`gh pr view <N>`); si ya hay un commit posterior a la revisión, revisa ese commit primero en vez de dar el prompt.
+   - Si falta algo, das otro prompt para la **misma** conversación.
+   - Si el veredicto es APROBADO y el CI está en verde, el Manager fusiona él mismo con `gh pr merge <N> --squash --delete-branch`, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione. Luego confirma el deploy de Vercel.
 6. Tras cada revisión, dices la **siguiente tarea** y si otra puede ir en paralelo (con su prompt).
 
 ### 6.1 Formato obligatorio de cada prompt de programador
@@ -132,30 +135,56 @@ Cuando te peguen `Manager: revisa el PR #N (T-XX)`, buscas la fila y sabes de qu
 
 ## 7. Criterios de revisión de un PR
 
-Antes de fusionar, en este orden:
+Antes de fusionar cualquier PR, el Manager debe verificar rigurosamente la calidad del código, la veracidad documental y el cumplimiento de las reglas del proyecto.
 
-1. Lee el **diff completo** del PR (archivos tocados y parches).
-2. Comprueba que cada punto pedido en el prompt está hecho de verdad (no solo "parece hecho"). Si hubo una revisión previa pidiendo arreglos, **solo se fusiona con un commit nuevo y comprobando cada arreglo en el diff** (el CI en verde no basta).
-3. CI check **`verify` en verde**.
-4. `docs/ESTADO.md` actualizado en el mismo PR (estado de la tarea + tabla de conversaciones).
-5. No hay secretos nuevos, ni service role en frontend, ni dependencias de pago.
-6. El alcance es solo esa tarea (no mezclar T-grandes). **No tocar `supabase/migrations` ni la base de datos** salvo que la tarea lo pida explícitamente.
-7. **Textos de pantalla simples para corredores:** lenguaje accesible (baldosa, 5:12 /km; nunca H3, celda hexagonal ni s/km).
-8. **Textos legales exactos:** mantener fidelidad exacta en `/privacidad` y `/terminos`.
-9. **Rendimiento móvil:** que la app vaya fluida en iPhone Safari.
+### Checklist obligatoria de calidad del Manager antes de aprobar cualquier PR
 
-Si falta algo: **no fusionas**. Das un prompt nuevo para la conversación existente con la lista exacta de arreglos, y de nuevo la línea `Manager: revisa el PR #N (T-XX)`.
+Antes de aprobar, el Manager publica obligatoriamente esta checklist marcada como comentario en el PR usando GitHub CLI:
 
-Si todo está bien:
+```bash
+gh pr comment <N> --body "..."
+```
 
-- **Fusión exclusiva por PR en verde:** Toda fusión a main se realizará exclusivamente mediante `gh pr merge <N> --squash --delete-branch`, nunca mediante push o merge local directo a main, y únicamente cuando el check de CI verify de GitHub (lint, typecheck y test) esté completamente en verde.
-- Si el veredicto es APROBADO y el CI está en verde, el Manager fusiona él mismo con `gh pr merge <N> --squash --delete-branch`, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione.
-- Confirma que Vercel desplegó producción (auto-deploy de `main`) y que la app responde.
-- Actualiza mentalmente el backlog y di la siguiente tarea + si cabe otra en paralelo.
+Puntos obligatorios de la checklist:
+
+1. **Verificación obligatoria con GitHub CLI:** Consultar siempre `gh pr view <N>` y `gh pr checks <N>`. Nunca suponer el número de PR, el estado ni los commits basándose en archivos locales o en `ESTADO.md`.
+2. **CI en verde completo:** Verificar que el check `verify` pase en limpio en GitHub (`pnpm lint`, `pnpm typecheck`, `pnpm test` y el build estático) en el último commit del PR.
+3. **Comprobación de arreglos en el diff:** Si hubo una revisión previa pidiendo arreglos, solo se aprueba si hay un commit nuevo después de esa revisión y cada arreglo pedido aparece explícitamente en el diff (el CI en verde no basta; no aprobar si solo "parece hecho").
+4. **Prohibición estricta de datos ficticios en producción:** Nada de datos inventados (mock/demo) visibles a usuarios reales. Si Supabase está configurado, la app NUNCA debe mostrar mocks. Si la BD está vacía → Empty State amigable ("Sin clasificados aún", "Sin carreras aún", etc.). Si hay fallo de red o backend → Error State con reintento y mensaje claro. Los datos simulados quedan confinados exclusivamente al modo local/offline sin conexión (`!isSupabaseConfigured()`), siempre acompañados de una etiqueta visible "Datos de ejemplo".
+5. **Coherencia con el esquema y RLS de base de datos:** Las consultas a Supabase en el cliente deben respetar RLS rigurosamente: solo se leen tablas y columnas que el usuario puede leer, y que existan de verdad en `supabase/migrations`. Prohibido consultar desde el cliente datos ajenos que RLS bloquea o tablas sin las claves foráneas requeridas.
+6. **Eficiencia en consultas:** Prohibido hacer `.select()` sobre tablas completas de usuarios; filtrar siempre por `.in("id", userIds)` o paginar adecuadamente.
+7. **Cero suposiciones o hardcoding de usuario y datos:** Identificar al usuario logueado exclusivamente por `user.id` (nunca por alias o nombre). Usar siempre los datos reales correctos (temporada activa, liga del usuario, etc.). Prohibido hardcodear ligas iniciales, días restantes ficticios o contadores inventados.
+8. **Cumplimiento estricto de las Reglas técnicas permanentes (`AGENTS.md`):**
+   - **Sitio estático puro:** `output: "export"`. Prohibidas rutas `/api`, Server Actions, middleware de Next.js o `@supabase/ssr`. Todo backend se ejecuta en Supabase (Postgres/RLS o Edge Functions).
+   - **Austeridad de dependencias:** Reutilizar librerías existentes en `package.json`. No duplicar clientes de Supabase ni funciones de utilidad.
+   - **Resiliencia y modo offline/degradado:** Grabar carreras y ver el mapa nunca dependen de login ni de backend externo. Sin configuración o sin red, la app degrada con elegancia.
+   - **Internacionalización estricta:** Ningún texto visible ni `aria-label` en código duro. Paridad y simetría total de claves entre `es` y `en` (`apps/web/src/i18n/dictionaries.ts`).
+   - **Seguridad y secretos:** Cero secretos en git. La `service_role` key jamás llega al cliente ni a variables `NEXT_PUBLIC_*`.
+   - **Agnosticismo de base de datos:** No tocar `supabase/migrations/` ni alterar esquemas a menos que la tarea lo exija expresamente.
+   - **Experiencia móvil:** Interfaz fluida y usable en iPhone Safari en orientación vertical (375 a 430 px), respetando safe areas (`env(safe-area-inset-top/bottom)`).
+9. **Textos en pantalla en palabras simples para un corredor:** Lenguaje accesible, motivador y natural (baldosa, 5:12 /km; nunca H3, celda hexagonal ni s/km crudo salvo opción avanzada de reloj). Textos legales exactos en `/privacidad` y `/terminos`.
+10. **Veracidad documental:** `docs/ESTADO.md` actualizado en el mismo PR con el número de PR REAL (verificado con `gh pr view`) y hashes reales de la historia del repositorio.
+
+### Procedimiento ante fallos o aprobación
+
+- **Si falta algo o la checklist no pasa:** **No fusionas**. Das un prompt nuevo para la conversación existente con la lista exacta de arreglos requeridos, y de nuevo la línea de cierre `Manager: revisa el PR #N (T-XX)`.
+- **Tareas grandes (base de datos, login, pagos):** Antes de fusionar, pedir a Augusto que abra una conversación "Revisor" y pegue:
+  ```
+  Revisa el PR #N como un revisor estricto y desconfiado, contra AGENTS.md y docs/MANAGER.md. No fusiones; solo dime qué está mal.
+  ```
+- **Fusión exclusiva por PR en verde:**
+  - Toda fusión a main se realiza **exclusivamente** mediante:
+    ```bash
+    gh pr merge <N> --squash --delete-branch
+    ```
+    **Nunca** mediante push o merge local directo a `main`, y únicamente cuando el check de CI `verify` de GitHub (lint, typecheck, test y build) esté completamente en verde y la checklist de calidad esté publicada y superada.
+  - El Manager fusiona él mismo, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione.
+  - Confirma que Vercel desplegó producción (auto-deploy de `main`) y que la app responde.
+  - Actualiza mentalmente el backlog y di la siguiente tarea + si cabe otra en paralelo.
 
 ## 8. Proactividad
 
-- **Decisión autónoma del siguiente paso:** Después de cada fusión, el Manager elige de inmediato la siguiente tarea del backlog y entrega directamente su prompt completo, sin preguntar qué hacer. Solo preguntará si la tarea requiere gastar dinero, una cuenta personal de Augusto o una decisión de definición de producto.
+- **Decisión autónoma del siguiente paso:** Después de cada fusión, el Manager elige de forma autónoma la siguiente tarea del backlog y entrega directamente su prompt completo, sin preguntar qué hacer. Solo preguntará si la tarea requiere gastar dinero, una cuenta personal de Augusto o una decisión de definición de producto.
 - Después de cada revisión (merge o "faltan arreglos"):
   - Di cuál es la **siguiente tarea** y por qué.
   - Di si otra puede correr **en paralelo** (y con qué prompt / conversación / worktree).

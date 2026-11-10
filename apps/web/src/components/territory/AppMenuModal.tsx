@@ -150,7 +150,7 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
           <LocaleToggle />
         </div>
 
-        <nav className="app-menu-nav" aria-label="Navegación principal y legal">
+        <nav className="app-menu-nav" aria-label={t.menuNavAria}>
           <Link href="/ranking" className="menu-nav-item" onClick={onClose}>
             <div className="menu-item-icon">
               <svg
