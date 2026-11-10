@@ -264,6 +264,42 @@ export const es = {
   authCallbackTitle: "Verificando tu sesión...",
   authCallbackDesc: "Conectando con Supabase Auth...",
   authCallbackError: "Hubo un problema al iniciar sesión.",
+
+  // Ranking page (T-17)
+  ranking: "Ranking",
+  rankingTitle: "Ranking · Territorio",
+  rankingDescription:
+    "Clasificación por ligas de la temporada en la pista de Jumeirah Beach y Kite Beach.",
+  rankingEyebrow: "Clasificación de temporada",
+  rankingPageTitle: "Ranking de liga",
+  rankingSubtitle: "Puntos acumulados y baldosas defendidas durante la temporada",
+  rankingEmptyTitle: "Sin clasificados aún",
+  rankingEmptyDesc: "Nadie ha puntuado todavía en esta liga esta temporada. ¡Sé el primero!",
+  rankingDaysRemaining: (days: number) =>
+    days === 1 ? "1 día restante" : `${days} días restantes`,
+  rankingSeasonFinished: "Temporada finalizada",
+  rankingYourPosition: "Tu posición",
+  rankingNotRankedYet: "Aún no tienes puntos esta temporada en esta liga.",
+  rankingRunToScore: "¡Sal a correr y conquista tu primera baldosa!",
+  rankingSignInToView: "Inicia sesión para ver tu posición en el ranking.",
+  rankingPointsSuffix: "pts",
+  rankingCellsCount: (count: number) => (count === 1 ? "1 baldosa" : `${count} baldosas`),
+  rankingKmUnit: "km",
+  rankingPodiumFirst: "1.er lugar",
+  rankingPodiumSecond: "2.º lugar",
+  rankingPodiumThird: "3.er lugar",
+  rankingTiebreakNote:
+    "Desempates: 1.º Más baldosas · 2.º Más km en la pista · 3.º Quien puntuó primero",
+  rankingGoRun: "Grabar carrera",
+  rankingPositionHash: (pos: number) => `#${pos}`,
+  sampleDataBadge: "Datos de ejemplo",
+  rankingErrorTitle: "No se pudo cargar el ranking",
+  rankingErrorDesc: "Comprueba tu conexión e inténtalo de nuevo.",
+  rankingOtherRunnersAria: "Resto de corredores clasificados",
+  rankingPodiumAria: "Podio de la liga",
+  rankingPositionAria: (pos: number, alias: string) => `Posición ${pos}: ${alias}`,
+  menuRankingTitle: "Ranking de temporada",
+  menuRankingDesc: "Consulta los podios y la clasificación de cada liga",
 };
 
 export type Dictionary = typeof es;
@@ -531,6 +567,40 @@ export const en: Dictionary = {
   authCallbackTitle: "Verifying your session...",
   authCallbackDesc: "Connecting to Supabase Auth...",
   authCallbackError: "There was a problem signing in.",
+
+  // Ranking page (T-17)
+  ranking: "Ranking",
+  rankingTitle: "Ranking · Territory",
+  rankingDescription: "Season league leaderboard on the Jumeirah Beach and Kite Beach track.",
+  rankingEyebrow: "Season Leaderboard",
+  rankingPageTitle: "League Ranking",
+  rankingSubtitle: "Accumulated points and tiles defended during the season",
+  rankingEmptyTitle: "No ranked runners yet",
+  rankingEmptyDesc: "Nobody has scored in this league this season yet. Be the first!",
+  rankingDaysRemaining: (days: number) =>
+    days === 1 ? "1 day remaining" : `${days} days remaining`,
+  rankingSeasonFinished: "Season ended",
+  rankingYourPosition: "Your position",
+  rankingNotRankedYet: "You have no points in this league this season yet.",
+  rankingRunToScore: "Go for a run and claim your first tile!",
+  rankingSignInToView: "Sign in to see your position on the leaderboard.",
+  rankingPointsSuffix: "pts",
+  rankingCellsCount: (count: number) => (count === 1 ? "1 tile" : `${count} tiles`),
+  rankingKmUnit: "km",
+  rankingPodiumFirst: "1st Place",
+  rankingPodiumSecond: "2nd Place",
+  rankingPodiumThird: "3rd Place",
+  rankingTiebreakNote: "Tiebreakers: 1st More tiles · 2nd More km on track · 3rd Who scored first",
+  rankingGoRun: "Record run",
+  rankingPositionHash: (pos: number) => `#${pos}`,
+  sampleDataBadge: "Sample data",
+  rankingErrorTitle: "Could not load leaderboard",
+  rankingErrorDesc: "Check your connection and try again.",
+  rankingOtherRunnersAria: "Other ranked runners",
+  rankingPodiumAria: "League podium",
+  rankingPositionAria: (pos: number, alias: string) => `Position ${pos}: ${alias}`,
+  menuRankingTitle: "Season Ranking",
+  menuRankingDesc: "Check the podiums and leaderboard for every league",
 };
 
 export type Locale = "es" | "en";

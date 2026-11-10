@@ -106,3 +106,19 @@ export type {
 } from "./recording";
 export { ZONE_CATALOG, activeZones, getZone, jumeirahKiteZone } from "./zones/registry";
 export type { LocalizedName, ZoneDefinition, ZoneStatus } from "./zones/types";
+export {
+  areCriteriaEqual,
+  calculateRanking,
+  compareRankingCandidates,
+  normalizeTimestamp,
+  aggregateRankingData,
+} from "./ranking";
+export type {
+  AggregateRankingInput,
+  RankedRunner,
+  RankingCandidate,
+  RankingCellOwnership,
+  RankingDailyPoint,
+  RankingProfile,
+  RankingValidRun,
+} from "./ranking";
