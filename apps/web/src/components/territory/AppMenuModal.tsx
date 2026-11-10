@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { LocaleToggle } from "@/components/common/LocaleToggle";
 import { useI18n } from "@/i18n";
+import { useAuth } from "@/lib/supabase";
 
 interface AppMenuModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface AppMenuModalProps {
 
 export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
   const { t } = useI18n();
+  const { user, profile, openAuthModal, signOut } = useAuth();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -65,6 +67,82 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
           >
             ✕
           </button>
+        </div>
+
+        {/* User Account / Login Section */}
+        <div className="menu-account-section">
+          {user ? (
+            <div className="menu-user-card">
+              <div className="menu-user-header">
+                <div className="menu-user-avatar">
+                  {profile?.alias ? profile.alias[0].toUpperCase() : "R"}
+                </div>
+                <div className="menu-user-info">
+                  <div className="menu-user-name">{profile?.alias ?? t.anonymousRunner}</div>
+                  {user.email && <div className="menu-user-email">{user.email}</div>}
+                  <span className="menu-user-status-pill">{t.menuUserLogged}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="menu-logout-btn"
+                onClick={async () => {
+                  await signOut();
+                  onClose();
+                }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span>{t.logout}</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="menu-login-card"
+              onClick={() => {
+                onClose();
+                openAuthModal();
+              }}
+            >
+              <div className="menu-item-icon">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </div>
+              <div className="menu-item-content text-left">
+                <span className="menu-item-title">{t.login}</span>
+                <span className="menu-item-desc">{t.menuLoginDesc}</span>
+              </div>
+              <span className="menu-item-arrow" aria-hidden="true">
+                →
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="app-menu-lang-row flex items-center justify-between py-2 px-1 border-b border-border-glass">

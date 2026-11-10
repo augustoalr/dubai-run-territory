@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.14.0 — 2026-11-09
+
+Autenticación y perfil básico (T-14).
+
+- T-14: Integración de Supabase Auth en `apps/web` con cliente desacoplado en `apps/web/src/lib/supabase/` leyendo `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` de forma segura.
+- Flujo de login con Google OAuth (`signInWithOAuth`) con redirección hacia `/auth/callback` y soporte PKCE (`detectSessionInUrl: true`) compatible con exportación estática (`output: "export"`).
+- Flujo de login con Email OTP preparado y condicionado a la variable de entorno `NEXT_PUBLIC_EMAIL_LOGIN === 'true'`.
+- Modal bloqueante de Onboarding de Alias para usuarios con `alias IS NULL` en `public.profiles`, con validación estricta (3 a 20 caracteres sin espacios ni caracteres de control) y gestión del error de índice único `profiles_alias_lower_uidx`.
+- Integración de estado de usuario (alias/avatar o botón "Iniciar sesión") en `TerritoryHeader` y `AppMenuModal`, con opción visible de "Cerrar sesión".
+- Soporte bilingüe en `es` y `en` con paridad total de claves en `apps/web/src/i18n/dictionaries.ts`.
+- Documento `docs/AUTH.md` con guía de variables de entorno, configuración gratuita de Google Cloud OAuth en Supabase y conexión de SMTP (Resend / Brevo) para dominio propio.
+
 ## 0.10.0 — 2026-10-31
 
 Pantalla "Mis carreras" local (T-15) y reglas de conquista según revisión de producto (T-27).

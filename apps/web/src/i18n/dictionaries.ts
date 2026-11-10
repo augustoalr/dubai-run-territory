@@ -220,6 +220,50 @@ export const es = {
   termsDescription:
     "Normas claras sobre seguridad, tráfico de Dubái y juego limpio en la pista de running de Jumeirah Beach y Kite Beach.",
   draftNotice: "Borrador pendiente de revisión legal",
+
+  // Authentication & Profile
+  login: "Iniciar sesión",
+  logout: "Cerrar sesión",
+  userAccount: "Cuenta de corredor",
+  anonymousRunner: "Corredor",
+  menuLoginDesc: "Guarda tus carreras y conquista baldosas en las ligas",
+  menuUserLogged: "Sesión iniciada",
+  authModalTitle: "Entrar en Territorio",
+  authModalSubtitle:
+    "Accede con tu cuenta para competir en tu liga, guardar tus marcas y conquistar baldosas.",
+  authContinueGoogle: "Continuar con Google",
+  authOrDivider: "o con tu correo",
+  authEmailLabel: "Correo electrónico",
+  authEmailPlaceholder: "tu@correo.com",
+  authSendOtp: "Enviar código de acceso",
+  authSendingOtp: "Enviando código...",
+  authOtpSentNotice:
+    "Te hemos enviado un código de acceso a tu correo. Revisa tu bandeja de entrada o carpeta de spam.",
+  authOtpCodeLabel: "Código recibido por correo",
+  authOtpPlaceholder: "123456",
+  authVerifyOtp: "Verificar y entrar",
+  authVerifyingOtp: "Verificando...",
+  authChangeEmail: "Usar otro correo",
+  authNotConfiguredNotice:
+    "La autenticación remota no está configurada aún en este entorno. Puedes seguir explorando el mapa y grabando carreras localmente.",
+  authGenericError: "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.",
+  aliasModalTitle: "Elige tu alias de corredor",
+  aliasModalSubtitle:
+    "Tu alias será tu nombre público visible en el mapa y en la clasificación de tu liga.",
+  aliasLabel: "Alias",
+  aliasPlaceholder: "ej. RunnerKite",
+  aliasHelp: "Entre 3 y 20 caracteres, sin espacios en blanco ni caracteres de control.",
+  aliasSaveBtn: "Guardar alias y continuar",
+  aliasSavingBtn: "Guardando...",
+  aliasErrorTooShort: "El alias debe tener al menos 3 caracteres.",
+  aliasErrorTooLong: "El alias no puede superar los 20 caracteres.",
+  aliasErrorWhitespace: "El alias no puede contener espacios en blanco.",
+  aliasErrorControlChars: "El alias contiene caracteres de control no permitidos.",
+  aliasErrorTaken: "Este alias ya está en uso por otro corredor. Prueba con otro.",
+  aliasErrorGeneric: "No se pudo guardar el alias. Inténtalo de nuevo.",
+  authCallbackTitle: "Verificando tu sesión...",
+  authCallbackDesc: "Conectando con Supabase Auth...",
+  authCallbackError: "Hubo un problema al iniciar sesión.",
 };
 
 export type Dictionary = typeof es;
@@ -444,4 +488,53 @@ export const en: Dictionary = {
   termsDescription:
     "Clear rules on safety, Dubai traffic, and fair play on the Jumeirah Beach and Kite Beach running track.",
   draftNotice: "Draft pending legal review",
+
+  // Authentication & Profile
+  login: "Log in",
+  logout: "Log out",
+  userAccount: "Runner account",
+  anonymousRunner: "Runner",
+  menuLoginDesc: "Save your runs and conquer tiles across leagues",
+  menuUserLogged: "Signed in",
+  authModalTitle: "Sign in to Territory",
+  authModalSubtitle:
+    "Access your account to compete in your league, log your paces and claim tiles.",
+  authContinueGoogle: "Continue with Google",
+  authOrDivider: "or with your email",
+  authEmailLabel: "Email address",
+  authEmailPlaceholder: "you@email.com",
+  authSendOtp: "Send access code",
+  authSendingOtp: "Sending code...",
+  authOtpSentNotice: "We sent an access code to your email. Check your inbox or spam folder.",
+  authOtpCodeLabel: "Code received by email",
+  authOtpPlaceholder: "123456",
+  authVerifyOtp: "Verify and sign in",
+  authVerifyingOtp: "Verifying...",
+  authChangeEmail: "Use another email",
+  authNotConfiguredNotice:
+    "Remote authentication is not configured yet in this environment. You can keep exploring the map and recording runs locally.",
+  authGenericError: "Could not sign in. Please try again.",
+  aliasModalTitle: "Choose your runner alias",
+  aliasModalSubtitle:
+    "Your alias will be your public name displayed on the map and your league leaderboard.",
+  aliasLabel: "Alias",
+  aliasPlaceholder: "e.g. KiteRunner",
+  aliasHelp: "Between 3 and 20 characters, without whitespace or control characters.",
+  aliasSaveBtn: "Save alias and continue",
+  aliasSavingBtn: "Saving...",
+  aliasErrorTooShort: "Alias must be at least 3 characters.",
+  aliasErrorTooLong: "Alias cannot exceed 20 characters.",
+  aliasErrorWhitespace: "Alias cannot contain spaces.",
+  aliasErrorControlChars: "Alias contains invalid control characters.",
+  aliasErrorTaken: "This alias is already taken by another runner. Try another.",
+  aliasErrorGeneric: "Could not save alias. Please try again.",
+  authCallbackTitle: "Verifying your session...",
+  authCallbackDesc: "Connecting to Supabase Auth...",
+  authCallbackError: "There was a problem signing in.",
 };
+
+export type Locale = "es" | "en";
+
+export function dictionary(locale: Locale): Dictionary {
+  return locale === "en" ? en : es;
+}

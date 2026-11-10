@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { LeagueCode } from "@dubai-run/core";
 import { LocaleToggle } from "@/components/common/LocaleToggle";
 import { useI18n } from "@/i18n";
+import { useAuth } from "@/lib/supabase";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 import type { TerritoryStats } from "@/lib/territory/types";
 import { AppMenuModal } from "./AppMenuModal";
@@ -30,6 +31,7 @@ export function TerritoryHeader({
 }: TerritoryHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useI18n();
+  const { user, profile, openAuthModal } = useAuth();
 
   return (
     <>
@@ -44,6 +46,45 @@ export function TerritoryHeader({
           </div>
 
           <div className="header-actions">
+            {user ? (
+              <button
+                type="button"
+                className="header-user-button"
+                onClick={() => setIsMenuOpen(true)}
+                aria-label={profile?.alias ?? t.userAccount}
+                title={profile?.alias ?? t.userAccount}
+              >
+                <span className="header-user-avatar">
+                  {profile?.alias ? profile.alias[0].toUpperCase() : "R"}
+                </span>
+                <span className="header-user-alias">{profile?.alias ?? t.anonymousRunner}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="header-auth-button"
+                onClick={openAuthModal}
+                aria-label={t.login}
+                title={t.login}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span className="header-auth-label">{t.login}</span>
+              </button>
+            )}
+
             <button
               type="button"
               className="header-menu-button"

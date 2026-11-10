@@ -10,7 +10,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { resolveInitialLocale, STORAGE_KEY } from "./detect";
-import { dictionary, type Dictionary, type Locale } from "./index";
+import { dictionary, es, type Dictionary, type Locale } from "./dictionaries";
 import {
   formatLocaleDate,
   formatLocaleDistance,
@@ -30,7 +30,7 @@ export interface I18nContextValue {
   formatDuration: (seconds: number) => string;
 }
 
-const defaultDictionary = dictionary("es");
+const defaultDictionary = es;
 
 const defaultContextValue: I18nContextValue = {
   locale: "es",

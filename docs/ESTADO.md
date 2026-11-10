@@ -166,22 +166,37 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. No 
 
 ## T-31 · Traspaso del manager a Antigravity
 
-- **Estado:** en revisión (PR #20).
+- **Estado:** terminada (PR #20 fusionado en `main`, squash `fa1de3c`).
 - **Hecho:** creación de `docs/MANAGER.md` con el playbook operativo para el manager en Antigravity (rol, límites, producto, seguridad, stack, flujo de trabajo, prompts, criterios de revisión detallados y backlog). Enlace al manager en `AGENTS.md`. Actualización de `docs/ESTADO.md` (cierre de T-30, sección T-31 y tabla de conversaciones). Actualización de `README.md` marcando soporte bilingüe como disponible/en producción.
-- **Pendiente:** revisión y fusión del PR #20.
-- **Siguiente paso:** fusionar.
+- **Pendiente:** ninguno.
+- **Siguiente paso:** ninguno.
+
+## T-14 · Autenticación y perfil
+
+- **Estado:** en curso (rama `t14-auth`).
+- **Hecho:**
+  1. Integración de Supabase Auth en `apps/web` con cliente y wrapper desacoplado en `src/lib/supabase/` leyendo `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` de forma segura.
+  2. Flujo de login con Google mediante `signInWithOAuth` con redirección adecuada hacia `/auth/callback` y soporte PKCE (`detectSessionInUrl: true`) compatible con exportación estática (`output: "export"`).
+  3. Flujo de login por Email OTP preparado pero condicionado a la variable de entorno `NEXT_PUBLIC_EMAIL_LOGIN === 'true'`. Si el flag está inactivo o ausente, solo se ofrece Google.
+  4. Onboarding de Alias: modal bloqueante cuando el usuario autenticado tiene `alias == null` en `public.profiles`. Validación en cliente de 3 a 20 caracteres sin espacios ni caracteres de control, con manejo de error por unicidad (`profiles_alias_lower_uidx`).
+  5. Punto de acceso en la UI: estado de usuario (alias y avatar con iniciales o botón "Iniciar sesión") en la cabecera `TerritoryHeader` y en `AppMenuModal`, con opción visible de "Cerrar sesión" para usuarios autenticados.
+  6. Soporte bilingüe en `es` y `en` con paridad total de claves en `apps/web/src/i18n/dictionaries.ts`.
+  7. Documentación `docs/AUTH.md` con variables de entorno, configuración gratuita de Google Cloud OAuth en Supabase y conexión de SMTP (Resend / Brevo) para dominio propio.
+- **Pendiente:** revisión y aprobación del PR.
+- **Siguiente paso:** abrir y revisar el PR.
 
 ## En curso
 
-Ninguna tarea de producto en código activo tras T-30. Siguiente: T-31 (traspaso del manager a Antigravity) y luego bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + Auth T-14 + desplegar `process-run`.
+T-14 · Autenticación y perfil en rama `t14-auth`. Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
 
 ### Tabla de conversaciones Antigravity
 
-| Tarea | Conversación Antigravity | Rama                                           | PR        | Estado      |
-| ----- | ------------------------ | ---------------------------------------------- | --------- | ----------- |
-| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14       | fusionado   |
-| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15       | fusionado   |
-| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16       | fusionado   |
-| T-30  | T-30 Inglés              | t30-ingles                                     | #17       | fusionado   |
-| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19 | fusionado   |
-| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20       | en revisión |
+| Tarea | Conversación Antigravity | Rama                                           | PR        | Estado    |
+| ----- | ------------------------ | ---------------------------------------------- | --------- | --------- |
+| T-15  | T-15 Mis carreras        | t15-mis-carreras                               | #14       | fusionado |
+| T-28  | T-28 GPS                 | t28-gps-pantalla                               | #15       | fusionado |
+| T-29  | T-29 Detalle móvil       | t29-detalle-carrera-movil                      | #16       | fusionado |
+| T-30  | T-30 Inglés              | t30-ingles                                     | #17       | fusionado |
+| docs  | (README / capturas)      | docs-public-readme / docs-progress-screenshots | #18 / #19 | fusionado |
+| T-31  | T-31 Traspaso manager    | t31-traspaso-manager                           | #20       | fusionado |
+| T-14  | T-14 Auth                | t14-auth                                       | #21       | en curso  |

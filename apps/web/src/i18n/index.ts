@@ -1,14 +1,4 @@
-import { en, es, type Dictionary } from "./dictionaries";
-
-export type Locale = "es" | "en";
-
-const dictionaries: Record<Locale, Dictionary> = { es, en };
-
-export function dictionary(locale: Locale): Dictionary {
-  return dictionaries[locale] ?? dictionaries.es;
-}
-
-export { en, es, type Dictionary };
+export { dictionary, en, es, type Dictionary, type Locale } from "./dictionaries";
 export { resolveInitialLocale, STORAGE_KEY } from "./detect";
 export {
   formatLocaleDate,
