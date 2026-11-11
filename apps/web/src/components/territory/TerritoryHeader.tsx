@@ -17,6 +17,9 @@ type TerritoryHeaderProps = {
   userLeague: LeagueCode;
   stats: TerritoryStats;
   theme: ThemeMode;
+  seasonName?: string | null;
+  hasActiveSeason?: boolean;
+  isSampleData?: boolean;
   onSelectLeague: (league: LeagueCode) => void;
   onToggleTheme: () => void;
 };
@@ -26,21 +29,26 @@ export function TerritoryHeader({
   userLeague,
   stats,
   theme,
+  seasonName = null,
+  hasActiveSeason = true,
+  isSampleData = false,
   onSelectLeague,
   onToggleTheme,
 }: TerritoryHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { t } = useI18n();
   const { user, profile, openAuthModal } = useAuth();
+  const seasonLabel = seasonName ?? (hasActiveSeason ? t.season : t.noActiveSeason);
 
   return (
     <>
       <header className="territory-header glass">
         <div className="header-top-row">
-          <div>
+          <div className="header-brand-group">
             <div className="brand-zone-row">
               <span className="zone-badge">{t.zoneName}</span>
-              <span className="season-pill">{t.season}</span>
+              <span className="season-pill">{seasonLabel}</span>
+              {isSampleData && <span className="ranking-sample-badge">{t.sampleDataBadge}</span>}
             </div>
             <h1 className="brand-wordmark">{t.appName}</h1>
           </div>

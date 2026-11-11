@@ -43,6 +43,10 @@ Reglas para que un corte de créditos no deje el repo a medias. Están en españ
 - **Seguridad y secretos:** Jamás incluir secretos en git. La `service_role` key nunca debe llegar al frontend ni a variables `NEXT_PUBLIC_*`.
 - **Agnosticismo de base de datos:** No tocar `supabase/migrations/` ni alterar esquemas a menos que la tarea lo exija expresamente.
 - **Experiencia móvil:** Toda la interfaz debe ser completamente fluida y usable en iPhone con Safari en orientación vertical (375 a 430 px).
+- **Contratos y estados existentes:** Reutiliza los tipos, estados y paletas ya definidos en el código (p. ej. `CellStatus`: `mine | threatened | rival | free`) sin inventar nombres alternativos.
+- **Coherencia con el esquema y RLS reales:** Verifica nombres de columnas, estados semilla (`draft` vs `active`) y políticas RLS en `supabase/migrations/` antes de consultar tablas. No uses hooks dentro de repositorios; pasa `currentUserId` desde `useAuth()`.
+- **Cero datos ficticios con backend configurado:** Si `isSupabaseConfigured()` es `true`, nunca hagas fallback a mocks ni inventes usuarios (`CURRENT_USER`), fechas o amenazas; sin sesión o sin datos muestra el estado real o error con reintento.
+- **Check `verify` completo en verde:** Todo PR debe pasar en limpio `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm db:verify` (si aplica al entorno) y `pnpm build`.
 
 ## Manager del proyecto
 
