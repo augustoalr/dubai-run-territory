@@ -2,26 +2,54 @@
 
 import { cellPolygon, jumeirahKiteZone, type LeagueCode } from "@dubai-run/core";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/i18n";
+import { useAuth } from "@/lib/supabase";
 import { getCellPaint, type ThemeMode } from "@/lib/territory/cell-paint";
 import { territoryRepository } from "@/lib/territory/territory-repository";
-import type { TerritoryCell } from "@/lib/territory/types";
+import type { TerritoryCell, TerritoryData, TerritoryStats } from "@/lib/territory/types";
 import { CellBottomSheet } from "./CellBottomSheet";
 import { MapLegend } from "./MapLegend";
 import { StealGuideModal } from "./StealGuideModal";
 import { TerritoryHeader } from "./TerritoryHeader";
 import { TerritoryMapView, type CellFeatureCollection } from "./TerritoryMapView";
 
+const EMPTY_STATS: TerritoryStats = {
+  mine: 0,
+  threatened: 0,
+  rival: 0,
+  free: 0,
+  total: 0,
+};
+
 export function TerritoryStage() {
   const { t } = useI18n();
-  const userProfile = useMemo(() => territoryRepository.getUserProfile(), []);
-  const [currentLeague, setCurrentLeague] = useState<LeagueCode>(userProfile.league);
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
+
+  const [currentLeague, setCurrentLeague] = useState<LeagueCode>("starter");
+  const [fetchedUserLeague, setFetchedUserLeague] = useState<{
+    userId: string;
+    league: LeagueCode;
+  } | null>(null);
+  const hasManualSelectionRef = useRef(false);
   const [theme, setTheme] = useState<ThemeMode>("dark");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [fatalError, setFatalError] = useState<string | null>(null);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  const requestKey = `${currentLeague}:${currentUserId ?? "anon"}:${reloadTrigger}`;
+  const [loadedSnapshot, setLoadedSnapshot] = useState<{
+    key: string;
+    data: TerritoryData;
+  } | null>(null);
+
+  const userLeague: LeagueCode =
+    currentUserId && fetchedUserLeague?.userId === currentUserId
+      ? fetchedUserLeague.league
+      : "starter";
 
   // Sync html data-theme for css tokens
   useEffect(() => {
@@ -33,14 +61,72 @@ export function TerritoryStage() {
     }
   }, [theme]);
 
-  const territoryData = useMemo(
-    () => territoryRepository.getTerritoryData(currentLeague),
-    [currentLeague],
-  );
+  // Fetch authenticated user's real league from Supabase (defaults to "starter" when absent or logged out)
+  useEffect(() => {
+    if (!currentUserId) return;
+    let isCancelled = false;
+
+    territoryRepository
+      .getUserLeague(currentUserId)
+      .then((league) => {
+        if (isCancelled || !league) return;
+        setFetchedUserLeague({ userId: currentUserId, league });
+        if (!hasManualSelectionRef.current) {
+          setCurrentLeague(league);
+        }
+      })
+      .catch(() => {
+        // Keep default "starter" league when profile league cannot be fetched
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentUserId]);
+
+  // Load territory cells & ownership reactively on league, session, or retry changes
+  useEffect(() => {
+    let isCancelled = false;
+
+    territoryRepository
+      .getTerritoryData(currentLeague, currentUserId)
+      .then((data) => {
+        if (!isCancelled) {
+          setLoadedSnapshot({ key: requestKey, data });
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setLoadedSnapshot({
+            key: requestKey,
+            data: {
+              league: currentLeague,
+              userProfile: null,
+              seasonName: null,
+              hasActiveSeason: false,
+              cells: [],
+              stats: EMPTY_STATS,
+              isSampleData: false,
+              error: "network_error",
+            },
+          });
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentLeague, currentUserId, requestKey]);
+
+  const isLoadingData = loadedSnapshot?.key !== requestKey;
+  const activeData = loadedSnapshot?.key === requestKey ? loadedSnapshot.data : null;
+  const isNetworkError = activeData?.error === "network_error";
+  const activeCells = useMemo(() => activeData?.cells ?? [], [activeData]);
+  const activeStats = activeData?.stats ?? EMPTY_STATS;
 
   const selectedCell: TerritoryCell | null = useMemo(
-    () => territoryData.cells.find((c: TerritoryCell) => c.id === selectedId) ?? null,
-    [territoryData.cells, selectedId],
+    () => activeCells.find((c: TerritoryCell) => c.id === selectedId) ?? null,
+    [activeCells, selectedId],
   );
 
   const polygon = jumeirahKiteZone.polygon;
@@ -49,7 +135,7 @@ export function TerritoryStage() {
   const cellCollection: CellFeatureCollection = useMemo(() => {
     return {
       type: "FeatureCollection" as const,
-      features: territoryData.cells.map((cell: TerritoryCell) => {
+      features: activeCells.map((cell: TerritoryCell) => {
         const isSelected = cell.id === selectedId;
         const paint = getCellPaint(cell, isSelected, theme);
         return {
@@ -68,7 +154,7 @@ export function TerritoryStage() {
         };
       }),
     };
-  }, [territoryData.cells, selectedId, theme]);
+  }, [activeCells, selectedId, theme]);
 
   if (!polygon) {
     return (
@@ -95,10 +181,14 @@ export function TerritoryStage() {
       {/* Floating Header */}
       <TerritoryHeader
         currentLeague={currentLeague}
-        userLeague={userProfile.league}
-        stats={territoryData.stats}
+        userLeague={userLeague}
+        stats={activeStats}
         theme={theme}
+        seasonName={activeData?.seasonName ?? null}
+        hasActiveSeason={activeData?.hasActiveSeason ?? true}
+        isSampleData={Boolean(activeData?.isSampleData)}
         onSelectLeague={(league) => {
+          hasManualSelectionRef.current = true;
           setCurrentLeague(league);
           setSelectedId(null);
         }}
@@ -152,18 +242,35 @@ export function TerritoryStage() {
       />
 
       {/* Loading state indicator */}
-      {!isReady && !fatalError && (
+      {(!isReady || isLoadingData) && !fatalError && !isNetworkError && (
         <div className="territory-loading-pill" aria-live="polite">
           <span className="spinner-dot" />
-          <span>{t.mapLoading}</span>
+          <span>{!isReady ? t.mapLoading : t.territoryLoading}</span>
         </div>
       )}
 
-      {/* Error state */}
+      {/* Network or WebGL error state */}
       {fatalError && (
         <div className="territory-fatal-error" role="alert">
           <p className="fatal-title">{t.mapFatalTitle}</p>
           <p className="fatal-desc">{t.mapFatalDesc}</p>
+        </div>
+      )}
+
+      {!fatalError && isNetworkError && (
+        <div className="territory-fatal-error" role="alert">
+          <p className="fatal-title">{t.territoryErrorTitle}</p>
+          <p className="fatal-desc">{t.territoryErrorDesc}</p>
+          <button
+            type="button"
+            className="ranking-retry-btn territory-retry-btn"
+            onClick={() => {
+              setSelectedId(null);
+              setReloadTrigger((prev) => prev + 1);
+            }}
+          >
+            {t.retry}
+          </button>
         </div>
       )}
     </main>

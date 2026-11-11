@@ -10,6 +10,7 @@ import {
 } from "maplibre-gl";
 import { useCallback, useEffect, useRef } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { useI18n } from "@/i18n";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
 
 export type CellFeatureCollection = {
@@ -54,6 +55,7 @@ export function TerritoryMapView({
   onReady,
   onFatal,
 }: TerritoryMapViewProps) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const polygonRef = useRef(polygon);
@@ -357,7 +359,7 @@ export function TerritoryMapView({
       ref={containerRef}
       className="territory-map-canvas"
       role="application"
-      aria-label="Mapa de territorios de carrera en Jumeirah y Kite Beach"
+      aria-label={t.mapAriaLabel}
     />
   );
 }

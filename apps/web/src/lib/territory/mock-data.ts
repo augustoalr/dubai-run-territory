@@ -1,38 +1,21 @@
-import {
-  LEAGUE_BANDS,
-  cellCenter,
-  formatPace,
-  haversineMeters,
-  type LeagueCode,
-  type LngLat,
-} from "@dubai-run/core";
+import { LEAGUE_BANDS, formatPace, type LeagueCode, type LngLat } from "@dubai-run/core";
+import { computeTerritoryStats, getInitials, sortCellsAlongCenterline } from "./helpers";
 import type {
   CellStatus,
   RunnerProfile,
   TerritoryCell,
   TerritoryData,
-  TerritoryStats,
   ThreatInfo,
   UserProfile,
 } from "./types";
+
+export { getInitials };
 
 export const CURRENT_USER: UserProfile = {
   alias: "sal.kite",
   initials: "SK",
   league: "advanced",
 };
-
-export function getInitials(alias: string | null | undefined): string {
-  if (!alias) return "—";
-  const cleaned = alias.trim().replace(/[^a-zA-Z0-9.\-_]/g, "");
-  const parts = cleaned.split(/[.\-_]/).filter(Boolean);
-  if (parts.length >= 2) {
-    const first = parts[0]?.[0] ?? "";
-    const second = parts[1]?.[0] ?? "";
-    return (first + second).toUpperCase();
-  }
-  return cleaned.slice(0, 2).toUpperCase();
-}
 
 type RivalDef = { alias: string; basePaceS: number };
 
@@ -87,10 +70,7 @@ export function buildTerritoryData(
   league: LeagueCode,
   userProfile: UserProfile = CURRENT_USER,
 ): TerritoryData {
-  const sorted = [...cells].sort(
-    (left, right) =>
-      alongTrack(cellCenter(left), centerline) - alongTrack(cellCenter(right), centerline),
-  );
+  const sorted = sortCellsAlongCenterline(cells, centerline);
 
   const roster = LEAGUE_ROSTERS[league];
   const userIsOwnLeague = userProfile.league === league;
@@ -207,20 +187,17 @@ export function buildTerritoryData(
     };
   });
 
-  const stats: TerritoryStats = territoryCells.reduce<TerritoryStats>(
-    (acc, cell) => {
-      acc[cell.status] += 1;
-      acc.total += 1;
-      return acc;
-    },
-    { mine: 0, threatened: 0, rival: 0, free: 0, total: 0 },
-  );
+  const stats = computeTerritoryStats(territoryCells);
 
   return {
     league,
     userProfile,
+    seasonName: null,
+    hasActiveSeason: true,
     cells: territoryCells,
     stats,
+    isSampleData: true,
+    error: null,
   };
 }
 
@@ -229,33 +206,6 @@ function clampPace(paceS: number, league: LeagueCode): number {
   const min = band?.minPaceS ?? 200;
   const max = band?.maxPaceS ?? 520;
   return Math.min(max, Math.max(min, Math.round(paceS)));
-}
-
-function alongTrack(point: LngLat, line: readonly LngLat[]): number {
-  let bestDistance = Number.POSITIVE_INFINITY;
-  let bestAlong = 0;
-  let walked = 0;
-  for (let i = 1; i < line.length; i += 1) {
-    const start = line[i - 1];
-    const end = line[i];
-    if (!start || !end) continue;
-    const dx = end[0] - start[0];
-    const dy = end[1] - start[1];
-    const length2 = dx * dx + dy * dy || 1;
-    const t = Math.max(
-      0,
-      Math.min(1, ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / length2),
-    );
-    const projected: LngLat = [start[0] + t * dx, start[1] + t * dy];
-    const distance = haversineMeters(point, projected);
-    const segment = haversineMeters(start, end);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      bestAlong = walked + segment * t;
-    }
-    walked += segment;
-  }
-  return bestAlong;
 }
 
 function hash(value: string): number {

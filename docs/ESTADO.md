@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 10 nov 2026, con main en `f8fc6bf` (T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
+Actualizado el 11 nov 2026, con main en `78f903d` (T-33 en PR #22 fusionado en `78f903d`; T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-33 (Checklist de calidad del Manager) en revisión (PR #22, rama `t33-checklist-manager`). El playbook del manager está en `docs/MANAGER.md`.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-34 (Conexión del mapa de territorios a Supabase) en rama `t34-mapa-supabase`. El playbook del manager está en `docs/MANAGER.md`.
 
 ## T-01 · Scaffolding
 
@@ -99,8 +99,8 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 - **Estado:** hecho (PR #9 fusionado en `main`).
 - **Hecho:** mapa MapLibre GL con OpenFreeMap a pantalla completa sobre las 99 baldosas de Jumeirah–Kite Beach. 4 estados visuales claros (Mía en naranja intenso, Mía en peligro con animación de borde que late solo si hay baldosas amenazadas y limitada a 15 fps respetando accesibilidad y batería, De otro en gris, Libre solo contorno). Soporte para modo oscuro y claro con `map.setStyle` sin recargar el mapa, usando estilos locales consistentes. Leyenda compacta fija. Selector de ligas superior con preselección de la liga del corredor. Tarjeta inferior (bottom sheet) con avatar e iniciales del dueño, ritmo formateado (ej. 5:12 /km) y botón "Cómo robarla" con guía paso a paso libre de tecnicismos. Capa de datos y repositorio desacoplado en `apps/web/src/lib/territory/` listo para conectar con Supabase.
-- **Pendiente:** conectar con la base de datos remota una vez completada la autenticación.
-- **Siguiente paso:** ninguno.
+- **Pendiente:** conexión con la base de datos remota completada en T-34.
+- **Siguiente paso:** ninguno (ver T-34).
 
 ## T-21 · Páginas legales
 
@@ -207,7 +207,7 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 ## T-33 · Checklist de calidad del Manager
 
-- **Estado:** en revisión (PR #22 en rama `t33-checklist-manager`).
+- **Estado:** hecho (PR #22 fusionado en `main`, squash `78f903d`).
 - **Hecho:**
   1. Formalización en `docs/MANAGER.md` (§7) de la "Checklist obligatoria de calidad del Manager antes de aprobar cualquier PR", publicada obligatoriamente como comentario en el PR con `gh pr comment`.
   2. Definición exhaustiva de los 10 puntos de control: verificación con GitHub CLI (`gh pr view` y `gh pr checks`), CI `verify` completo en verde, comprobación de arreglos en el diff, prohibición estricta de datos ficticios/mocks en producción (empty state o error state con reintento), coherencia con esquema y RLS de BD, eficiencia de consultas (`.in("id", ...)` o paginación), cero hardcoding de usuario o datos de temporada, cumplimiento de las 7 reglas técnicas permanentes de `AGENTS.md`, textos comprensibles para corredores y veracidad documental en `ESTADO.md`.
@@ -217,12 +217,26 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
   6. Internacionalización de `aria-label="Navegación principal y legal"` en `AppMenuModal.tsx` mediante clave `menuNavAria` en los diccionarios `es` y `en`.
   7. Actualización de `docs/GUIA-AUGUSTO.md`: regla "main está protegida: todo entra por PR con verify en verde", instrucción para el Revisor y sección final "¿Pego o no el prompt del Manager?".
   8. Corrección documental de T-14 y T-32 en `docs/ESTADO.md`.
-- **Pendiente:** revisión y aprobación del PR #22 por el Manager.
-- **Siguiente paso:** revisión del Manager y fusión con `gh pr merge`.
+- **Pendiente:** ninguno.
+- **Siguiente paso:** ninguno.
+
+## T-34 · Conexión del mapa de territorios a Supabase
+
+- **Estado:** en curso (rama `t34-mapa-supabase`).
+- **Hecho:**
+  1. Repositorio híbrido `HybridTerritoryRepository` en `apps/web/src/lib/territory/territory-repository.ts` siguiendo el patrón de `HybridRankingRepository` sin hooks de React (`currentUserId: string | null` recibido desde la UI).
+  2. Con Supabase sin configurar (`!isSupabaseConfigured()`), devuelve datos de muestra (`mock-data.ts`) con `isSampleData: true` para mostrar el badge visible "Datos de ejemplo" / "Sample data".
+  3. Con Supabase configurado (`isSupabaseConfigured()`), consulta `zones` por `slug = 'jumeirah-kite'` sin exigir `status = 'active'` (compatible con `draft`), lee `zone_cells`, consulta temporada activa (`status = 'active'`), y si no existe temporada activa muestra todas las baldosas en `"free"` sin inventar dueños ni usar mocks.
+  4. Consulta `cell_ownership` por zona, temporada y liga seleccionada, perfiles exclusivamente con `.in("id", ownerIds)` y `cell_efforts` propios (`.eq("user_id", currentUserId)`) sin tocar `runs`, calculando `"threatened"` solo cuando han pasado > 7 días de juego en Dubái desde `MAX(crossed_at)` propio y conservando la mejor marca propia (`MIN(pace_s)`).
+  5. Propaga errores de red/consulta sin fallback silencioso a datos simulados y muestra aviso con botón de reintentar en `TerritoryStage.tsx`.
+  6. Integración en `TerritoryStage.tsx` con `useAuth()` (`user?.id ?? null`), liga real desde Supabase (por defecto `"starter"`), estado reactivo de carga/sesión/liga, badge visible de datos de ejemplo cuando corresponde, `CellBottomSheet` con alias real, ritmo y diferencia frente a mejor marca propia, y diccionarios `es`/`en` simétricos.
+  7. Reglas permanentes reutilizables añadidas en `AGENTS.md` y tests unitarios del repositorio en `territory-repository.test.ts`.
+- **Pendiente:** validación de CI (`verify`) y revisión del PR por el Manager.
+- **Siguiente paso:** abrir PR en GitHub para T-34 y esperar revisión del Manager.
 
 ## En curso
 
-T-33 · Checklist de calidad del Manager en revisión (PR #22, rama `t33-checklist-manager`). Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
+T-34 · Conexión del mapa de territorios a Supabase en curso (rama `t34-mapa-supabase`). Siguiente: bloqueos externos (Gmail del proyecto → Garmin T-22 / Polar) + desplegar `process-run`.
 
 ### Tabla de conversaciones Antigravity
 
@@ -237,4 +251,5 @@ T-33 · Checklist de calidad del Manager en revisión (PR #22, rama `t33-checkli
 | T-14  | T-14 Auth                | t14-auth                                       | - (push directo a main) | fusionado |
 | T-32  | T-32 Reglas              | t32-reglas-tecnicas                            | - (push directo a main) | fusionado |
 | T-17  | T-17 Ranking             | t17-ranking                                    | #21                     | fusionado |
-| T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | #22                     | en curso  |
+| T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | #22                     | fusionado |
+| T-34  | T-34 Mapa Supabase       | t34-mapa-supabase                              | (abierto)               | en curso  |

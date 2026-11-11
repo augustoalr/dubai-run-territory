@@ -23,7 +23,9 @@ export function StealGuideModal({ cell, isOpen, onClose }: StealGuideModalProps)
 
   if (isThreatened) {
     title = t.guideTitleDefend;
-    subtitle = t.guideSubtitleDefend(cell.threat?.gapSeconds ?? 2);
+    subtitle = cell.threat
+      ? t.guideSubtitleDefend(cell.threat.gapSeconds)
+      : t.guideSubtitleDefendDecay;
   } else if (isMine) {
     title = t.guideTitleImprove;
     subtitle = t.guideSubtitleImprove;

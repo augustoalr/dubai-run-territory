@@ -33,6 +33,9 @@ export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetP
     actionLabel = t.actionHowToConquer;
   }
 
+  const ownerDisplayAlias = cell.owner?.alias ?? (isFree ? t.freeTerritory : t.anonymousRunner);
+  const ownerInitials = isFree ? "—" : cell.owner?.alias ? cell.owner.initials : "R";
+
   // Friendly status message
   let statusMessage = "";
   if (isThreatened && cell.threat) {
@@ -41,10 +44,16 @@ export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetP
       cell.threat.rivalPaceFormatted,
       cell.threat.gapSeconds,
     );
+  } else if (isThreatened) {
+    statusMessage = t.statusDangerDecay;
   } else if (isMine) {
     statusMessage = t.statusMine;
-  } else if (isRival && cell.gapSeconds !== null) {
-    statusMessage = t.statusRival(cell.gapSeconds, cell.owner?.alias ?? t.owner.toLowerCase());
+  } else if (isRival && cell.gapSeconds !== null && cell.gapSeconds > 0) {
+    statusMessage = t.statusRival(cell.gapSeconds, ownerDisplayAlias);
+  } else if (isRival && cell.gapSeconds === 0) {
+    statusMessage = t.statusRivalFaster;
+  } else if (isRival && cell.paceFormatted) {
+    statusMessage = t.statusRivalPace(cell.paceFormatted, ownerDisplayAlias);
   } else if (isFree) {
     statusMessage = t.statusFree;
   }
@@ -56,11 +65,11 @@ export function CellBottomSheet({ cell, onClose, onOpenGuide }: CellBottomSheetP
       <div className="sheet-header">
         <div className="owner-profile">
           <div className={`avatar-badge ${cell.status}`}>
-            <span>{isFree ? "—" : (cell.owner?.initials ?? "??")}</span>
+            <span>{ownerInitials}</span>
           </div>
           <div className="owner-meta">
             <div className="owner-alias-row">
-              <span className="owner-alias">{isFree ? t.freeTerritory : cell.owner?.alias}</span>
+              <span className="owner-alias">{ownerDisplayAlias}</span>
               {isMine && <span className="status-tag tag-you">{t.tagYou}</span>}
               {isThreatened && <span className="status-tag tag-threatened">{t.tagThreatened}</span>}
               {isRival && <span className="status-tag tag-rival">{t.tagRival}</span>}

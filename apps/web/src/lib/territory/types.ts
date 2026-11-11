@@ -3,7 +3,7 @@ import type { LeagueCode } from "@dubai-run/core";
 export type CellStatus = "mine" | "threatened" | "rival" | "free";
 
 export type RunnerProfile = {
-  alias: string;
+  alias: string | null;
   initials: string;
   isCurrentUser: boolean;
 };
@@ -46,7 +46,11 @@ export type UserProfile = {
 
 export type TerritoryData = {
   league: LeagueCode;
-  userProfile: UserProfile;
+  userProfile: UserProfile | null;
+  seasonName: string | null;
+  hasActiveSeason: boolean;
   cells: TerritoryCell[];
   stats: TerritoryStats;
+  isSampleData: boolean;
+  error?: "network_error" | null;
 };

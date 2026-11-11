@@ -90,6 +90,11 @@ export const es = {
   legendRivalDesc: "Territorio dominado por otro corredor",
   legendFreeDesc: "Territorio disponible para conquistar",
   mapLoading: "Cargando mapa de territorios...",
+  territoryLoading: "Cargando territorios...",
+  mapAriaLabel: "Mapa de territorios de carrera en Jumeirah y Kite Beach",
+  noActiveSeason: "Sin temporada activa",
+  territoryErrorTitle: "No se pudo cargar el territorio",
+  territoryErrorDesc: "Comprueba tu conexión e inténtalo de nuevo.",
   mapFatalTitle: "No se pudo iniciar el mapa 3D",
   mapFatalDesc: "Se requiere WebGL y conexión a internet para renderizar los mapas de OpenFreeMap.",
   mapGeometryError: "No se pudo cargar la geometría de la zona Jumeirah · Kite.",
@@ -113,9 +118,15 @@ export const es = {
   actionHowToConquer: "Cómo conquistarla",
   statusDanger: (rival: string, pace: string, gap: number) =>
     `⚠️ ¡En peligro! ${rival} corrió a ${pace} (a solo ${gap} seg/km de robarte).`,
+  statusDangerDecay:
+    "⚠️ Han pasado más de 7 días desde tu última defensa. Vuelve a correr esta baldosa para no perderla.",
   statusMine: "¡Eres el dueño actual de esta sección de la pista!",
   statusRival: (gap: number, rival: string) =>
     `Te faltan solo ${gap} segundos por km para superar a ${rival}.`,
+  statusRivalPace: (pace: string, rival: string) =>
+    `Supera ${pace} para arrebatarle esta baldosa a ${rival}.`,
+  statusRivalFaster:
+    "Tu mejor marca ya supera este ritmo. ¡Vuelve a pasar por esta baldosa para recuperarla!",
   statusFree: "Nadie ha reclamado esta baldosa en tu liga todavía. ¡Sé el primero!",
 
   // Steal Guide Modal
@@ -125,6 +136,8 @@ export const es = {
   guideTitleDefend: "Cómo defender tu territorio",
   guideSubtitleDefend: (gap: number) =>
     `Un rival está a solo ${gap} segundos. Corre más rápido para afianzar tu liderato.`,
+  guideSubtitleDefendDecay:
+    "Tu defensa de 7 días ha caducado. Vuelve a pasar por este tramo para reforzar tu marca.",
   guideTitleImprove: "Cómo mejorar tu marca",
   guideSubtitleImprove:
     "Cuanto más rápido corras este tramo, más difícil será que otro corredor te lo robe.",
@@ -397,6 +410,11 @@ export const en: Dictionary = {
   legendRivalDesc: "Territory owned by another runner",
   legendFreeDesc: "Territory available to conquer",
   mapLoading: "Loading territory map...",
+  territoryLoading: "Loading territories...",
+  mapAriaLabel: "Jumeirah and Kite Beach running territory map",
+  noActiveSeason: "No active season",
+  territoryErrorTitle: "Could not load territory",
+  territoryErrorDesc: "Check your connection and try again.",
   mapFatalTitle: "Could not launch 3D map",
   mapFatalDesc: "WebGL and an internet connection are required to render OpenFreeMap maps.",
   mapGeometryError: "Could not load Jumeirah · Kite zone geometry.",
@@ -420,9 +438,14 @@ export const en: Dictionary = {
   actionHowToConquer: "How to conquer it",
   statusDanger: (rival: string, pace: string, gap: number) =>
     `⚠️ In danger! ${rival} ran at ${pace} (just ${gap} s/km from taking it from you).`,
+  statusDangerDecay:
+    "⚠️ Over 7 days since your last defense. Run this tile again so you don't lose it.",
   statusMine: "You are the current owner of this section of the track!",
   statusRival: (gap: number, rival: string) =>
     `You are only ${gap} seconds per km away from beating ${rival}.`,
+  statusRivalPace: (pace: string, rival: string) => `Beat ${pace} to take this tile from ${rival}.`,
+  statusRivalFaster:
+    "Your best mark already beats this pace. Run through this tile again to reclaim it!",
   statusFree: "Nobody has claimed this tile in your league yet. Be the first!",
 
   // Steal Guide Modal
@@ -432,6 +455,8 @@ export const en: Dictionary = {
   guideTitleDefend: "How to defend your territory",
   guideSubtitleDefend: (gap: number) =>
     `A rival is just ${gap} seconds away. Run faster to secure your lead.`,
+  guideSubtitleDefendDecay:
+    "Your 7-day defense has expired. Run through this section again to renew your mark.",
   guideTitleImprove: "How to improve your mark",
   guideSubtitleImprove:
     "The faster you run this section, the harder it will be for someone to take it from you.",
