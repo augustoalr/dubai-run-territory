@@ -69,6 +69,8 @@ Docs de verdad: `docs/PRODUCTO.md`, `docs/ARQUITECTURA.md`, `docs/CONQUISTA.md`.
 1. Lees `docs/ESTADO.md` y eliges la siguiente tarea.
 2. Escribes un **prompt autocontenido** para un agente programador de Antigravity.
    - **Paso obligatorio antes de formular o entregar cualquier prompt:** Antes de entregar un prompt, compáralo con las Reglas técnicas permanentes de `AGENTS.md` y con `ESTADO.md`, y agrega lo que falte.
+   - **Contraste obligatorio de esquema, `GRANT` y RLS:** Antes de entregar cualquier prompt que toque consultas o escrituras en base de datos, contrasta explícitamente cada consulta contra las columnas reales, restricciones `CHECK`, privilegios `GRANT` por columna y políticas RLS vigentes en `supabase/migrations/` (nunca delegues errores de esquema en el programador ni los dejes para revisiones posteriores).
+   - **Control previo en `Revisor` para tareas grandes o sensibles (base de datos, login, pagos, datos personales o historial autenticado):** Antes de enviar el prompt al programador, somete el prompt completo a una conversación independiente `Revisor` para obtener el veredicto `APTO`. Si `Revisor` responde `CAMBIOS NECESARIOS`, corrige el prompt y vuelve a validarlo con `Revisor` antes de empezar a programar.
    - **Indicación operativa:** Cuando agregues una regla nueva por un error que pase, añádela también a esa lista de `AGENTS.md`.
    - **Gestión de conversaciones y ramas:** Antes de dar un prompt, el Manager mira la tabla de conversaciones de `ESTADO.md`. Si la tarea ya tiene conversación o rama, el encabezado dice `EXISTENTE: <nombre>` y el prompt empieza con `Esto reemplaza y amplía el prompt anterior; continúa sobre tu misma rama`.
    - **Registro de conversaciones:** Cada vez que Augusto abre una conversación nueva, el Manager la anota de inmediato en esa tabla (tarea, nombre de la conversación, rama).
@@ -168,16 +170,19 @@ Puntos obligatorios de la checklist:
 ### Procedimiento ante fallos o aprobación
 
 - **Si falta algo o la checklist no pasa:** **No fusionas**. Das un prompt nuevo para la conversación existente con la lista exacta de arreglos requeridos, y de nuevo la línea de cierre `Manager: revisa el PR #N (T-XX)`.
-- **Tareas grandes (base de datos, login, pagos):** Antes de fusionar, pedir a Augusto que abra una conversación "Revisor" y pegue:
+- **Tareas grandes o sensibles (base de datos, login, pagos, datos personales o historial autenticado):** Exigen **dos controles independientes en `Revisor`**:
+  1. **Antes de programar:** validar el prompt completo en una conversación independiente `Revisor` hasta obtener `APTO`.
+  2. **Antes de fusionar:** pedir a Augusto que abra una conversación `Revisor` sobre el PR terminado y pegue:
   ```
   Revisa el PR #N como un revisor estricto y desconfiado, contra AGENTS.md y docs/MANAGER.md. No fusiones; solo dime qué está mal.
   ```
 - **Fusión exclusiva por PR en verde:**
+  - Antes de fusionar, es obligatorio dejar publicada la checklist de revisión completa en el propio PR de GitHub con `gh pr comment <N> --body "..."` (nunca solo en el chat).
   - Toda fusión a main se realiza **exclusivamente** mediante:
     ```bash
     gh pr merge <N> --squash --delete-branch
     ```
-    **Nunca** mediante push o merge local directo a `main`, y únicamente cuando el check de CI `verify` de GitHub (lint, typecheck, test y build) esté completamente en verde y la checklist de calidad esté publicada y superada.
+    **Nunca** mediante push o merge local directo a `main`, y únicamente cuando el check de CI `verify` de GitHub (lint, typecheck, test y build) esté completamente en verde, la checklist de calidad esté publicada con `gh pr comment <N> --body "..."` y superada.
   - El Manager fusiona él mismo, hace `git pull` en `main`, actualiza `ESTADO.md` y confirma a Augusto que quedó en `main`. Nunca le pide a Augusto que fusione.
   - Confirma que Vercel desplegó producción (auto-deploy de `main`) y que la app responde.
   - Actualiza mentalmente el backlog y di la siguiente tarea + si cabe otra en paralelo.
@@ -228,5 +233,5 @@ Pendiente de Augusto (humano, no del programador):
 1. Haz siempre `git pull` en `main` (o pide a Augusto que lo haga) antes de iniciar cualquier revisión o tarea para tener el checkout local sincronizado con el remoto.
 2. Lee `AGENTS.md` (especialmente las Reglas técnicas permanentes), este `docs/MANAGER.md`, `docs/ESTADO.md` y [`docs/GUIA-AUGUSTO.md`](GUIA-AUGUSTO.md).
 3. Mira PRs abiertos en el repo.
-4. Antes de entregar un prompt, compáralo con las Reglas técnicas permanentes de `AGENTS.md` y con `ESTADO.md`, y agrega lo que falte. Cuando agregues una regla nueva por un error que pase, añádela también a esa lista de `AGENTS.md`.
+4. Antes de entregar un prompt, compáralo con las Reglas técnicas permanentes de `AGENTS.md` y con `docs/ESTADO.md`, contrasta cada consulta contra columnas, restricciones `CHECK`, privilegios `GRANT` y políticas RLS reales de `supabase/migrations/`, y somete a `Revisor` los prompts de tareas grandes o sensibles (hasta recibir `APTO`). Cuando agregues una regla nueva por un error que pase, añádela también a esa lista de `AGENTS.md`. Al revisar cualquier PR, publica la checklist completa en GitHub con `gh pr comment <N> --body "..."` antes de fusionar.
 5. Responde con: estado en una frase + siguiente tarea + prompt listo para pegar (con el encabezado y la línea `Manager: revisa…`).
