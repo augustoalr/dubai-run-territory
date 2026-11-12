@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 12 nov 2026, con main en `e661fb8` (T-19 en PR #24 fusionado en `e661fb8`; T-34 en PR #23 fusionado en `caee589`; T-33 en PR #22 fusionado en `78f903d`; T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
+Actualizado el 12 nov 2026, con main en `e2aa51b` (T-35 en PR #25 fusionado en `e2aa51b`; T-19 en PR #24 fusionado en `e661fb8`; T-34 en PR #23 fusionado en `caee589`; T-33 en PR #22 fusionado en `78f903d`; T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-35 (Auth y ligas) en rama `t35-auth-y-ligas`. El playbook del manager está en `docs/MANAGER.md`.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-18 (Panel de admin mínimo) en rama `t18-admin-panel` (PR #26). El playbook del manager está en `docs/MANAGER.md`.
 
 ## T-01 · Scaffolding
 
@@ -252,18 +252,30 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 ## T-35 · Auth y ligas
 
-- **Estado:** en curso (rama `t35-auth-y-ligas`).
+- **Estado:** hecho (PR #25 fusionado en `main`, squash `e2aa51b`).
 - **Hecho:**
   1. Lectura de perfil propio compatible con `GRANT SELECT (id, alias, created_at)` en `apps/web/src/lib/supabase/auth.ts`: `fetchProfile` consulta exclusivamente `"id, alias, created_at"` (nunca `is_admin` ni `*`) con inyección opcional de cliente para pruebas unitarias; eliminación de `isAdmin`/`is_admin` de `Profile` (`types.ts`), `RawProfileRow`, `fetchProfile` y fallback en `handleSaveAlias` (`AuthContext.tsx`).
   2. Helper compartido `getActiveUserLeague` en `apps/web/src/lib/supabase/active-user-league.ts` reutilizado por `HybridRankingRepository.getUserLeague` y `HybridTerritoryRepository.getUserLeague`: consulta `zones` por `slug` sin exigir `status = 'active'`, `seasons` con `status = 'active'`, `user_leagues` filtrada por `user_id`, `season_id` y `valid_from <= now` (`ORDER BY valid_from DESC LIMIT 1`), validando en cliente `valid_from <= nowMs` y `LeagueCode` válido. Inyección de `deps` en `HybridRankingRepository` (`getUserLeague` y `getLeagueRanking`) y vinculación de `userLeague` a `user?.id` en `RankingContainer.tsx` siguiendo el patrón de `TerritoryStage.tsx`.
   3. Manejo seguro y visible de errores en `signOut`: `try/catch` e inyección opcional de `deps` en `auth.ts`, limpieza de `user`/`session`/`profile` en `AuthContext.tsx` únicamente cuando `!result.error` mediante helper puro testeable sin DOM, patrón de desmontaje limpio + `isSigningOut`/`logoutError` (`t.profileLogoutError`, `role="alert"`) y bloqueo de cierre mientras cierra sesión en `AppMenuModal.tsx`, y estado independiente `isSigningOut` con error visible en `AliasOnboardingModal.tsx`.
   4. Tests unitarios en `apps/web/src/lib/supabase/auth.test.ts`, `apps/web/src/lib/ranking/ranking-repository.test.ts` y `apps/web/src/lib/territory/territory-repository.test.ts`.
 - **Pendientes reales:** ninguno de código de T-35.
-- **Siguiente paso:** revisión independiente en `Revisor` y revisión del PR por el Manager.
+- **Siguiente paso:** cerrado en `main` (`e2aa51b`).
+
+## T-18 · Panel de admin mínimo
+
+- **Estado:** en curso (rama `t18-admin-panel`, PR #26 abierto contra `main`).
+- **Qué se hizo:**
+  - Migración `supabase/migrations/20261112120000_admin_audit_logs.sql` con `public.admin_audit_logs`, índices (incluido `admin_id` y `reports (status, created_at DESC)`), RLS de lectura exclusiva para administradores (`private.is_admin()`) y tipos en `supabase/database.types.ts`.
+  - Ampliación de `scripts/verify-db.ts` para comprobar el índice FK, bloqueos `42501`/RLS a usuarios no admin, lecturas admin y recálculo con `apply_run` + `recompute_season`.
+  - Edge Function `supabase/functions/admin-review/` (`index.ts` y `logic.ts`) y configuración `verify_jwt = false` en `supabase/config.toml`: CORS, validación JWT + `is_admin`, `GET` de cola (`runsReview`, `reports`, `auditLogs`) y `POST` para `approve_run` (recalculando ventana, esfuerzos y temporada con rollback si falla RPC), `void_run`, `resolve_report` y `dismiss_report`.
+  - Página estática `/admin`, repositorio `apps/web/src/lib/admin/`, componentes en `apps/web/src/components/admin/` con diseño móvil (375–430 px) e i18n completo `es`/`en` sin tecnicismos, y soporte de `coordinates` en `RunMiniMap.tsx` vía `run-track-helpers.ts`.
+  - Tests Vitest para `admin-repository.ts`, `admin-review/logic.ts` y `run-track-helpers.ts`.
+- **Pendientes reales:** verificación CI de `pnpm db:verify` y `supabase gen types typescript` contra Postgres/Supabase CLI (no instalados en este entorno local), además de despliegue manual de `admin-review` y migración tras revisión.
+- **Siguiente paso:** revisión del PR #26 por el Manager y ejecución de checks en CI.
 
 ## En curso
 
-T-35 · Auth y ligas en curso (rama `t35-auth-y-ligas`). Siguiente: bloqueos externos (T-04 polígono en `draft`, despliegue de `process-run`, T-18 `/admin`, Gmail del proyecto → Garmin T-22 / Polar y `LEGAL_CONTACT_EMAIL`, pruebas en iOS Safari real y FIT anonimizados).
+T-18 · Panel de admin mínimo en curso (rama `t18-admin-panel`, PR #26). Siguiente: revisión de PR #26 y desbloqueos externos (T-04 polígono en `draft`, despliegue de `process-run` y `admin-review`, Gmail del proyecto → Garmin T-22 / Polar y `LEGAL_CONTACT_EMAIL`, pruebas en iOS Safari real y FIT anonimizados).
 
 ### Tabla de conversaciones Antigravity
 
@@ -281,4 +293,5 @@ T-35 · Auth y ligas en curso (rama `t35-auth-y-ligas`). Siguiente: bloqueos ext
 | T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | #22                     | fusionado |
 | T-34  | T-34 Mapa Supabase       | t34-mapa-supabase                              | #23                     | fusionado |
 | T-19  | T-19 Perfil              | t19-perfil                                     | #24                     | fusionado |
-| T-35  | T-35 Auth y ligas        | t35-auth-y-ligas                               | #25                     | en curso  |
+| T-35  | T-35 Auth y ligas        | t35-auth-y-ligas                               | #25                     | fusionado |
+| T-18  | T-18 Admin               | t18-admin-panel                                | #26                     | en curso  |

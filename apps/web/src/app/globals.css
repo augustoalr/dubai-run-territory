@@ -4814,3 +4814,281 @@ button:disabled {
     width: 100%;
   }
 }
+
+/* ============================================================================
+   Admin Review Panel (T-18)
+   ============================================================================ */
+
+.admin-page {
+  min-height: 100dvh;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+.admin-shell {
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
+}
+
+.admin-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--profile-space-xs);
+}
+
+.admin-title {
+  margin: 0;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.admin-subtitle {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.admin-success-banner {
+  padding: var(--profile-space-sm) var(--profile-space-md);
+  border-radius: var(--profile-radius-lg);
+  border: 1px solid var(--profile-status-accepted-fg);
+  background: var(--profile-status-accepted-bg);
+  color: var(--profile-status-accepted-fg);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.admin-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--profile-space-xs);
+}
+
+.admin-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: var(--profile-radius-pill);
+  border: 1px solid var(--border-glass);
+  background: var(--chip-bg);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.admin-tab-btn--active {
+  background: var(--color-orange-run);
+  border-color: var(--color-orange-run);
+  color: #ffffff;
+}
+
+.admin-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--profile-radius-pill);
+  background: rgba(15, 23, 42, 0.2);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--profile-space-md);
+}
+
+.admin-cards-list,
+.admin-audit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--profile-space-md);
+}
+
+.admin-card,
+.admin-audit-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--profile-space-sm);
+  padding: var(--profile-space-md);
+  border-radius: var(--profile-radius-lg);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-glass);
+  box-shadow: var(--glass-shadow);
+  min-width: 0;
+}
+
+.admin-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--profile-space-sm);
+  flex-wrap: wrap;
+}
+
+.admin-card-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-card-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.admin-card-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.admin-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--profile-space-xs);
+}
+
+.admin-flag-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--profile-radius-pill);
+  background: var(--profile-status-review-bg);
+  color: var(--profile-status-review-fg);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.admin-detail-note {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.admin-minimap-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--profile-space-xs);
+}
+
+.admin-track-warning {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--profile-status-review-fg);
+}
+
+.admin-decision-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--profile-space-xs);
+  padding-top: var(--profile-space-xs);
+  border-top: 1px solid var(--border-glass);
+}
+
+.admin-reason-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.admin-reason-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--profile-radius-lg);
+  border: 1px solid var(--border-glass);
+  background: var(--chip-bg);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+}
+
+.admin-reason-input:focus-visible {
+  outline: 2px solid var(--color-orange-run);
+  outline-offset: 2px;
+}
+
+.admin-inline-error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--profile-radius-lg);
+  background: var(--profile-status-rejected-bg);
+  color: var(--profile-status-rejected-fg);
+  font-size: 0.84rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--profile-space-xs);
+  margin-top: 4px;
+}
+
+.admin-btn {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: var(--profile-radius-pill);
+  border: 1px solid transparent;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    opacity 0.16s ease,
+    transform 0.12s ease;
+}
+
+.admin-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-btn--approve {
+  background: var(--profile-status-accepted-bg);
+  border-color: var(--profile-status-accepted-fg);
+  color: var(--profile-status-accepted-fg);
+}
+
+.admin-btn--danger {
+  background: var(--profile-status-rejected-bg);
+  border-color: var(--profile-status-rejected-fg);
+  color: var(--profile-status-rejected-fg);
+}
+
+.admin-btn--neutral {
+  background: var(--chip-bg);
+  border-color: var(--border-glass);
+  color: var(--text-primary);
+}
+
+@media (max-width: 639px) {
+  .admin-actions-row {
+    flex-direction: column;
+  }
+
+  .admin-btn {
+    width: 100%;
+  }
+}
