@@ -115,6 +115,7 @@ async function main(): Promise<void> {
   const missingIndexes = await client.query<{ table_name: string }>(
     `WITH wanted AS (
        SELECT * FROM (VALUES
+         ('admin_audit_logs', ARRAY['admin_id']::text[]),
          ('cell_efforts', ARRAY['season_id']::text[]),
          ('cell_ownership', ARRAY['zone_id', 'h3']::text[]),
          ('daily_points', ARRAY['league_id']::text[]),
@@ -477,10 +478,104 @@ async function main(): Promise<void> {
     }
   });
 
+  const reportByB = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.reports (run_id, reporter_id, reason)
+     VALUES ($1, $2, 'Ritmo sospechoso en el tramo final')
+     RETURNING id`,
+    [runA.id, userB],
+  );
+  const reportByA = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.reports (run_id, reporter_id, reason)
+     VALUES ($1, $2, 'Posible trayecto en bicicleta')
+     RETURNING id`,
+    [runB.id, userA],
+  );
+  await client.query(
+    `INSERT INTO public.admin_audit_logs (admin_id, action, target_type, target_id, reason, metadata)
+     VALUES ($1, 'dismiss_report', 'report', $2, 'Revisión inicial de auditoría', '{"admin_alias":"ana"}'::jsonb)`,
+    [userA, reportByB.id],
+  );
+
+  // Non-admin (userA before promotion & userB) cannot read admin_audit_logs, other users' runs/reports,
+  // or write to admin_audit_logs / update runs / update reports / execute apply_run or recompute_season.
+  await asUser(client, userA, "rollback", async () => {
+    const logs = await client.query("SELECT id FROM public.admin_audit_logs");
+    if (logs.rows.length !== 0) throw new Error("non-admin userA saw admin_audit_logs");
+    const visibleReports = await client.query("SELECT id FROM public.reports");
+    if (visibleReports.rows.length !== 1 || visibleReports.rows[0]?.id !== reportByA.id) {
+      throw new Error("non-admin userA saw another user's report");
+    }
+  });
+
+  await asUser(client, userB, "rollback", async () => {
+    const logs = await client.query("SELECT id FROM public.admin_audit_logs");
+    if (logs.rows.length !== 0) throw new Error("non-admin userB saw admin_audit_logs");
+    const visibleRuns = await client.query("SELECT id FROM public.runs");
+    const visibleRunIds = new Set(visibleRuns.rows.map((row: { id: string }) => row.id));
+    if (visibleRunIds.has(runA.id) || !visibleRunIds.has(runB.id)) {
+      throw new Error("non-admin userB saw another user's run");
+    }
+    const visibleReports = await client.query("SELECT id FROM public.reports");
+    if (visibleReports.rows.length !== 1 || visibleReports.rows[0]?.id !== reportByB.id) {
+      throw new Error("non-admin userB saw another user's report");
+    }
+  });
+  await asUser(client, userB, "rollback", async () => {
+    await expectFailure(
+      () =>
+        client.query(
+          `INSERT INTO public.admin_audit_logs (admin_id, action, target_type, target_id, reason)
+           VALUES ($1, 'void_run', 'run', $2, 'Intento no autorizado')`,
+          [userB, runA.id],
+        ),
+      "42501",
+      "permission denied",
+    );
+  });
+  await asUser(client, userB, "rollback", async () => {
+    await expectFailure(
+      () => client.query("UPDATE public.runs SET status = 'voided' WHERE id = $1", [runA.id]),
+      "42501",
+      "permission denied",
+    );
+  });
+  await asUser(client, userB, "rollback", async () => {
+    await expectFailure(
+      () =>
+        client.query("UPDATE public.reports SET status = 'resolved' WHERE id = $1", [reportByB.id]),
+      "42501",
+      "permission denied",
+    );
+  });
+  await asUser(client, userB, "rollback", async () => {
+    await expectFailure(
+      () => client.query("SELECT public.apply_run($1, '[]'::jsonb)", [runA.id]),
+      "42501",
+      "permission denied",
+    );
+  });
+  await asUser(client, userB, "rollback", async () => {
+    await expectFailure(
+      () => client.query("SELECT public.recompute_season($1)", [season.id]),
+      "42501",
+      "permission denied",
+    );
+  });
+
   await client.query("UPDATE public.profiles SET is_admin = true WHERE id = $1", [userA]);
   await asUser(client, userA, "rollback", async () => {
     const seen = await client.query("SELECT id FROM public.runs");
     if (seen.rows.length !== 4) throw new Error(`admin should see 4 runs, saw ${seen.rows.length}`);
+    const seenReports = await client.query("SELECT id FROM public.reports");
+    if (seenReports.rows.length !== 2) {
+      throw new Error(`admin should see 2 reports, saw ${seenReports.rows.length}`);
+    }
+    const seenLogs = await client.query("SELECT id FROM public.admin_audit_logs");
+    if (seenLogs.rows.length !== 1) {
+      throw new Error(`admin should see 1 audit log, saw ${seenLogs.rows.length}`);
+    }
     const admin = await client.query("SELECT private.is_admin() AS ok");
     if (admin.rows[0]?.ok !== true) throw new Error("is_admin() should be true");
   });
@@ -1036,6 +1131,85 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
   if (asNumber(starterRemaining.rows[0]?.n) !== 1) {
     throw new Error(
       `expected exactly 1 cell remaining in starter for userB, got ${starterRemaining.rows[0]?.n}`,
+    );
+  }
+
+  console.log("checking admin moderation (T-18)");
+  const cellAdmin = "8a43a13614dffff";
+  await client.query(
+    `INSERT INTO public.zone_cells (zone_id, h3, center, boundary)
+     VALUES ($1, $2, ${point}, ${ring}) ON CONFLICT DO NOTHING`,
+    [zone.id, cellAdmin],
+  );
+  const reviewRun = await one<{ id: string }>(
+    client,
+    `INSERT INTO public.runs (
+       user_id, zone_id, season_id, league_id, storage_path, file_sha256, format,
+       source, status, reject_code, started_at, ended_at, created_at
+     ) VALUES (
+       $1, $2, $3, $4, 'server/admin-review.gpx', $5, 'gpx', 'upload', 'review',
+       'IMPOSSIBLE_PACE', '2026-11-02 09:00:00+04', '2026-11-02 10:00:00+04', '2026-11-02 14:00:00+04'
+     ) RETURNING id`,
+    [userA, zone.id, season.id, elite.id, hash("ad")],
+  );
+  const beforeApprovePoints = await one<{ points: number }>(
+    client,
+    `SELECT COALESCE(sum(points), 0)::int AS points FROM public.daily_points
+     WHERE season_id = $1 AND league_id = $2 AND user_id = $3 AND day = '2026-11-02'`,
+    [season.id, elite.id, userA],
+  );
+
+  await client.query(
+    "UPDATE public.runs SET status = 'accepted', reject_code = NULL WHERE id = $1",
+    [reviewRun.id],
+  );
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
+      reviewRun.id,
+      effort(cellAdmin, 240, "2026-11-02T05:30:00.000Z"),
+    ]);
+    await client.query("SELECT public.recompute_season($1)", [season.id]);
+  });
+
+  const adminCellOwner = await ownerOf(elite.id, cellAdmin);
+  if (adminCellOwner.owner_id !== userA || adminCellOwner.pace_s !== 240) {
+    throw new Error("approve + apply_run + recompute_season did not assign cell to userA");
+  }
+  const afterApprovePoints = await one<{ points: number }>(
+    client,
+    `SELECT COALESCE(sum(points), 0)::int AS points FROM public.daily_points
+     WHERE season_id = $1 AND league_id = $2 AND user_id = $3 AND day = '2026-11-02'`,
+    [season.id, elite.id, userA],
+  );
+  if (afterApprovePoints.points <= beforeApprovePoints.points) {
+    throw new Error(
+      `daily_points did not increase after approving run: ${beforeApprovePoints.points} -> ${afterApprovePoints.points}`,
+    );
+  }
+
+  await client.query("UPDATE public.runs SET status = 'voided' WHERE id = $1", [reviewRun.id]);
+  await asRole(client, "service_role", null, "commit", async () => {
+    await client.query("SELECT public.recompute_season($1)", [season.id]);
+  });
+
+  const remainingAdminCell = await one<{ n: number }>(
+    client,
+    `SELECT count(*)::int AS n FROM public.cell_ownership
+     WHERE season_id = $1 AND league_id = $2 AND h3 = $3`,
+    [season.id, elite.id, cellAdmin],
+  );
+  if (remainingAdminCell.n !== 0) {
+    throw new Error("void + recompute_season did not release approved cell");
+  }
+  const afterVoidPoints = await one<{ points: number }>(
+    client,
+    `SELECT COALESCE(sum(points), 0)::int AS points FROM public.daily_points
+     WHERE season_id = $1 AND league_id = $2 AND user_id = $3 AND day = '2026-11-02'`,
+    [season.id, elite.id, userA],
+  );
+  if (afterVoidPoints.points !== beforeApprovePoints.points) {
+    throw new Error(
+      `daily_points did not revert after voiding run: expected ${beforeApprovePoints.points}, got ${afterVoidPoints.points}`,
     );
   }
 }

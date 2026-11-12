@@ -1,14 +1,20 @@
 "use client";
 
-import { parseGpx, type RawPoint } from "@dubai-run/core";
 import { LngLatBounds, Map as MapLibreMap, setWorkerUrl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/i18n";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
+import {
+  computeSvgTrackData,
+  computeTrackBounds,
+  isRenderableTrack,
+  resolveTrackCoordinates,
+} from "./run-track-helpers";
 
-interface RunMiniMapProps {
-  gpx: string;
+export interface RunMiniMapProps {
+  gpx?: string;
+  coordinates?: readonly [number, number][];
   theme?: ThemeMode;
 }
 
@@ -25,104 +31,30 @@ function checkWebGLSupport(): boolean {
   }
 }
 
-export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
+export function RunMiniMap({
+  gpx,
+  coordinates: explicitCoordinates,
+  theme = "dark",
+}: RunMiniMapProps) {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [hasMapError, setHasMapError] = useState(false);
 
-  // Parse points safely
-  const points: RawPoint[] = useMemo(() => {
-    try {
-      const parsed = parseGpx(gpx);
-      return parsed.points;
-    } catch {
-      return [];
-    }
-  }, [gpx]);
+  const coordinates = useMemo(
+    () => resolveTrackCoordinates({ gpx, coordinates: explicitCoordinates }),
+    [gpx, explicitCoordinates],
+  );
 
-  const coordinates: [number, number][] = useMemo(() => {
-    return points.map((p) => [p.lon, p.lat]);
-  }, [points]);
+  const trackBounds = useMemo(() => computeTrackBounds(coordinates), [coordinates]);
 
-  // Compute track bounds and distance span
-  const trackBounds = useMemo(() => {
-    if (coordinates.length === 0) return null;
-    let minLon = coordinates[0][0];
-    let maxLon = coordinates[0][0];
-    let minLat = coordinates[0][1];
-    let maxLat = coordinates[0][1];
-
-    for (const [lon, lat] of coordinates) {
-      if (lon < minLon) minLon = lon;
-      if (lon > maxLon) maxLon = lon;
-      if (lat < minLat) minLat = lat;
-      if (lat > maxLat) maxLat = lat;
-    }
-
-    const spanLon = maxLon - minLon;
-    const spanLat = maxLat - minLat;
-    // ~15 meters threshold: very short race or single point
-    const isVeryShort = spanLon < 0.00015 && spanLat < 0.00015;
-
-    return { minLon, maxLon, minLat, maxLat, spanLon, spanLat, isVeryShort };
-  }, [coordinates]);
-
-  // SVG Fallback projection with aspect ratio preservation
-  const svgData = useMemo(() => {
-    if (!trackBounds || coordinates.length === 0) return null;
-
-    const width = 280;
-    const height = 160;
-
-    if (trackBounds.isVeryShort || coordinates.length < 2) {
-      return {
-        isVeryShort: true,
-        width,
-        height,
-        startPt: { x: 140, y: 75 },
-        endPt: null,
-        polyline: null,
-      };
-    }
-
-    const padding = 28;
-    const centerLat = (trackBounds.minLat + trackBounds.maxLat) / 2;
-    const aspectCos = Math.cos((centerLat * Math.PI) / 180);
-    const spanX = Math.max(trackBounds.spanLon * aspectCos, 0.00001);
-    const spanY = Math.max(trackBounds.spanLat, 0.00001);
-
-    const availW = width - 2 * padding;
-    const availH = height - 2 * padding;
-    const scale = Math.min(availW / spanX, availH / spanY);
-
-    const trackW = spanX * scale;
-    const trackH = spanY * scale;
-    const offsetX = padding + (availW - trackW) / 2;
-    const offsetY = padding + (availH - trackH) / 2;
-
-    const svgCoords = coordinates.map(([lon, lat]) => {
-      const x = offsetX + (lon - trackBounds.minLon) * aspectCos * scale;
-      const y = height - (offsetY + (lat - trackBounds.minLat) * scale);
-      return { x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
-    });
-
-    const polyline = svgCoords.map((c) => `${c.x},${c.y}`).join(" ");
-    const startPt = svgCoords[0];
-    const endPt = svgCoords[svgCoords.length - 1];
-
-    return {
-      isVeryShort: false,
-      width,
-      height,
-      startPt,
-      endPt: startPt.x !== endPt.x || startPt.y !== endPt.y ? endPt : null,
-      polyline,
-    };
-  }, [coordinates, trackBounds]);
+  const svgData = useMemo(
+    () => computeSvgTrackData(coordinates, trackBounds),
+    [coordinates, trackBounds],
+  );
 
   useEffect(() => {
-    if (coordinates.length < 2 || !containerRef.current) return;
+    if (!isRenderableTrack(coordinates) || !containerRef.current) return;
 
     if (!checkWebGLSupport()) {
       const timer = setTimeout(() => {
@@ -154,7 +86,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
 
       map.on("error", (event) => {
         const message = event.error?.message ?? "";
-        // Only switch to SVG fallback on genuine fatal errors (WebGL or style failure)
         const isFatal =
           /webgl|context|style|failed to initialize|worker failed to load/i.test(message) ||
           (!isMapLoaded && !/tile/i.test(message));
@@ -171,7 +102,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
         try {
           map.resize();
 
-          // Camera adjustment
           const isShort = trackBounds?.isVeryShort || coordinates.length < 2;
           if (isShort) {
             map.setCenter(coordinates[0]);
@@ -188,7 +118,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
             });
           }
 
-          // Always add Start Point marker
           map.addSource("run-start-point", {
             type: "geojson",
             data: {
@@ -224,7 +153,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
             },
           });
 
-          // Add track line and end point if track has meaningful length
           if (!isShort && coordinates.length >= 2) {
             map.addSource("run-track", {
               type: "geojson",
@@ -238,7 +166,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
               },
             });
 
-            // Glow layer
             map.addLayer({
               id: "run-track-glow",
               type: "line",
@@ -250,7 +177,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
               },
             });
 
-            // Main track line
             map.addLayer({
               id: "run-track-line",
               type: "line",
@@ -265,7 +191,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
               },
             });
 
-            // End point marker if distinct from start
             const lastCoord = coordinates[coordinates.length - 1];
             if (lastCoord[0] !== coordinates[0][0] || lastCoord[1] !== coordinates[0][1]) {
               map.addSource("run-end-point", {
@@ -294,7 +219,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
             }
           }
 
-          // Setup ResizeObserver for smooth resize inside animated modals
           if (containerRef.current) {
             resizeObserver = new ResizeObserver(() => {
               map.resize();
@@ -323,7 +247,7 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
     };
   }, [coordinates, theme, trackBounds]);
 
-  if (coordinates.length < 2) {
+  if (!isRenderableTrack(coordinates)) {
     return (
       <div className="run-mini-map-wrap glass">
         <div className="run-mini-map-empty flex flex-col items-center justify-center gap-2">
@@ -352,14 +276,12 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
 
   return (
     <div className="run-mini-map-wrap glass">
-      {/* MapLibre Container */}
       <div
         ref={containerRef}
         className={`run-mini-map-canvas ${hasMapError ? "hidden" : ""}`}
         aria-hidden={hasMapError}
       />
 
-      {/* Resilient SVG Fallback */}
       {hasMapError && svgData && (
         <svg
           className="run-mini-map-svg"
@@ -369,7 +291,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
           aria-label={t.mapTrackAria}
         >
           {svgData.isVeryShort ? (
-            // Single point or very short race SVG rendering
             <g className="svg-start-group">
               <circle
                 cx={svgData.startPt.x}
@@ -410,7 +331,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
               </text>
             </g>
           ) : (
-            // Full track SVG rendering
             <>
               {svgData.polyline && (
                 <>
@@ -433,7 +353,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
                 </>
               )}
 
-              {/* Start point marker */}
               <circle
                 cx={svgData.startPt.x}
                 cy={svgData.startPt.y}
@@ -449,7 +368,6 @@ export function RunMiniMap({ gpx, theme = "dark" }: RunMiniMapProps) {
                 strokeWidth="1.5"
               />
 
-              {/* End point marker */}
               {svgData.endPt && (
                 <>
                   <circle
