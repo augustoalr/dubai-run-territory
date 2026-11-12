@@ -281,3 +281,4 @@ T-35 · Auth y ligas en curso (rama `t35-auth-y-ligas`). Siguiente: bloqueos ext
 | T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | #22                     | fusionado |
 | T-34  | T-34 Mapa Supabase       | t34-mapa-supabase                              | #23                     | fusionado |
 | T-19  | T-19 Perfil              | t19-perfil                                     | #24                     | fusionado |
+| T-35  | T-35 Auth y ligas        | t35-auth-y-ligas                               | #25                     | en curso  |
