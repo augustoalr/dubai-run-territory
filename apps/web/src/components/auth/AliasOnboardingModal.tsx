@@ -11,7 +11,10 @@ export function AliasOnboardingModal() {
 
   const [alias, setAlias] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const isBusy = isSubmitting || isSigningOut;
 
   // Show only when user is logged in, profile loaded, and alias is not yet set
   const needsOnboarding = Boolean(
@@ -22,6 +25,7 @@ export function AliasOnboardingModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isBusy) return;
     setErrorMessage(null);
 
     const validation = validateAlias(alias);
@@ -57,6 +61,22 @@ export function AliasOnboardingModal() {
       } else {
         setErrorMessage(t.aliasErrorGeneric);
       }
+    }
+  };
+
+  const handleSignOut = async () => {
+    if (isBusy) return;
+    setIsSigningOut(true);
+    setErrorMessage(null);
+    try {
+      const res = await signOut();
+      if (res.error) {
+        setErrorMessage(t.profileLogoutError);
+      }
+    } catch {
+      setErrorMessage(t.profileLogoutError);
+    } finally {
+      setIsSigningOut(false);
     }
   };
 
@@ -134,7 +154,7 @@ export function AliasOnboardingModal() {
                 setAlias(e.target.value);
                 if (errorMessage) setErrorMessage(null);
               }}
-              disabled={isSubmitting}
+              disabled={isBusy}
               autoFocus
               autoComplete="nickname"
             />
@@ -144,7 +164,7 @@ export function AliasOnboardingModal() {
           <button
             type="submit"
             className="action-btn-primary"
-            disabled={isSubmitting || alias.trim().length < 3}
+            disabled={isBusy || alias.trim().length < 3}
           >
             {isSubmitting ? t.aliasSavingBtn : t.aliasSaveBtn}
           </button>
@@ -152,10 +172,10 @@ export function AliasOnboardingModal() {
           <button
             type="button"
             className="auth-secondary-btn"
-            onClick={() => signOut()}
-            disabled={isSubmitting}
+            onClick={handleSignOut}
+            disabled={isBusy}
           >
-            {t.logout}
+            {isSigningOut ? t.profileLogoutLoggingOut : t.logout}
           </button>
         </form>
       </div>

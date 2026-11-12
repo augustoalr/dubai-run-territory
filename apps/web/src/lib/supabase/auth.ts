@@ -1,6 +1,51 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabase, isSupabaseConfigured } from "./client";
 import type { Profile, UpdateAliasResult } from "./types";
 import { validateAlias, validateEmail } from "./validation";
+
+export interface AuthClientDeps {
+  getSupabase?: () => SupabaseClient | null;
+}
+
+export interface AuthSessionSnapshot<TUser = unknown, TSession = unknown> {
+  user: TUser | null;
+  session: TSession | null;
+  profile: Profile | null;
+}
+
+/**
+ * Resolves the next auth session snapshot after a signOut attempt.
+ * Keeps existing session state intact whenever signOut returns an error.
+ */
+export function resolveSignOutTransition<TUser, TSession>(
+  current: AuthSessionSnapshot<TUser, TSession>,
+  result: { error: string | null },
+): AuthSessionSnapshot<TUser, TSession> {
+  if (result.error) {
+    return current;
+  }
+  return { user: null, session: null, profile: null };
+}
+
+/**
+ * Executes a signOut call and runs the clear callback only if signOut succeeds without error.
+ */
+export async function executeSignOut(
+  signOutFn: () => Promise<{ error: string | null }>,
+  onSuccessClear: () => void,
+): Promise<{ error: string | null }> {
+  try {
+    const result = await signOutFn();
+    if (!result.error) {
+      onSuccessClear();
+    }
+    return result;
+  } catch (err) {
+    return {
+      error: err instanceof Error && err.message ? err.message : "SIGN_OUT_FAILED",
+    };
+  }
+}
 
 /**
  * Checks whether the email OTP login option is active via environment flag.
@@ -109,38 +154,45 @@ export async function verifyOtp(email: string, token: string): Promise<{ error: 
 /**
  * Signs the user out of the current session.
  */
-export async function signOut(): Promise<{ error: string | null }> {
-  const supabase = getSupabase();
-  if (!supabase) {
+export async function signOut(deps?: AuthClientDeps): Promise<{ error: string | null }> {
+  try {
+    const resolveSupabase = deps?.getSupabase ?? getSupabase;
+    const supabase = resolveSupabase();
+    if (!supabase) {
+      return { error: null };
+    }
+
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      return { error: error.message || "SIGN_OUT_FAILED" };
+    }
+
     return { error: null };
+  } catch (err) {
+    return {
+      error: err instanceof Error && err.message ? err.message : "SIGN_OUT_FAILED",
+    };
   }
-
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    return { error: error.message };
-  }
-
-  return { error: null };
 }
 
 interface RawProfileRow {
   id: string;
   alias: string | null;
   created_at: string;
-  is_admin: boolean;
 }
 
 /**
  * Fetches the user profile from public.profiles.
  */
-export async function fetchProfile(userId: string): Promise<Profile | null> {
-  const supabase = getSupabase();
-  if (!supabase) return null;
-
+export async function fetchProfile(userId: string, deps?: AuthClientDeps): Promise<Profile | null> {
   try {
+    const resolveSupabase = deps?.getSupabase ?? getSupabase;
+    const supabase = resolveSupabase();
+    if (!supabase) return null;
+
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, alias, created_at, is_admin")
+      .select("id, alias, created_at")
       .eq("id", userId)
       .maybeSingle<RawProfileRow>();
 
@@ -152,7 +204,6 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
       id: data.id,
       alias: data.alias,
       createdAt: data.created_at,
-      isAdmin: Boolean(data.is_admin),
     };
   } catch {
     return null;

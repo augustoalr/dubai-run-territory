@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { LocaleToggle } from "@/components/common/LocaleToggle";
 import { useI18n } from "@/i18n";
 import { useAuth } from "@/lib/supabase";
@@ -12,19 +12,56 @@ interface AppMenuModalProps {
 }
 
 export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
+  if (!isOpen) return null;
+  return <AppMenuDialog onClose={onClose} />;
+}
+
+function AppMenuDialog({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
   const { user, profile, openAuthModal, signOut } = useAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !isSigningOut) {
+        onClose();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isSigningOut, onClose]);
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    if (isSigningOut) return;
+    onClose();
+  };
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isSigningOut) {
+      e.preventDefault();
+      return;
+    }
+    onClose();
+  };
+
+  const handleSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    setLogoutError(null);
+    try {
+      const res = await signOut();
+      if (res.error) {
+        setLogoutError(t.profileLogoutError);
+        setIsSigningOut(false);
+        return;
+      }
+      onClose();
+    } catch {
+      setLogoutError(t.profileLogoutError);
+      setIsSigningOut(false);
+    }
+  };
 
   return (
     <div
@@ -32,7 +69,11 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="app-menu-title"
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isSigningOut) {
+          onClose();
+        }
+      }}
     >
       <div className="modal-card glass app-menu-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -62,7 +103,8 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
           <button
             type="button"
             className="modal-close-btn"
-            onClick={onClose}
+            onClick={handleClose}
+            disabled={isSigningOut}
             aria-label={t.menuCloseAria}
           >
             ✕
@@ -83,13 +125,32 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
                   <span className="menu-user-status-pill">{t.menuUserLogged}</span>
                 </div>
               </div>
+              {logoutError && (
+                <div className="auth-error-banner mt-0" role="alert">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                    className="flex-shrink-0"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <span>{logoutError}</span>
+                </div>
+              )}
               <button
                 type="button"
                 className="menu-logout-btn"
-                onClick={async () => {
-                  await signOut();
-                  onClose();
-                }}
+                onClick={handleSignOut}
+                disabled={isSigningOut}
               >
                 <svg
                   width="16"
@@ -106,7 +167,7 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
-                <span>{t.logout}</span>
+                <span>{isSigningOut ? t.profileLogoutLoggingOut : t.logout}</span>
               </button>
             </div>
           ) : (
@@ -151,7 +212,7 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
         </div>
 
         <nav className="app-menu-nav" aria-label={t.menuNavAria}>
-          <Link href="/ranking" className="menu-nav-item" onClick={onClose}>
+          <Link href="/ranking" className="menu-nav-item" onClick={handleNavClick}>
             <div className="menu-item-icon">
               <svg
                 width="20"
@@ -181,7 +242,7 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
             </span>
           </Link>
 
-          <Link href="/perfil" className="menu-nav-item" onClick={onClose}>
+          <Link href="/perfil" className="menu-nav-item" onClick={handleNavClick}>
             <div className="menu-item-icon">
               <svg
                 width="20"
@@ -207,7 +268,7 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
             </span>
           </Link>
 
-          <Link href="/terminos" className="menu-nav-item" onClick={onClose}>
+          <Link href="/terminos" className="menu-nav-item" onClick={handleNavClick}>
             <div className="menu-item-icon">
               <svg
                 width="20"
@@ -236,7 +297,7 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
             </span>
           </Link>
 
-          <Link href="/privacidad" className="menu-nav-item" onClick={onClose}>
+          <Link href="/privacidad" className="menu-nav-item" onClick={handleNavClick}>
             <div className="menu-item-icon">
               <svg
                 width="20"
@@ -269,7 +330,12 @@ export function AppMenuModal({ isOpen, onClose }: AppMenuModalProps) {
         </div>
 
         <div className="modal-footer">
-          <button type="button" className="action-btn-primary" onClick={onClose}>
+          <button
+            type="button"
+            className="action-btn-primary"
+            onClick={handleClose}
+            disabled={isSigningOut}
+          >
             {t.backToMap}
           </button>
         </div>

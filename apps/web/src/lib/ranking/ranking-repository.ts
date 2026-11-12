@@ -6,7 +6,8 @@ import {
   type RankingDailyPoint,
   type RankingProfile,
 } from "@dubai-run/core";
-import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getActiveUserLeague, getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { calculateDaysRemaining, getMockLeagueRanking } from "./mock-ranking";
 import type { LeagueRankingData, SeasonInfo } from "./types";
 
@@ -15,31 +16,33 @@ export interface RankingRepository {
   getUserLeague(userId: string): Promise<LeagueCode | null>;
 }
 
-export class HybridRankingRepository implements RankingRepository {
-  async getUserLeague(userId: string): Promise<LeagueCode | null> {
-    if (!isSupabaseConfigured()) return null;
-    try {
-      const supabase = getSupabase();
-      if (!supabase) return null;
-      const { data, error } = await supabase
-        .from("user_leagues")
-        .select("leagues(code)")
-        .eq("user_id", userId)
-        .order("valid_from", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+export type RankingRepositoryDeps = {
+  getSupabase: () => SupabaseClient | null;
+  isSupabaseConfigured: () => boolean;
+  now: () => number;
+};
 
-      if (error || !data) return null;
-      const leagueCode = (data.leagues as { code?: string } | null)?.code;
-      if (
-        leagueCode === "starter" ||
-        leagueCode === "intermediate" ||
-        leagueCode === "advanced" ||
-        leagueCode === "elite"
-      ) {
-        return leagueCode as LeagueCode;
-      }
-      return null;
+export class HybridRankingRepository implements RankingRepository {
+  private readonly deps: RankingRepositoryDeps;
+
+  constructor(deps: Partial<RankingRepositoryDeps> = {}) {
+    this.deps = {
+      getSupabase: deps.getSupabase ?? getSupabase,
+      isSupabaseConfigured: deps.isSupabaseConfigured ?? isSupabaseConfigured,
+      now: deps.now ?? (() => Date.now()),
+    };
+  }
+
+  async getUserLeague(userId: string): Promise<LeagueCode | null> {
+    if (!this.deps.isSupabaseConfigured()) return null;
+    try {
+      const supabase = this.deps.getSupabase();
+      if (!supabase) return null;
+      return await getActiveUserLeague({
+        supabase,
+        userId,
+        nowMs: this.deps.now(),
+      });
     } catch {
       return null;
     }
@@ -47,12 +50,12 @@ export class HybridRankingRepository implements RankingRepository {
 
   async getLeagueRanking(league: LeagueCode): Promise<LeagueRankingData> {
     // 1. Unconfigured environment: provide realistic sample data with sample badge
-    if (!isSupabaseConfigured()) {
+    if (!this.deps.isSupabaseConfigured()) {
       return getMockLeagueRanking(league);
     }
 
     try {
-      const supabase = getSupabase();
+      const supabase = this.deps.getSupabase();
       if (!supabase) {
         return {
           league,

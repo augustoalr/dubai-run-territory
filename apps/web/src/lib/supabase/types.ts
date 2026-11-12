@@ -4,7 +4,6 @@ export interface Profile {
   id: string;
   alias: string | null;
   createdAt: string;
-  isAdmin: boolean;
 }
 
 export type AliasValidationError =
