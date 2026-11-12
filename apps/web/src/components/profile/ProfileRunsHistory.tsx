@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useI18n } from "@/i18n";
-import type { ProfileRunItem } from "@/lib/profile";
+import { resolveRunReasonInfo, type ProfileRunItem } from "@/lib/profile";
 
 interface ProfileRunsHistoryProps {
   runs: ProfileRunItem[];
@@ -10,38 +10,6 @@ interface ProfileRunsHistoryProps {
   isLoadingMore: boolean;
   loadMoreError: string | null;
   onLoadMore: () => void;
-}
-
-const KNOWN_REASON_CODES = [
-  "NO_TIMESTAMPS",
-  "NOT_RUNNING",
-  "OUT_OF_WINDOW",
-  "LOW_DENSITY",
-  "GPS_SPIKES",
-  "TOO_SHORT",
-  "DUPLICATE",
-  "COPIED_TRACK",
-  "RATE_LIMIT",
-  "IMPOSSIBLE_PACE",
-  "BIKE_PATTERN",
-  "CADENCE",
-] as const;
-
-type KnownReasonCode = (typeof KNOWN_REASON_CODES)[number];
-
-const KNOWN_REASON_SET: ReadonlySet<string> = new Set(KNOWN_REASON_CODES);
-
-function resolveReasonText(
-  rejectCode: string | null,
-  reasons: Record<KnownReasonCode | "unknown", string>,
-): string | null {
-  if (!rejectCode) return null;
-  const trimmed = rejectCode.trim();
-  if (!trimmed) return null;
-  if (KNOWN_REASON_SET.has(trimmed)) {
-    return reasons[trimmed as KnownReasonCode];
-  }
-  return reasons.unknown;
 }
 
 export function ProfileRunsHistory({
@@ -78,7 +46,7 @@ export function ProfileRunsHistory({
                 run.distanceInZoneM !== null
                   ? formatDistance(run.distanceInZoneM)
                   : t.profileRunNoZoneDistance;
-              const reasonText = resolveReasonText(run.rejectCode, t.profileRejectReasons);
+              const reasonInfo = resolveRunReasonInfo(run.status, run.rejectCode);
 
               return (
                 <li key={run.id} className="profile-run-card">
@@ -99,9 +67,15 @@ export function ProfileRunsHistory({
                     <span className="profile-run-zone-tag">{t.profileRunDistanceLabel}</span>
                   </div>
 
-                  {reasonText && (
-                    <p className="profile-run-reason">
-                      <strong>{t.profileRunReasonLabel}:</strong> {reasonText}
+                  {reasonInfo && (
+                    <p className={`profile-run-reason profile-run-reason--${reasonInfo.variant}`}>
+                      <strong>
+                        {reasonInfo.labelKind === "note"
+                          ? t.profileRunNoteLabel
+                          : t.profileRunReasonLabel}
+                        :
+                      </strong>{" "}
+                      {t.profileRejectReasons[reasonInfo.reasonKey]}
                     </p>
                   )}
                 </li>

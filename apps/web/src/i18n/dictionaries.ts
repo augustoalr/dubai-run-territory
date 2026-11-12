@@ -336,6 +336,7 @@ export const es = {
   profileRefPaceLabel: "Ritmo de referencia",
   profileOwnedTilesLabel: "Baldosas en posesión",
   profileOwnedTilesZoneHint: "Jumeirah Kite · temporada activa",
+  profileOwnedTilesNoSeasonHint: "Jumeirah Kite · sin temporada activa",
   profileNoLeagueYet: "Sin liga asignada todavía",
   profileNoActiveSeasonHint: "Sin temporada activa en este momento",
   profileNoActiveSeasonDesc:
@@ -365,6 +366,7 @@ export const es = {
   profileRunFormatLabel: "Formato",
   profileRunDateLabel: "Fecha",
   profileRunReasonLabel: "Motivo",
+  profileRunNoteLabel: "Nota",
   profileRunNoZoneDistance: "--",
   profileRunStatuses: {
     pending: "Pendiente",
@@ -736,6 +738,7 @@ export const en: Dictionary = {
   profileRefPaceLabel: "Reference pace",
   profileOwnedTilesLabel: "Owned tiles",
   profileOwnedTilesZoneHint: "Jumeirah Kite · active season",
+  profileOwnedTilesNoSeasonHint: "Jumeirah Kite · no active season",
   profileNoLeagueYet: "No league assigned yet",
   profileNoActiveSeasonHint: "No active season right now",
   profileNoActiveSeasonDesc:
@@ -765,6 +768,7 @@ export const en: Dictionary = {
   profileRunFormatLabel: "Format",
   profileRunDateLabel: "Date",
   profileRunReasonLabel: "Reason",
+  profileRunNoteLabel: "Note",
   profileRunNoZoneDistance: "--",
   profileRunStatuses: {
     pending: "Pending",

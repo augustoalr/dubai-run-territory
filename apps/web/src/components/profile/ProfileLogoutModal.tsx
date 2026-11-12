@@ -44,10 +44,11 @@ export function ProfileLogoutModal({
       }}
     >
       <div
-        className="delete-modal-content profile-logout-modal"
+        className="modal-card glass delete-modal-card"
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-logout-title"
+        onClick={(event) => event.stopPropagation()}
       >
         <h2 id="profile-logout-title" className="delete-modal-title">
           {t.profileLogoutModalTitle}
@@ -55,7 +56,7 @@ export function ProfileLogoutModal({
         <p className="delete-modal-desc">{t.profileLogoutModalDesc}</p>
 
         {errorMessage && (
-          <div className="profile-inline-error" role="alert">
+          <div className="delete-modal-error" role="alert">
             {errorMessage}
           </div>
         )}
@@ -63,7 +64,7 @@ export function ProfileLogoutModal({
         <div className="delete-modal-actions">
           <button
             type="button"
-            className="delete-modal-cancel"
+            className="action-btn-secondary"
             onClick={onClose}
             disabled={isSubmitting}
           >
@@ -71,7 +72,7 @@ export function ProfileLogoutModal({
           </button>
           <button
             type="button"
-            className="delete-modal-confirm"
+            className="btn-destructive"
             onClick={onConfirm}
             disabled={isSubmitting}
           >

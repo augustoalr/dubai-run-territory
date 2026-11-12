@@ -383,7 +383,9 @@ export function ProfileContainer() {
               <article className="profile-stat-card">
                 <span className="profile-stat-label">{t.profileOwnedTilesLabel}</span>
                 <span className="profile-stat-value">{result.ownedCellsCount}</span>
-                <span className="profile-stat-hint">{t.profileOwnedTilesZoneHint}</span>
+                <span className="profile-stat-hint">
+                  {result.season ? t.profileOwnedTilesZoneHint : t.profileOwnedTilesNoSeasonHint}
+                </span>
               </article>
             </section>
 

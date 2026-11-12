@@ -245,6 +245,7 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 - **Fallos existentes abiertos (no resueltos en T-19):**
   1. `fetchProfile` en `apps/web/src/lib/supabase/auth.ts` selecciona `is_admin`, lo que falla con `SQLSTATE 42501` frente a `GRANT SELECT (id, alias, created_at)` y deja `useAuth().profile` en `null` en Postgres real (afecta a `AppMenuModal`, `TerritoryHeader` y `RankingHeader`).
   2. `HybridRankingRepository.getUserLeague` y `HybridTerritoryRepository.getUserLeague` ordenan `user_leagues` por `valid_from DESC` sin filtrar por `season_id` ni `valid_from <= now()`.
+  3. `AuthContext.signOut` (`apps/web/src/lib/supabase/AuthContext.tsx`) limpia `user` incondicionalmente aunque `authSignOut()` devuelva error (comportamiento heredado de T-14).
 - **Pendientes reales (no resueltos en T-19):**
   1. Borrado/anulación remota de carreras propias y recálculo (`recompute_season` es exclusivo de `service_role` y `authenticated` no tiene `DELETE`/`UPDATE` sobre `runs`; depende de T-18 / RPC).
   2. Botón "reportar carrera" ajena desde el detalle de celda hacia `reports` (requiere exponer `run_id` ajeno vía vista/RPC segura o T-18).
@@ -271,4 +272,4 @@ T-19 · Perfil, historial y avisos en curso (rama `t19-perfil`). Siguiente: corr
 | T-17  | T-17 Ranking             | t17-ranking                                    | #21                     | fusionado |
 | T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | #22                     | fusionado |
 | T-34  | T-34 Mapa Supabase       | t34-mapa-supabase                              | #23                     | fusionado |
-| T-19  | T-19 Perfil              | t19-perfil                                     | (abierto)               | en curso  |
+| T-19  | T-19 Perfil              | t19-perfil                                     | #24                     | en curso  |

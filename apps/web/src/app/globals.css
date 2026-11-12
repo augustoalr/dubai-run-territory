@@ -1065,6 +1065,9 @@ button:disabled {
 .app-menu-card {
   max-width: 28rem;
   width: 92%;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .app-menu-nav {
@@ -2781,6 +2784,13 @@ button:disabled {
   gap: 0.75rem;
   width: 100%;
   margin-top: 0.75rem;
+}
+
+.delete-modal-actions .action-btn-secondary {
+  flex: 1;
+  width: auto;
+  min-height: 3rem;
+  padding: 0 0.75rem;
 }
 
 .btn-destructive {
@@ -4654,6 +4664,22 @@ button:disabled {
   color: var(--profile-status-rejected-fg);
   font-size: 0.8rem;
   line-height: 1.4;
+}
+
+.profile-run-reason--info {
+  background: var(--chip-bg);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+}
+
+.profile-run-reason--review {
+  background: var(--profile-status-review-bg);
+  color: var(--profile-status-review-fg);
+}
+
+.profile-run-reason--rejected {
+  background: var(--profile-status-rejected-bg);
+  color: var(--profile-status-rejected-fg);
 }
 
 .profile-load-more-wrap {
