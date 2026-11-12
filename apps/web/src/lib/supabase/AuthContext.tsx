@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import {
+  executeSignOut,
   fetchProfile,
   isEmailLoginEnabled,
   signInWithGoogle as authSignInWithGoogle,
@@ -123,11 +124,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleSignOut = useCallback(async () => {
-    const result = await authSignOut();
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    return result;
+    return executeSignOut(authSignOut, () => {
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+    });
   }, []);
 
   const handleSaveAlias = useCallback(
@@ -144,7 +145,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 id: user.id,
                 alias: result.alias,
                 createdAt: new Date().toISOString(),
-                isAdmin: false,
               },
         );
       }

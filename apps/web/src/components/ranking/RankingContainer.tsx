@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { LeagueCode, RankedRunner } from "@dubai-run/core";
 import { LeagueSelector } from "@/components/territory/LeagueSelector";
@@ -15,24 +15,39 @@ import { UserStandingBanner } from "./UserStandingBanner";
 export function RankingContainer() {
   const { t } = useI18n();
   const { user } = useAuth();
+  const currentUserId = user?.id ?? null;
 
   // Item 5: Default league is the first league ("starter"), unless user has an assigned league
   const [selectedLeague, setSelectedLeague] = useState<LeagueCode>("starter");
-  const [userLeague, setUserLeague] = useState<LeagueCode>("starter");
-  const [rankingData, setRankingData] = useState<LeagueRankingData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [fetchedUserLeague, setFetchedUserLeague] = useState<{
+    userId: string;
+    league: LeagueCode;
+  } | null>(null);
+  const hasManualSelectionRef = useRef(false);
   const [reloadTrigger, setReloadTrigger] = useState<number>(0);
+
+  const requestKey = `${selectedLeague}:${reloadTrigger}`;
+  const [loadedSnapshot, setLoadedSnapshot] = useState<{
+    key: string;
+    data: LeagueRankingData;
+  } | null>(null);
+
+  const userLeague: LeagueCode =
+    currentUserId && fetchedUserLeague?.userId === currentUserId
+      ? fetchedUserLeague.league
+      : "starter";
 
   // Item 5: Fetch user's actual league if logged in
   useEffect(() => {
-    if (!user) return;
+    if (!currentUserId) return;
     let isCancelled = false;
 
     rankingRepository
-      .getUserLeague(user.id)
+      .getUserLeague(currentUserId)
       .then((league) => {
-        if (!isCancelled && league) {
-          setUserLeague(league);
+        if (isCancelled || !league) return;
+        setFetchedUserLeague({ userId: currentUserId, league });
+        if (!hasManualSelectionRef.current) {
           setSelectedLeague(league);
         }
       })
@@ -43,7 +58,7 @@ export function RankingContainer() {
     return () => {
       isCancelled = true;
     };
-  }, [user]);
+  }, [currentUserId]);
 
   // Fetch league ranking whenever selected league or reload trigger changes
   useEffect(() => {
@@ -53,37 +68,40 @@ export function RankingContainer() {
       .getLeagueRanking(selectedLeague)
       .then((data) => {
         if (!isCancelled) {
-          setRankingData(data);
-          setIsLoading(false);
+          setLoadedSnapshot({ key: requestKey, data });
         }
       })
       .catch(() => {
         if (!isCancelled) {
-          setRankingData({
-            league: selectedLeague,
-            season: null,
-            runners: [],
-            isSampleData: false,
-            error: "network_error",
+          setLoadedSnapshot({
+            key: requestKey,
+            data: {
+              league: selectedLeague,
+              season: null,
+              runners: [],
+              isSampleData: false,
+              error: "network_error",
+            },
           });
-          setIsLoading(false);
         }
       });
 
     return () => {
       isCancelled = true;
     };
-  }, [selectedLeague, reloadTrigger]);
+  }, [selectedLeague, requestKey]);
 
   const handleSelectLeague = (league: LeagueCode) => {
+    hasManualSelectionRef.current = true;
     setSelectedLeague(league);
-    setIsLoading(true);
   };
 
   const handleRetry = () => {
-    setIsLoading(true);
     setReloadTrigger((prev) => prev + 1);
   };
+
+  const isLoading = loadedSnapshot?.key !== requestKey;
+  const rankingData = loadedSnapshot?.key === requestKey ? loadedSnapshot.data : null;
 
   const runners = rankingData?.runners ?? [];
   const season = rankingData?.season ?? null;

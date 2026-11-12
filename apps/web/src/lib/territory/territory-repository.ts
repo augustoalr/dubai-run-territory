@@ -7,7 +7,7 @@ import {
   type LeagueCode,
 } from "@dubai-run/core";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { getActiveUserLeague, getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { computeTerritoryStats, getInitials, sortCellsAlongCenterline } from "./helpers";
 import { CURRENT_USER, buildTerritoryData } from "./mock-data";
 import type { TerritoryCell, TerritoryData } from "./types";
@@ -95,21 +95,11 @@ export class HybridTerritoryRepository implements TerritoryRepository {
       const supabase = this.deps.getSupabase();
       if (!supabase) return null;
 
-      const { data, error } = await supabase
-        .from("user_leagues")
-        .select("leagues(code)")
-        .eq("user_id", userId)
-        .order("valid_from", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error || !data) return null;
-
-      const leaguesJoin = (data as { leagues?: { code?: string } | { code?: string }[] | null })
-        .leagues;
-      const code = Array.isArray(leaguesJoin) ? leaguesJoin[0]?.code : leaguesJoin?.code;
-
-      return isLeagueCode(code) ? code : null;
+      return await getActiveUserLeague({
+        supabase,
+        userId,
+        nowMs: this.deps.now(),
+      });
     } catch {
       return null;
     }
@@ -287,12 +277,6 @@ export class HybridTerritoryRepository implements TerritoryRepository {
 }
 
 export const territoryRepository: TerritoryRepository = new HybridTerritoryRepository();
-
-function isLeagueCode(value: unknown): value is LeagueCode {
-  return (
-    value === "starter" || value === "intermediate" || value === "advanced" || value === "elite"
-  );
-}
 
 function buildErrorTerritoryData(league: LeagueCode): TerritoryData {
   return {

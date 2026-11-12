@@ -1,8 +1,8 @@
 # Estado de la Fase 0
 
-Actualizado el 12 nov 2026, con main en `caee589` (T-34 en PR #23 fusionado en `caee589`; T-33 en PR #22 fusionado en `78f903d`; T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
+Actualizado el 12 nov 2026, con main en `e661fb8` (T-19 en PR #24 fusionado en `e661fb8`; T-34 en PR #23 fusionado en `caee589`; T-33 en PR #22 fusionado en `78f903d`; T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
 
-Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-19 (Perfil, historial y avisos) en rama `t19-perfil`. El playbook del manager está en `docs/MANAGER.md`.
+Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-35 (Auth y ligas) en rama `t35-auth-y-ligas`. El playbook del manager está en `docs/MANAGER.md`.
 
 ## T-01 · Scaffolding
 
@@ -236,26 +236,34 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
 
 ## T-19 · Perfil, historial y avisos
 
-- **Estado:** en curso (rama `t19-perfil`).
+- **Estado:** hecho (PR #24 fusionado en `main`, squash `e661fb8`).
 - **Hecho:**
   1. Repositorio desacoplado `HybridProfileRepository` en `apps/web/src/lib/profile/profile-repository.ts` (exportación estática pura cliente, sin hooks de React, con inyección de `getSupabase`, `isSupabaseConfigured` y `now`), con estados discriminados (`"sample" | "unauthenticated" | "ready" | "error"`).
   2. Consultas alineadas con columnas, `CHECK`, `GRANT` y RLS reales de `supabase/migrations/`: `profiles` con `id, alias, created_at` (sin `is_admin` ni `*`), `zones` sin exigir `status = 'active'`, `seasons` con `status = 'active'`, `user_leagues` filtrada por `season_id` y `valid_from <= now` con validación de `LeagueCode`, `cell_ownership` con `select("h3", { count: "exact", head: true })`, `runs` paginadas (`created_at DESC, id DESC`, `pageSize + 1` para `hasMore`) preservando `started_at` y `distance_in_zone_m` anulables, `ownership_events` filtrada por `type = 'steal'` + `prev_owner_id` (y `zone_id`) omitiendo la consulta a `profiles` cuando no hay actores, lectura de avisos persistida por usuario en `localStorage`, y propagación de `network_error` sin fallback a mocks.
   3. Página `/perfil` (`apps/web/src/app/perfil/page.tsx` y componentes en `apps/web/src/components/profile/`), acceso desde `<nav className="app-menu-nav">` en `AppMenuModal.tsx`, ritmo con `formatPace`, distancia segura (`"--"` si `distanceInZoneM === null`), traducción simétrica `es`/`en` de los 6 estados de `runs` y los 12 `ReasonCode` (+ respaldo genérico), confirmación de cierre de sesión, enlace visible a `/privacidad#borrado-datos` y diseño móvil 375–430 px compatible con Safari en iOS.
   4. Controles permanentes endurecidos en `docs/MANAGER.md` (§6, §7 y §11.4) y tests unitarios en `apps/web/src/lib/profile/profile-repository.test.ts`.
-- **Fallos existentes abiertos (no resueltos en T-19):**
-  1. `fetchProfile` en `apps/web/src/lib/supabase/auth.ts` selecciona `is_admin`, lo que falla con `SQLSTATE 42501` frente a `GRANT SELECT (id, alias, created_at)` y deja `useAuth().profile` en `null` en Postgres real (afecta a `AppMenuModal`, `TerritoryHeader` y `RankingHeader`).
-  2. `HybridRankingRepository.getUserLeague` y `HybridTerritoryRepository.getUserLeague` ordenan `user_leagues` por `valid_from DESC` sin filtrar por `season_id` ni `valid_from <= now()`.
-  3. `AuthContext.signOut` (`apps/web/src/lib/supabase/AuthContext.tsx`) limpia `user` incondicionalmente aunque `authSignOut()` devuelva error (comportamiento heredado de T-14).
+  5. Los 3 fallos existentes abiertos detectados en T-19 (`fetchProfile` con `is_admin`, `getUserLeague` en ranking/territorio sin `season_id`/`valid_from <= now`, y `AuthContext.signOut` limpiando sesión ante error) quedaron resueltos en T-35.
 - **Pendientes reales (no resueltos en T-19):**
   1. Borrado/anulación remota de carreras propias y recálculo (`recompute_season` es exclusivo de `service_role` y `authenticated` no tiene `DELETE`/`UPDATE` sobre `runs`; depende de T-18 / RPC).
   2. Botón "reportar carrera" ajena desde el detalle de celda hacia `reports` (requiere exponer `run_id` ajeno vía vista/RPC segura o T-18).
   3. Borrado automatizado de cuenta en servidor (`service_role` sobre `auth.users`/`public.profiles`) y sustitución de `LEGAL_CONTACT_EMAIL = "privacidad@PENDIENTE"` en `apps/web/src/lib/legal/legal-content.ts` por el Gmail real del proyecto (`/privacidad#borrado-datos` reemplazó a `docs/PRIVACIDAD.md`).
   4. Bloqueos previos del proyecto aún abiertos: T-04 polígono de `jumeirah-kite` en `draft`, despliegue de `process-run`, T-18 `/admin`, Gmail del proyecto → Garmin T-22 / Polar, pruebas de PWA en iOS Safari real y FIT reales anonimizados.
-- **Siguiente paso:** pasar CI (`verify`), revisión independiente en `Revisor` y revisión del PR por el Manager.
+- **Siguiente paso:** ninguno.
+
+## T-35 · Auth y ligas
+
+- **Estado:** en curso (rama `t35-auth-y-ligas`).
+- **Hecho:**
+  1. Lectura de perfil propio compatible con `GRANT SELECT (id, alias, created_at)` en `apps/web/src/lib/supabase/auth.ts`: `fetchProfile` consulta exclusivamente `"id, alias, created_at"` (nunca `is_admin` ni `*`) con inyección opcional de cliente para pruebas unitarias; eliminación de `isAdmin`/`is_admin` de `Profile` (`types.ts`), `RawProfileRow`, `fetchProfile` y fallback en `handleSaveAlias` (`AuthContext.tsx`).
+  2. Helper compartido `getActiveUserLeague` en `apps/web/src/lib/supabase/active-user-league.ts` reutilizado por `HybridRankingRepository.getUserLeague` y `HybridTerritoryRepository.getUserLeague`: consulta `zones` por `slug` sin exigir `status = 'active'`, `seasons` con `status = 'active'`, `user_leagues` filtrada por `user_id`, `season_id` y `valid_from <= now` (`ORDER BY valid_from DESC LIMIT 1`), validando en cliente `valid_from <= nowMs` y `LeagueCode` válido. Inyección de `deps` en `HybridRankingRepository` (`getUserLeague` y `getLeagueRanking`) y vinculación de `userLeague` a `user?.id` en `RankingContainer.tsx` siguiendo el patrón de `TerritoryStage.tsx`.
+  3. Manejo seguro y visible de errores en `signOut`: `try/catch` e inyección opcional de `deps` en `auth.ts`, limpieza de `user`/`session`/`profile` en `AuthContext.tsx` únicamente cuando `!result.error` mediante helper puro testeable sin DOM, patrón de desmontaje limpio + `isSigningOut`/`logoutError` (`t.profileLogoutError`, `role="alert"`) y bloqueo de cierre mientras cierra sesión en `AppMenuModal.tsx`, y estado independiente `isSigningOut` con error visible en `AliasOnboardingModal.tsx`.
+  4. Tests unitarios en `apps/web/src/lib/supabase/auth.test.ts`, `apps/web/src/lib/ranking/ranking-repository.test.ts` y `apps/web/src/lib/territory/territory-repository.test.ts`.
+- **Pendientes reales:** ninguno de código de T-35.
+- **Siguiente paso:** revisión independiente en `Revisor` y revisión del PR por el Manager.
 
 ## En curso
 
-T-19 · Perfil, historial y avisos en curso (rama `t19-perfil`). Siguiente: corregir fallos existentes abiertos (`auth.ts`, `ranking-repository.ts`, `territory-repository.ts`) + bloqueos externos (T-04 polígono en `draft`, despliegue de `process-run`, T-18 `/admin`, Gmail del proyecto → Garmin T-22 / Polar y `LEGAL_CONTACT_EMAIL`, pruebas en iOS Safari real y FIT anonimizados).
+T-35 · Auth y ligas en curso (rama `t35-auth-y-ligas`). Siguiente: bloqueos externos (T-04 polígono en `draft`, despliegue de `process-run`, T-18 `/admin`, Gmail del proyecto → Garmin T-22 / Polar y `LEGAL_CONTACT_EMAIL`, pruebas en iOS Safari real y FIT anonimizados).
 
 ### Tabla de conversaciones Antigravity
 
@@ -272,4 +280,4 @@ T-19 · Perfil, historial y avisos en curso (rama `t19-perfil`). Siguiente: corr
 | T-17  | T-17 Ranking             | t17-ranking                                    | #21                     | fusionado |
 | T-33  | T-33 Checklist Manager   | t33-checklist-manager                          | #22                     | fusionado |
 | T-34  | T-34 Mapa Supabase       | t34-mapa-supabase                              | #23                     | fusionado |
-| T-19  | T-19 Perfil              | t19-perfil                                     | #24                     | en curso  |
+| T-19  | T-19 Perfil              | t19-perfil                                     | #24                     | fusionado |

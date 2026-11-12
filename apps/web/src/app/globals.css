@@ -681,14 +681,19 @@ button:disabled {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.action-btn-primary:hover {
+.action-btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 12px 30px rgba(255, 85, 0, 0.5);
   background: #ff661a;
 }
 
-.action-btn-primary:active {
+.action-btn-primary:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.action-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-icon {
@@ -779,9 +784,14 @@ button:disabled {
   -webkit-tap-highlight-color: transparent;
 }
 
-.modal-close-btn:hover {
+.modal-close-btn:hover:not(:disabled) {
   background: var(--btn-close-hover);
   color: #ffffff;
+}
+
+.modal-close-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .guide-steps {
@@ -2997,9 +3007,14 @@ button:disabled {
   transition: all 0.2s ease;
 }
 
-.menu-logout-btn:hover {
+.menu-logout-btn:hover:not(:disabled) {
   background: rgba(239, 68, 68, 0.16);
   border-color: rgba(239, 68, 68, 0.45);
+}
+
+.menu-logout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .menu-login-card {

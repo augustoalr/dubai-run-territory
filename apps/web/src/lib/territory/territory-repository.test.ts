@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import { HybridTerritoryRepository, territoryRepository } from "./territory-repository";
 
 type FilterRecord =
-  { op: "eq"; column: string; value: unknown } | { op: "in"; column: string; values: unknown[] };
+  | { op: "eq"; column: string; value: unknown }
+  | { op: "in"; column: string; values: unknown[] }
+  | { op: "lte"; column: string; value: unknown };
 
 type QueryResponse = {
   data: unknown;
@@ -14,6 +16,8 @@ type CapturedQuery = {
   table: string;
   selectCols: string;
   filters: FilterRecord[];
+  orders: Array<{ column: string; ascending: boolean }>;
+  limitValue?: number;
   rangeArgs?: [number, number];
 };
 
@@ -30,6 +34,7 @@ function createMockSupabase(handler: QueryHandler): {
       table,
       selectCols: "",
       filters: [],
+      orders: [],
     };
 
     const execute = async (): Promise<QueryResponse> => {
@@ -37,6 +42,8 @@ function createMockSupabase(handler: QueryHandler): {
         table: state.table,
         selectCols: state.selectCols,
         filters: [...state.filters],
+        orders: [...state.orders],
+        limitValue: state.limitValue,
         rangeArgs: state.rangeArgs,
       });
       return handler(state);
@@ -55,10 +62,16 @@ function createMockSupabase(handler: QueryHandler): {
         state.filters.push({ op: "in", column, values });
         return builder;
       },
-      order() {
+      lte(column: string, value: unknown) {
+        state.filters.push({ op: "lte", column, value });
         return builder;
       },
-      limit() {
+      order(column: string, opts?: { ascending?: boolean }) {
+        state.orders.push({ column, ascending: opts?.ascending ?? true });
+        return builder;
+      },
+      limit(value: number) {
+        state.limitValue = value;
         return builder;
       },
       range(fromIdx: number, toIdx: number) {
@@ -436,12 +449,25 @@ describe("HybridTerritoryRepository", () => {
     expect(result.cells[0]?.status).toBe("mine");
   });
 
-  it("resolves getUserLeague from user_leagues and falls back to null on missing or error", async () => {
-    const { client } = createMockSupabase((q) => {
+  it("resolves getUserLeague via draft zone, active season, and user_leagues with valid_from <= now", async () => {
+    const nowMs = Date.parse("2026-11-12T10:00:00.000Z");
+    const { client, queries } = createMockSupabase((q) => {
+      if (q.table === "zones") {
+        return { data: { id: ZONE_ID }, error: null };
+      }
+      if (q.table === "seasons") {
+        return { data: { id: SEASON_ID }, error: null };
+      }
       if (q.table === "user_leagues") {
         const userFilter = q.filters.find((f) => f.op === "eq" && f.column === "user_id");
         if (userFilter?.op === "eq" && userFilter.value === USER_ID) {
-          return { data: { leagues: { code: "intermediate" } }, error: null };
+          return {
+            data: {
+              valid_from: "2026-11-10T08:00:00.000Z",
+              leagues: { code: "intermediate" },
+            },
+            error: null,
+          };
         }
         return { data: null, error: null };
       }
@@ -451,9 +477,83 @@ describe("HybridTerritoryRepository", () => {
     const repo = new HybridTerritoryRepository({
       getSupabase: () => client,
       isSupabaseConfigured: () => true,
+      now: () => nowMs,
     });
 
     expect(await repo.getUserLeague(USER_ID)).toBe("intermediate");
     expect(await repo.getUserLeague(RIVAL_ID)).toBeNull();
+
+    const zoneQuery = queries.find((q) => q.table === "zones");
+    expect(zoneQuery?.filters).toEqual([{ op: "eq", column: "slug", value: "jumeirah-kite" }]);
+
+    const seasonQuery = queries.find((q) => q.table === "seasons");
+    expect(seasonQuery?.filters).toEqual([
+      { op: "eq", column: "zone_id", value: ZONE_ID },
+      { op: "eq", column: "status", value: "active" },
+    ]);
+
+    const ulQuery = queries.find((q) => q.table === "user_leagues");
+    expect(ulQuery?.selectCols).toBe("valid_from, leagues(code)");
+    expect(ulQuery?.filters).toEqual([
+      { op: "eq", column: "user_id", value: USER_ID },
+      { op: "eq", column: "season_id", value: SEASON_ID },
+      { op: "lte", column: "valid_from", value: "2026-11-12T10:00:00.000Z" },
+    ]);
+    expect(ulQuery?.orders).toEqual([{ column: "valid_from", ascending: false }]);
+    expect(ulQuery?.limitValue).toBe(1);
+  });
+
+  it("discards future user_leagues rows and degrades to null without active season or on error", async () => {
+    const nowMs = Date.parse("2026-11-12T10:00:00.000Z");
+
+    const futureRowClient = createMockSupabase((q) => {
+      if (q.table === "zones") return { data: { id: ZONE_ID }, error: null };
+      if (q.table === "seasons") return { data: { id: SEASON_ID }, error: null };
+      if (q.table === "user_leagues") {
+        return {
+          data: {
+            valid_from: "2026-11-13T10:00:00.000Z",
+            leagues: [{ code: "elite" }],
+          },
+          error: null,
+        };
+      }
+      return { data: null, error: null };
+    }).client;
+
+    const noSeasonClient = createMockSupabase((q) => {
+      if (q.table === "zones") return { data: { id: ZONE_ID }, error: null };
+      if (q.table === "seasons") return { data: null, error: null };
+      throw new Error("user_leagues should not be queried without active season");
+    }).client;
+
+    const networkErrorClient = createMockSupabase(() => ({
+      data: null,
+      error: { message: "timeout" },
+    })).client;
+
+    expect(
+      await new HybridTerritoryRepository({
+        getSupabase: () => futureRowClient,
+        isSupabaseConfigured: () => true,
+        now: () => nowMs,
+      }).getUserLeague(USER_ID),
+    ).toBeNull();
+
+    expect(
+      await new HybridTerritoryRepository({
+        getSupabase: () => noSeasonClient,
+        isSupabaseConfigured: () => true,
+        now: () => nowMs,
+      }).getUserLeague(USER_ID),
+    ).toBeNull();
+
+    expect(
+      await new HybridTerritoryRepository({
+        getSupabase: () => networkErrorClient,
+        isSupabaseConfigured: () => true,
+        now: () => nowMs,
+      }).getUserLeague(USER_ID),
+    ).toBeNull();
   });
 });

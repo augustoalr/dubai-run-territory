@@ -1,9 +1,14 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  executeSignOut,
+  fetchProfile,
   getAuthCallbackUrl,
   isEmailLoginEnabled,
+  resolveSignOutTransition,
   signInWithGoogle,
   signInWithOtp,
+  signOut,
   updateProfileAlias,
 } from "./auth";
 
@@ -93,6 +98,163 @@ describe("auth functions", () => {
       if (!res.success) {
         expect(res.error).toBe("INVALID_FORMAT");
       }
+    });
+  });
+
+  describe("fetchProfile", () => {
+    it("selects only id, alias, created_at (never is_admin or *) and maps Profile without isAdmin", async () => {
+      let capturedTable = "";
+      let capturedSelect = "";
+      const eqFilters: Array<[string, unknown]> = [];
+      let usedMaybeSingle = false;
+
+      const mockClient = {
+        from(table: string) {
+          capturedTable = table;
+          const builder = {
+            select(cols: string) {
+              capturedSelect = cols;
+              return builder;
+            },
+            eq(col: string, val: unknown) {
+              eqFilters.push([col, val]);
+              return builder;
+            },
+            maybeSingle() {
+              usedMaybeSingle = true;
+              return Promise.resolve({
+                data: {
+                  id: "user-123",
+                  alias: "dubai.runner",
+                  created_at: "2026-11-01T10:00:00Z",
+                },
+                error: null,
+              });
+            },
+          };
+          return builder;
+        },
+      } as unknown as SupabaseClient;
+
+      const profile = await fetchProfile("user-123", { getSupabase: () => mockClient });
+
+      expect(capturedTable).toBe("profiles");
+      expect(capturedSelect).toBe("id, alias, created_at");
+      expect(capturedSelect).not.toContain("is_admin");
+      expect(capturedSelect).not.toContain("*");
+      expect(eqFilters).toEqual([["id", "user-123"]]);
+      expect(usedMaybeSingle).toBe(true);
+      expect(profile).toEqual({
+        id: "user-123",
+        alias: "dubai.runner",
+        createdAt: "2026-11-01T10:00:00Z",
+      });
+      expect("isAdmin" in (profile ?? {})).toBe(false);
+    });
+
+    it("returns null on query error, missing row, or thrown exception", async () => {
+      const errorClient = {
+        from() {
+          const builder = {
+            select() {
+              return builder;
+            },
+            eq() {
+              return builder;
+            },
+            maybeSingle() {
+              return Promise.resolve({ data: null, error: { code: "42501", message: "denied" } });
+            },
+          };
+          return builder;
+        },
+      } as unknown as SupabaseClient;
+
+      const throwingClient = {
+        from() {
+          throw new Error("network down");
+        },
+      } as unknown as SupabaseClient;
+
+      expect(await fetchProfile("user-123", { getSupabase: () => null })).toBeNull();
+      expect(await fetchProfile("user-123", { getSupabase: () => errorClient })).toBeNull();
+      expect(await fetchProfile("user-123", { getSupabase: () => throwingClient })).toBeNull();
+    });
+  });
+
+  describe("signOut and AuthContext session transition", () => {
+    it("returns { error: null } when client is null or signOut succeeds", async () => {
+      const okClient = {
+        auth: {
+          signOut: async () => ({ error: null }),
+        },
+      } as unknown as SupabaseClient;
+
+      expect(await signOut({ getSupabase: () => null })).toEqual({ error: null });
+      expect(await signOut({ getSupabase: () => okClient })).toEqual({ error: null });
+    });
+
+    it("returns { error } when supabase.auth.signOut returns an error", async () => {
+      const errClient = {
+        auth: {
+          signOut: async () => ({ error: { message: "Session revoke failed" } }),
+        },
+      } as unknown as SupabaseClient;
+
+      expect(await signOut({ getSupabase: () => errClient })).toEqual({
+        error: "Session revoke failed",
+      });
+    });
+
+    it("catches rejected promises from supabase.auth.signOut without throwing", async () => {
+      const rejectClient = {
+        auth: {
+          signOut: async () => {
+            throw new Error("Network failure");
+          },
+        },
+      } as unknown as SupabaseClient;
+
+      expect(await signOut({ getSupabase: () => rejectClient })).toEqual({
+        error: "Network failure",
+      });
+    });
+
+    it("clears session state only when signOut succeeds without error", async () => {
+      const initialSnapshot = {
+        user: { id: "user-123" },
+        session: { access_token: "tok" },
+        profile: { id: "user-123", alias: "maya", createdAt: "2026-11-01T00:00:00Z" },
+      };
+
+      expect(resolveSignOutTransition(initialSnapshot, { error: "Network failure" })).toBe(
+        initialSnapshot,
+      );
+      expect(resolveSignOutTransition(initialSnapshot, { error: null })).toEqual({
+        user: null,
+        session: null,
+        profile: null,
+      });
+
+      let clearedOnFail = false;
+      const failResult = await executeSignOut(
+        async () => ({ error: "Network failure" }),
+        () => {
+          clearedOnFail = true;
+        },
+      );
+      expect(failResult).toEqual({ error: "Network failure" });
+      expect(clearedOnFail).toBe(false);
+
+      let clearedOnSuccess = false;
+      const okResult = await executeSignOut(
+        async () => ({ error: null }),
+        () => {
+          clearedOnSuccess = true;
+        },
+      );
+      expect(okResult).toEqual({ error: null });
+      expect(clearedOnSuccess).toBe(true);
     });
   });
 });
