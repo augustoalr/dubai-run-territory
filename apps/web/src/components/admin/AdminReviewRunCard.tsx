@@ -7,7 +7,11 @@ import type { AdminActionType, AdminRunItem } from "@/lib/admin";
 import { resolveRunReasonInfo } from "@/lib/profile/run-reason";
 import type { ProfileRunStatus } from "@/lib/profile/types";
 import type { ThemeMode } from "@/lib/territory/cell-paint";
-import { resolveAdminErrorMessage, resolveFlagLabel } from "./admin-error-message";
+import {
+  resolveAdminErrorMessage,
+  resolveFlagLabel,
+  resolveRunSourceLabel,
+} from "./admin-error-message";
 
 const VALID_PROFILE_STATUSES: ReadonlySet<string> = new Set<ProfileRunStatus>([
   "pending",
@@ -66,10 +70,10 @@ export function AdminReviewRunCard({ run, theme, isBusy, onAction }: AdminReview
           <span className="admin-card-meta">
             {formatDate(run.createdAt)}
             {run.distanceInZoneM !== null ? ` · ${formatDistance(run.distanceInZoneM)}` : ""}
-            {` · ${run.format.toUpperCase()} · ${run.source}`}
+            {` · ${run.format.toUpperCase()} · ${resolveRunSourceLabel(run.source, t)}`}
           </span>
         </div>
-        <span className="profile-status-pill profile-status-pill--review">
+        <span className="profile-run-status profile-run-status--review">
           {t.profileRunStatuses.review}
         </span>
       </div>

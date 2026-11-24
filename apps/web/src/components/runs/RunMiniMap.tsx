@@ -39,12 +39,18 @@ export function RunMiniMap({
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const [hasMapError, setHasMapError] = useState(false);
+  const [failedTrackKey, setFailedTrackKey] = useState<string | null>(null);
 
   const coordinates = useMemo(
     () => resolveTrackCoordinates({ gpx, coordinates: explicitCoordinates }),
     [gpx, explicitCoordinates],
   );
+
+  const trackKey = useMemo(
+    () => coordinates.map(([lon, lat]) => `${lon},${lat}`).join(";"),
+    [coordinates],
+  );
+  const hasMapError = failedTrackKey !== null && failedTrackKey === trackKey;
 
   const trackBounds = useMemo(() => computeTrackBounds(coordinates), [coordinates]);
 
@@ -58,7 +64,7 @@ export function RunMiniMap({
 
     if (!checkWebGLSupport()) {
       const timer = setTimeout(() => {
-        setHasMapError(true);
+        setFailedTrackKey(trackKey);
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -91,7 +97,7 @@ export function RunMiniMap({
           (!isMapLoaded && !/tile/i.test(message));
 
         if (isFatal) {
-          setHasMapError(true);
+          setFailedTrackKey(trackKey);
         }
       });
 
@@ -226,12 +232,12 @@ export function RunMiniMap({
             resizeObserver.observe(containerRef.current);
           }
         } catch {
-          setHasMapError(true);
+          setFailedTrackKey(trackKey);
         }
       });
     } catch {
       setTimeout(() => {
-        setHasMapError(true);
+        setFailedTrackKey(trackKey);
       }, 0);
     }
 
@@ -245,7 +251,7 @@ export function RunMiniMap({
         mapRef.current = null;
       }
     };
-  }, [coordinates, theme, trackBounds]);
+  }, [coordinates, theme, trackBounds, trackKey]);
 
   if (!isRenderableTrack(coordinates)) {
     return (

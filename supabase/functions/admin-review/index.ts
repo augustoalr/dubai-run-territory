@@ -368,8 +368,8 @@ async function handleApproveRun(
   const hash = await trackHash(activity);
   const resolvedSport = normalizeRunSport(parsedTrack.sport, run.sport);
 
-  const resolvedLeagueId = await resolveAndPersistLeague(supabase, run, season.id, refPaceS);
-  if (!resolvedLeagueId) {
+  const leagueResolution = await resolveTargetLeague(supabase, run, season.id, refPaceS);
+  if (!leagueResolution) {
     return jsonResponse({ error: "league_resolution_failed" }, 500);
   }
 
@@ -391,7 +391,7 @@ async function handleApproveRun(
       status: "accepted",
       reject_code: null,
       season_id: season.id,
-      league_id: resolvedLeagueId,
+      league_id: leagueResolution.targetLeagueId,
       started_at: startedAtIso,
       ended_at: endedAtIso,
       distance_in_zone_m: activity.distanceM,
@@ -404,13 +404,34 @@ async function handleApproveRun(
     return jsonResponse({ error: "run_update_failed" }, 500);
   }
 
+  let insertedUserLeagueId: string | null = null;
+  if (leagueResolution.leagueInsertPayload) {
+    const { data: insertedLeague, error: leagueInsertError } = await supabase
+      .from("user_leagues")
+      .insert(leagueResolution.leagueInsertPayload)
+      .select("id")
+      .single<{ id: string }>();
+
+    if (leagueInsertError || !insertedLeague?.id) {
+      await supabase.from("runs").update(previousRunSnapshot).eq("id", runId);
+      return jsonResponse({ error: "league_insert_failed" }, 500);
+    }
+    insertedUserLeagueId = insertedLeague.id;
+  }
+
   const { error: applyError } = await supabase.rpc("apply_run", {
     p_run_id: runId,
     p_efforts: efforts,
   });
 
   if (applyError) {
+    if (insertedUserLeagueId) {
+      await supabase.from("user_leagues").delete().eq("id", insertedUserLeagueId);
+    }
     await supabase.from("runs").update(previousRunSnapshot).eq("id", runId);
+    if (leagueResolution.leagueInsertPayload?.reason === "promotion") {
+      await supabase.rpc("recompute_season", { p_season_id: season.id });
+    }
     const isOutOfWindow = applyError.message.toUpperCase().includes("OUT_OF_WINDOW");
     return jsonResponse(
       { error: isOutOfWindow ? "out_of_window" : "apply_run_failed" },
@@ -422,6 +443,10 @@ async function handleApproveRun(
     p_season_id: season.id,
   });
   if (recomputeError) {
+    await supabase.from("cell_efforts").delete().eq("run_id", runId);
+    if (insertedUserLeagueId) {
+      await supabase.from("user_leagues").delete().eq("id", insertedUserLeagueId);
+    }
     await supabase.from("runs").update(previousRunSnapshot).eq("id", runId);
     return jsonResponse({ error: "recompute_season_failed" }, 500);
   }
@@ -631,12 +656,25 @@ async function resolveRunSeason(
   return data ?? null;
 }
 
-async function resolveAndPersistLeague(
+interface LeagueInsertPayload {
+  user_id: string;
+  season_id: string;
+  league_id: string;
+  ref_pace_s: number;
+  reason: "provisional" | "promotion";
+}
+
+interface TargetLeagueResolution {
+  targetLeagueId: string;
+  leagueInsertPayload: LeagueInsertPayload | null;
+}
+
+async function resolveTargetLeague(
   supabase: ReturnType<typeof createClient>,
   run: RunRow,
   seasonId: string,
   refPaceS: number | null,
-): Promise<string | null> {
+): Promise<TargetLeagueResolution | null> {
   const nowIso = new Date().toISOString();
   const { data: currentRow } = await supabase
     .from("user_leagues")
@@ -666,31 +704,25 @@ async function resolveAndPersistLeague(
     const targetLeagueId = await leagueIdForCode(supabase, decision.league);
     if (!targetLeagueId) return null;
 
-    if (decision.reason === "provisional" || decision.reason === "promotion") {
-      const { error: insertError } = await supabase.from("user_leagues").insert({
-        user_id: run.user_id,
-        season_id: seasonId,
-        league_id: targetLeagueId,
-        ref_pace_s: refPaceS,
-        reason: decision.reason,
-      });
-      if (insertError) {
-        console.error(
-          JSON.stringify({
-            run_id: run.id,
-            error: "admin_league_insert_failed",
-            code: insertError.code,
-          }),
-        );
-      }
-    }
+    const leagueInsertPayload: LeagueInsertPayload | null =
+      decision.reason === "provisional" || decision.reason === "promotion"
+        ? {
+            user_id: run.user_id,
+            season_id: seasonId,
+            league_id: targetLeagueId,
+            ref_pace_s: refPaceS,
+            reason: decision.reason,
+          }
+        : null;
 
-    return targetLeagueId;
+    return { targetLeagueId, leagueInsertPayload };
   }
 
-  if (currentLeagueId) return currentLeagueId;
-  if (run.league_id) return run.league_id;
-  return leagueIdForCode(supabase, "starter");
+  const fallbackLeagueId =
+    currentLeagueId ?? run.league_id ?? (await leagueIdForCode(supabase, "starter"));
+  if (!fallbackLeagueId) return null;
+
+  return { targetLeagueId: fallbackLeagueId, leagueInsertPayload: null };
 }
 
 async function leagueIdForCode(

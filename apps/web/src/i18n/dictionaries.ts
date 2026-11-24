@@ -456,6 +456,12 @@ export const es = {
     run: "Carrera",
     report: "Reporte",
   },
+  adminRunSources: {
+    upload: "Archivo subido",
+    garmin: "Garmin",
+    polar: "Polar",
+    browser: "Grabada en el móvil",
+  },
   adminErrors: {
     out_of_window:
       "La carrera está fuera de la temporada activa o superó el plazo máximo de validación.",
@@ -466,6 +472,7 @@ export const es = {
     not_found: "El elemento ya no existe.",
     forbidden: "No tienes permisos para ejecutar esta acción.",
     unauthorized: "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+    invalid_request: "La solicitud enviada no es válida. Recarga la página e inténtalo de nuevo.",
     generic: "No se pudo completar la acción. Inténtalo de nuevo.",
   },
 };
@@ -923,6 +930,12 @@ export const en: Dictionary = {
     run: "Run",
     report: "Report",
   },
+  adminRunSources: {
+    upload: "Uploaded file",
+    garmin: "Garmin",
+    polar: "Polar",
+    browser: "Recorded on phone",
+  },
   adminErrors: {
     out_of_window: "The run is outside the active season or passed the maximum validation window.",
     missing_timestamps: "The GPS file does not include complete timestamps.",
@@ -932,6 +945,7 @@ export const en: Dictionary = {
     not_found: "The item no longer exists.",
     forbidden: "You do not have permission to perform this action.",
     unauthorized: "Your session has expired. Please sign in again.",
+    invalid_request: "The submitted request is invalid. Reload the page and try again.",
     generic: "Could not complete the action. Please try again.",
   },
 };

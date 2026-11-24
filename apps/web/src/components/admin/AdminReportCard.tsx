@@ -59,7 +59,7 @@ export function AdminReportCard({ report, theme, isBusy, onAction }: AdminReport
               : ""}
           </span>
         </div>
-        <span className="profile-status-pill profile-status-pill--review">{statusLabel}</span>
+        <span className="profile-run-status profile-run-status--review">{statusLabel}</span>
       </div>
 
       <p className="admin-detail-note">

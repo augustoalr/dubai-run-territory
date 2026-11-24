@@ -23,18 +23,22 @@ const THEME_CHANGE_EVENT = "dubai-run-admin-theme-change";
 type AdminTab = "runs" | "reports" | "audit";
 
 function subscribeToTheme(callback: () => void): () => void {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || typeof document === "undefined") {
     return () => {};
   }
-  const observer = new MutationObserver(callback);
+  const observer = new MutationObserver(() => {
+    callback();
+  });
   observer.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ["data-theme", "class"],
   });
   window.addEventListener(THEME_CHANGE_EVENT, callback);
+  window.addEventListener("storage", callback);
   return () => {
     observer.disconnect();
     window.removeEventListener(THEME_CHANGE_EVENT, callback);
+    window.removeEventListener("storage", callback);
   };
 }
 
@@ -102,10 +106,11 @@ export function AdminContainer() {
     if (typeof document === "undefined") return;
     const next: ThemeMode = getThemeSnapshot() === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, next);
     } catch {
-      // ignore storage errors
+      // Ignore storage failures in Safari private mode.
     }
     window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
   }, []);
@@ -184,12 +189,13 @@ export function AdminContainer() {
   const isSampleData = state?.status === "sample";
 
   return (
-    <div className="profile-theme admin-page" data-theme={theme}>
+    <div className="profile-viewport admin-page">
       <div className="profile-shell admin-shell">
         <AdminHeader theme={theme} isSampleData={isSampleData} onToggleTheme={handleToggleTheme} />
 
         {(authLoading || state === null) && (
           <div className="profile-state-card" role="status" aria-live="polite">
+            <div className="profile-spinner" aria-hidden="true" />
             <p className="profile-state-desc">{t.adminLoading}</p>
           </div>
         )}
@@ -198,7 +204,7 @@ export function AdminContainer() {
           <div className="profile-state-card">
             <h2 className="profile-state-title">{t.adminUnauthenticatedTitle}</h2>
             <p className="profile-state-desc">{t.adminUnauthenticatedDesc}</p>
-            <button type="button" className="profile-cta-btn" onClick={() => openAuthModal()}>
+            <button type="button" className="profile-primary-btn" onClick={() => openAuthModal()}>
               {t.adminSignInCta}
             </button>
           </div>
@@ -217,7 +223,7 @@ export function AdminContainer() {
             <p className="profile-state-desc">{t.adminErrorDesc}</p>
             <button
               type="button"
-              className="profile-cta-btn"
+              className="profile-primary-btn"
               onClick={() => setReloadNonce((prev) => prev + 1)}
             >
               {t.adminRetry}

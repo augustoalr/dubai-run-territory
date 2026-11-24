@@ -4820,9 +4820,7 @@ button:disabled {
    ============================================================================ */
 
 .admin-page {
-  min-height: 100dvh;
-  background: var(--bg-canvas);
-  color: var(--text-primary);
+  overscroll-behavior-y: contain;
 }
 
 .admin-shell {
@@ -4900,9 +4898,15 @@ button:disabled {
   height: 22px;
   padding: 0 6px;
   border-radius: var(--profile-radius-pill);
-  background: rgba(15, 23, 42, 0.2);
+  border: 1px solid var(--chip-border);
+  background: var(--btn-close-bg);
   font-size: 0.75rem;
   font-weight: 700;
+}
+
+.admin-tab-btn--active .admin-tab-count {
+  border-color: currentColor;
+  background: var(--btn-close-hover);
 }
 
 .admin-section {

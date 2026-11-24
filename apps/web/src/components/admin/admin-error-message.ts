@@ -10,9 +10,9 @@ export function resolveAdminErrorMessage(code: string, t: Dictionary): string {
       return t.adminErrors.no_active_season;
     case "track_unavailable":
       return t.adminErrors.track_unavailable;
-    case "invalid_status":
-    case "already_voided":
-    case "report_not_open":
+    case "run_not_in_review":
+    case "run_already_voided":
+    case "report_already_closed":
       return t.adminErrors.conflict;
     case "run_not_found":
     case "report_not_found":
@@ -23,6 +23,10 @@ export function resolveAdminErrorMessage(code: string, t: Dictionary): string {
       return t.adminErrors.unauthorized;
     case "invalid_reason":
       return t.adminReasonTooShort;
+    case "invalid_body":
+    case "invalid_action":
+    case "invalid_target_id":
+      return t.adminErrors.invalid_request;
     default:
       return t.adminErrors.generic;
   }
@@ -38,5 +42,20 @@ export function resolveFlagLabel(flag: string, t: Dictionary): string {
       return t.adminFlagLabels.GAP;
     default:
       return flag;
+  }
+}
+
+export function resolveRunSourceLabel(source: string, t: Dictionary): string {
+  switch (source) {
+    case "upload":
+      return t.adminRunSources.upload;
+    case "garmin":
+      return t.adminRunSources.garmin;
+    case "polar":
+      return t.adminRunSources.polar;
+    case "browser":
+      return t.adminRunSources.browser;
+    default:
+      return source;
   }
 }

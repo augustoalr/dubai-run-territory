@@ -269,9 +269,9 @@ Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tar
   - Ampliación de `scripts/verify-db.ts` para comprobar el índice FK, bloqueos `42501`/RLS a usuarios no admin, lecturas admin y recálculo con `apply_run` + `recompute_season`.
   - Edge Function `supabase/functions/admin-review/` (`index.ts` y `logic.ts`) y configuración `verify_jwt = false` en `supabase/config.toml`: CORS, validación JWT + `is_admin`, `GET` de cola (`runsReview`, `reports`, `auditLogs`) y `POST` para `approve_run` (recalculando ventana, esfuerzos y temporada con rollback si falla RPC), `void_run`, `resolve_report` y `dismiss_report`.
   - Página estática `/admin`, repositorio `apps/web/src/lib/admin/`, componentes en `apps/web/src/components/admin/` con diseño móvil (375–430 px) e i18n completo `es`/`en` sin tecnicismos, y soporte de `coordinates` en `RunMiniMap.tsx` vía `run-track-helpers.ts`.
-  - Tests Vitest para `admin-repository.ts`, `admin-review/logic.ts` y `run-track-helpers.ts`.
-- **Pendientes reales:** verificación CI de `pnpm db:verify` y `supabase gen types typescript` contra Postgres/Supabase CLI (no instalados en este entorno local), además de despliegue manual de `admin-review` y migración tras revisión.
-- **Siguiente paso:** revisión del PR #26 por el Manager y ejecución de checks en CI.
+  - Tests Vitest para `admin-repository.ts`, `admin-review/logic.ts`, `admin-error-message.ts` y `run-track-helpers.ts`.
+- **Pendientes reales:** `pnpm db:verify` y `supabase gen types typescript` ya se validaron en verde en el CI del PR #26; queda pendiente únicamente aplicar la migración y desplegar manualmente `admin-review` (junto con `process-run`) tras fusionar.
+- **Siguiente paso:** nueva revisión del PR #26 por el Manager tras aplicar los ajustes de revisión.
 
 ## En curso
 

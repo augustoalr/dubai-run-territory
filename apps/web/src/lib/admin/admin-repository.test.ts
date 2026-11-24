@@ -147,7 +147,7 @@ describe("HybridAdminRepository", () => {
               zoneId: "zone-1",
               seasonId: null,
               format: "gpx",
-              source: "manual",
+              source: "upload",
               sport: "running",
               startedAt: "2026-11-10T06:00:00.000Z",
               endedAt: "2026-11-10T06:20:00.000Z",
