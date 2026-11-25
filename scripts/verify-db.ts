@@ -1164,16 +1164,32 @@ async function verifyConquest(client: pg.Client, connectionString: string): Prom
     [reviewRun.id],
   );
   await asRole(client, "service_role", null, "commit", async () => {
-    await client.query("SELECT public.apply_run($1, $2::jsonb)", [
-      reviewRun.id,
-      effort(cellAdmin, 240, "2026-11-02T05:30:00.000Z"),
-    ]);
+    await client.query(
+      `INSERT INTO public.cell_efforts (
+         run_id, user_id, zone_id, season_id, league_id, h3,
+         crossed_at, pace_s, window_start_m, window_end_m
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        reviewRun.id,
+        userA,
+        zone.id,
+        season.id,
+        elite.id,
+        cellAdmin,
+        "2026-11-02T05:30:00.000Z",
+        240,
+        0,
+        1000,
+      ],
+    );
     await client.query("SELECT public.recompute_season($1)", [season.id]);
   });
 
   const adminCellOwner = await ownerOf(elite.id, cellAdmin);
   if (adminCellOwner.owner_id !== userA || adminCellOwner.pace_s !== 240) {
-    throw new Error("approve + apply_run + recompute_season did not assign cell to userA");
+    throw new Error(
+      "approve + cell_efforts insert + recompute_season did not assign cell to userA",
+    );
   }
   const afterApprovePoints = await one<{ points: number }>(
     client,

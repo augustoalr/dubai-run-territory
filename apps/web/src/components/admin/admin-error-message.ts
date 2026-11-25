@@ -11,6 +11,7 @@ export function resolveAdminErrorMessage(code: string, t: Dictionary): string {
     case "track_unavailable":
       return t.adminErrors.track_unavailable;
     case "run_not_in_review":
+    case "run_already_applied":
     case "run_already_voided":
     case "report_already_closed":
       return t.adminErrors.conflict;

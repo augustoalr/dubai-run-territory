@@ -22,6 +22,7 @@ describe("admin-error-message helpers", () => {
 
       // Exact 409 codes returned by supabase/functions/admin-review/index.ts
       expect(resolveAdminErrorMessage("run_not_in_review", dict)).toBe(dict.adminErrors.conflict);
+      expect(resolveAdminErrorMessage("run_already_applied", dict)).toBe(dict.adminErrors.conflict);
       expect(resolveAdminErrorMessage("run_already_voided", dict)).toBe(dict.adminErrors.conflict);
       expect(resolveAdminErrorMessage("report_already_closed", dict)).toBe(
         dict.adminErrors.conflict,

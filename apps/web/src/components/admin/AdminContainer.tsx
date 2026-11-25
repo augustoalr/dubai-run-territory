@@ -91,16 +91,34 @@ function applySampleMutation(
   };
 }
 
+interface LoadedAdminSnapshot {
+  key: string;
+  result: AdminLoadResult;
+}
+
+interface ScopedNotice {
+  sessionKey: string;
+  message: string;
+}
+
 export function AdminContainer() {
   const { t } = useI18n();
-  const { isLoading: authLoading, session, openAuthModal } = useAuth();
+  const { user, isLoading: authLoading, isConfigured, session, openAuthModal } = useAuth();
   const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerThemeSnapshot);
 
-  const [state, setState] = useState<AdminLoadResult | null>(null);
+  const [loadedSnapshot, setLoadedSnapshot] = useState<LoadedAdminSnapshot | null>(null);
   const [activeTab, setActiveTab] = useState<AdminTab>("runs");
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const [successNotice, setSuccessNotice] = useState<string | null>(null);
+  const [scopedNotice, setScopedNotice] = useState<ScopedNotice | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
+  const [refreshSeq, setRefreshSeq] = useState(0);
+
+  const isWaitingForAuth = isConfigured && authLoading;
+  const effectiveUserId = isConfigured ? (user?.id ?? null) : null;
+  const sessionScopeKey = isWaitingForAuth
+    ? "waiting"
+    : `${isConfigured ? "cfg" : "sample"}:${effectiveUserId ?? "anon"}`;
+  const requestKey = isWaitingForAuth ? "waiting" : `${sessionScopeKey}:${reloadNonce}`;
 
   const handleToggleTheme = useCallback(() => {
     if (typeof document === "undefined") return;
@@ -116,26 +134,30 @@ export function AdminContainer() {
   }, []);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (isWaitingForAuth) return;
     let cancelled = false;
+    const activeKey = requestKey;
     const accessToken = session?.access_token ?? null;
 
     adminRepository
       .getQueue(accessToken)
       .then((result) => {
         if (!cancelled) {
-          setState(result);
+          setLoadedSnapshot({ key: activeKey, result });
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setState({
-            status: "error",
-            isSampleData: false,
-            error: "network_error",
-            runsReview: [],
-            reports: [],
-            auditLogs: [],
+          setLoadedSnapshot({
+            key: activeKey,
+            result: {
+              status: "error",
+              isSampleData: false,
+              error: "network_error",
+              runsReview: [],
+              reports: [],
+              auditLogs: [],
+            },
           });
         }
       });
@@ -143,13 +165,18 @@ export function AdminContainer() {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, session?.access_token, reloadNonce]);
+  }, [isWaitingForAuth, requestKey, refreshSeq, session?.access_token]);
+
+  const activeSnapshot = loadedSnapshot?.key === requestKey ? loadedSnapshot : null;
+  const isLoadingQueue = isWaitingForAuth || activeSnapshot === null;
+  const state = activeSnapshot?.result ?? null;
+  const successNotice = scopedNotice?.sessionKey === sessionScopeKey ? scopedNotice.message : null;
 
   const handleAction = useCallback(
     async (action: AdminActionType, targetId: string, reason: string) => {
       const opKey = `${action}:${targetId}`;
       setBusyKey(opKey);
-      setSuccessNotice(null);
+      setScopedNotice(null);
 
       const result = await adminRepository.submitAction({
         action,
@@ -167,23 +194,23 @@ export function AdminContainer() {
         return { ok: false, code: result.code };
       }
 
-      setSuccessNotice(t.adminActionSuccess);
+      setScopedNotice({ sessionKey: sessionScopeKey, message: t.adminActionSuccess });
 
-      setState((prev) => {
-        if (!prev) return prev;
-        if (prev.status === "sample") {
-          return applySampleMutation(prev, action, targetId, reason);
-        }
-        return prev;
-      });
-
-      if (state?.status !== "sample") {
-        setReloadNonce((prev) => prev + 1);
+      if (state?.status === "sample") {
+        setLoadedSnapshot((prev) => {
+          if (!prev || prev.key !== requestKey || prev.result.status !== "sample") return prev;
+          return {
+            key: prev.key,
+            result: applySampleMutation(prev.result, action, targetId, reason),
+          };
+        });
+      } else {
+        setRefreshSeq((prev) => prev + 1);
       }
 
       return { ok: true };
     },
-    [session?.access_token, state?.status, t.adminActionSuccess],
+    [requestKey, session?.access_token, sessionScopeKey, state?.status, t.adminActionSuccess],
   );
 
   const isSampleData = state?.status === "sample";
@@ -193,14 +220,14 @@ export function AdminContainer() {
       <div className="profile-shell admin-shell">
         <AdminHeader theme={theme} isSampleData={isSampleData} onToggleTheme={handleToggleTheme} />
 
-        {(authLoading || state === null) && (
+        {isLoadingQueue && (
           <div className="profile-state-card" role="status" aria-live="polite">
             <div className="profile-spinner" aria-hidden="true" />
             <p className="profile-state-desc">{t.adminLoading}</p>
           </div>
         )}
 
-        {!authLoading && state?.status === "unauthenticated" && (
+        {!isLoadingQueue && state?.status === "unauthenticated" && (
           <div className="profile-state-card">
             <h2 className="profile-state-title">{t.adminUnauthenticatedTitle}</h2>
             <p className="profile-state-desc">{t.adminUnauthenticatedDesc}</p>
@@ -210,14 +237,14 @@ export function AdminContainer() {
           </div>
         )}
 
-        {!authLoading && state?.status === "forbidden" && (
+        {!isLoadingQueue && state?.status === "forbidden" && (
           <div className="profile-state-card">
             <h2 className="profile-state-title">{t.adminForbiddenTitle}</h2>
             <p className="profile-state-desc">{t.adminForbiddenDesc}</p>
           </div>
         )}
 
-        {!authLoading && state?.status === "error" && (
+        {!isLoadingQueue && state?.status === "error" && (
           <div className="profile-state-card" role="alert">
             <h2 className="profile-state-title">{t.adminErrorTitle}</h2>
             <p className="profile-state-desc">{t.adminErrorDesc}</p>
@@ -231,7 +258,7 @@ export function AdminContainer() {
           </div>
         )}
 
-        {!authLoading && (state?.status === "ready" || state?.status === "sample") && (
+        {!isLoadingQueue && (state?.status === "ready" || state?.status === "sample") && (
           <>
             {successNotice && (
               <div className="admin-success-banner" role="status" aria-live="polite">
@@ -279,7 +306,7 @@ export function AdminContainer() {
                         key={run.id}
                         run={run}
                         theme={theme}
-                        isBusy={busyKey !== null}
+                        busyKey={busyKey}
                         onAction={handleAction}
                       />
                     ))}
@@ -301,7 +328,7 @@ export function AdminContainer() {
                         key={report.id}
                         report={report}
                         theme={theme}
-                        isBusy={busyKey !== null}
+                        busyKey={busyKey}
                         onAction={handleAction}
                       />
                     ))}

@@ -10,7 +10,7 @@ import { resolveAdminErrorMessage, resolveFlagLabel } from "./admin-error-messag
 interface AdminReportCardProps {
   report: AdminReportItem;
   theme: ThemeMode;
-  isBusy: boolean;
+  busyKey: string | null;
   onAction: (
     action: AdminActionType,
     targetId: string,
@@ -21,10 +21,15 @@ interface AdminReportCardProps {
   }>;
 }
 
-export function AdminReportCard({ report, theme, isBusy, onAction }: AdminReportCardProps) {
+export function AdminReportCard({ report, theme, busyKey, onAction }: AdminReportCardProps) {
   const { t, formatDate, formatDistance } = useI18n();
   const [reason, setReason] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const isAnyBusy = busyKey !== null;
+  const isVoidingRun = report.run !== null && busyKey === `void_run:${report.run.id}`;
+  const isResolving = busyKey === `resolve_report:${report.id}`;
+  const isDismissing = busyKey === `dismiss_report:${report.id}`;
 
   const statusLabel =
     report.status === "reviewing" ? t.adminReportStatusReviewing : t.adminReportStatusOpen;
@@ -97,7 +102,7 @@ export function AdminReportCard({ report, theme, isBusy, onAction }: AdminReport
           className="admin-reason-input"
           value={reason}
           maxLength={500}
-          disabled={isBusy}
+          disabled={isAnyBusy}
           placeholder={t.adminReasonPlaceholder}
           onChange={(event) => {
             setReason(event.target.value);
@@ -114,27 +119,27 @@ export function AdminReportCard({ report, theme, isBusy, onAction }: AdminReport
             <button
               type="button"
               className="admin-btn admin-btn--danger"
-              disabled={isBusy}
+              disabled={isAnyBusy}
               onClick={() => void handleSubmit("void_run", report.run!.id)}
             >
-              {isBusy ? t.adminSubmitting : t.adminVoidRun}
+              {isVoidingRun ? t.adminSubmitting : t.adminVoidRun}
             </button>
           )}
           <button
             type="button"
             className="admin-btn admin-btn--approve"
-            disabled={isBusy}
+            disabled={isAnyBusy}
             onClick={() => void handleSubmit("resolve_report", report.id)}
           >
-            {isBusy ? t.adminSubmitting : t.adminResolveReport}
+            {isResolving ? t.adminSubmitting : t.adminResolveReport}
           </button>
           <button
             type="button"
             className="admin-btn admin-btn--neutral"
-            disabled={isBusy}
+            disabled={isAnyBusy}
             onClick={() => void handleSubmit("dismiss_report", report.id)}
           >
-            {isBusy ? t.adminSubmitting : t.adminDismissReport}
+            {isDismissing ? t.adminSubmitting : t.adminDismissReport}
           </button>
         </div>
       </div>

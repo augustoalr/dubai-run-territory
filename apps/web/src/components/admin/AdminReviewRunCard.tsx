@@ -25,7 +25,7 @@ const VALID_PROFILE_STATUSES: ReadonlySet<string> = new Set<ProfileRunStatus>([
 interface AdminReviewRunCardProps {
   run: AdminRunItem;
   theme: ThemeMode;
-  isBusy: boolean;
+  busyKey: string | null;
   onAction: (
     action: AdminActionType,
     targetId: string,
@@ -36,10 +36,14 @@ interface AdminReviewRunCardProps {
   }>;
 }
 
-export function AdminReviewRunCard({ run, theme, isBusy, onAction }: AdminReviewRunCardProps) {
+export function AdminReviewRunCard({ run, theme, busyKey, onAction }: AdminReviewRunCardProps) {
   const { t, formatDate, formatDistance } = useI18n();
   const [reason, setReason] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const isAnyBusy = busyKey !== null;
+  const isApproving = busyKey === `approve_run:${run.id}`;
+  const isVoiding = busyKey === `void_run:${run.id}`;
 
   const normalizedStatus: ProfileRunStatus = VALID_PROFILE_STATUSES.has(run.status)
     ? (run.status as ProfileRunStatus)
@@ -109,7 +113,7 @@ export function AdminReviewRunCard({ run, theme, isBusy, onAction }: AdminReview
           className="admin-reason-input"
           value={reason}
           maxLength={500}
-          disabled={isBusy}
+          disabled={isAnyBusy}
           placeholder={t.adminReasonPlaceholder}
           onChange={(event) => {
             setReason(event.target.value);
@@ -125,18 +129,18 @@ export function AdminReviewRunCard({ run, theme, isBusy, onAction }: AdminReview
           <button
             type="button"
             className="admin-btn admin-btn--approve"
-            disabled={isBusy}
+            disabled={isAnyBusy}
             onClick={() => void handleSubmit("approve_run")}
           >
-            {isBusy ? t.adminSubmitting : t.adminApproveRun}
+            {isApproving ? t.adminSubmitting : t.adminApproveRun}
           </button>
           <button
             type="button"
             className="admin-btn admin-btn--danger"
-            disabled={isBusy}
+            disabled={isAnyBusy}
             onClick={() => void handleSubmit("void_run")}
           >
-            {isBusy ? t.adminSubmitting : t.adminVoidRun}
+            {isVoiding ? t.adminSubmitting : t.adminVoidRun}
           </button>
         </div>
       </div>

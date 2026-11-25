@@ -1,6 +1,6 @@
 # Estado de la Fase 0
 
-Actualizado el 12 nov 2026, con main en `e2aa51b` (T-35 en PR #25 fusionado en `e2aa51b`; T-19 en PR #24 fusionado en `e661fb8`; T-34 en PR #23 fusionado en `caee589`; T-33 en PR #22 fusionado en `78f903d`; T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
+Actualizado el 25 nov 2026, con main en `e2aa51b` (T-35 en PR #25 fusionado en `e2aa51b`; T-19 en PR #24 fusionado en `e661fb8`; T-34 en PR #23 fusionado en `caee589`; T-33 en PR #22 fusionado en `78f903d`; T-17 en PR #21 fusionado en `f8fc6bf`; T-32 en `76b2bdf` y T-14 en `4298309`, push directo a main sin PR propio; también PR #20, #17, #18, #19).
 
 Al retomar: lee este archivo y actualiza la rama con `main` antes de seguir. Tarea en curso: T-18 (Panel de admin mínimo) en rama `t18-admin-panel` (PR #26). El playbook del manager está en `docs/MANAGER.md`.
 

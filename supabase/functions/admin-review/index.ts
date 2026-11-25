@@ -332,6 +332,18 @@ async function handleApproveRun(
     return jsonResponse({ error: "run_not_in_review" }, 409);
   }
 
+  const { count: existingEffortsCount, error: effortsCheckError } = await supabase
+    .from("cell_efforts")
+    .select("id", { count: "exact", head: true })
+    .eq("run_id", runId);
+
+  if (effortsCheckError) {
+    return jsonResponse({ error: "run_lookup_failed" }, 500);
+  }
+  if ((existingEffortsCount ?? 0) > 0) {
+    return jsonResponse({ error: "run_already_applied" }, 409);
+  }
+
   const parsedTrack = await loadRunTrack(supabase, run);
   if (!parsedTrack.ok) {
     return jsonResponse({ error: "track_unavailable" }, 422);
@@ -404,6 +416,41 @@ async function handleApproveRun(
     return jsonResponse({ error: "run_update_failed" }, 500);
   }
 
+  if (efforts.length > 0) {
+    const effortRows = efforts.map((effort) => ({
+      run_id: runId,
+      user_id: run.user_id,
+      zone_id: run.zone_id,
+      season_id: season.id,
+      league_id: leagueResolution.targetLeagueId,
+      h3: effort.h3,
+      crossed_at: effort.crossedAt,
+      pace_s: effort.paceS,
+      window_start_m: effort.windowStartM,
+      window_end_m: effort.windowEndM,
+    }));
+
+    const { error: insertEffortsError } = await supabase.from("cell_efforts").insert(effortRows);
+    if (insertEffortsError) {
+      const { error: rollbackRunError } = await supabase
+        .from("runs")
+        .update(previousRunSnapshot)
+        .eq("id", runId);
+      if (rollbackRunError) {
+        console.error(
+          JSON.stringify({
+            run_id: runId,
+            step: "rollback_runs_after_efforts",
+            error: rollbackRunError,
+          }),
+        );
+      }
+      const isValidationError =
+        insertEffortsError.code === "22P02" || insertEffortsError.code === "23514";
+      return jsonResponse({ error: "efforts_insert_failed" }, isValidationError ? 422 : 500);
+    }
+  }
+
   let insertedUserLeagueId: string | null = null;
   if (leagueResolution.leagueInsertPayload) {
     const { data: insertedLeague, error: leagueInsertError } = await supabase
@@ -413,50 +460,117 @@ async function handleApproveRun(
       .single<{ id: string }>();
 
     if (leagueInsertError || !insertedLeague?.id) {
-      await supabase.from("runs").update(previousRunSnapshot).eq("id", runId);
+      if (efforts.length > 0) {
+        const { error: delEffortsError } = await supabase
+          .from("cell_efforts")
+          .delete()
+          .eq("run_id", runId);
+        if (delEffortsError) {
+          console.error(
+            JSON.stringify({
+              run_id: runId,
+              step: "rollback_efforts_after_league_insert",
+              error: delEffortsError,
+            }),
+          );
+        }
+      }
+      const { error: rollbackRunError } = await supabase
+        .from("runs")
+        .update(previousRunSnapshot)
+        .eq("id", runId);
+      if (rollbackRunError) {
+        console.error(
+          JSON.stringify({
+            run_id: runId,
+            step: "rollback_runs_after_league_insert",
+            error: rollbackRunError,
+          }),
+        );
+      }
       return jsonResponse({ error: "league_insert_failed" }, 500);
     }
     insertedUserLeagueId = insertedLeague.id;
-  }
-
-  const { error: applyError } = await supabase.rpc("apply_run", {
-    p_run_id: runId,
-    p_efforts: efforts,
-  });
-
-  if (applyError) {
-    if (insertedUserLeagueId) {
-      await supabase.from("user_leagues").delete().eq("id", insertedUserLeagueId);
-    }
-    await supabase.from("runs").update(previousRunSnapshot).eq("id", runId);
-    if (leagueResolution.leagueInsertPayload?.reason === "promotion") {
-      await supabase.rpc("recompute_season", { p_season_id: season.id });
-    }
-    const isOutOfWindow = applyError.message.toUpperCase().includes("OUT_OF_WINDOW");
-    return jsonResponse(
-      { error: isOutOfWindow ? "out_of_window" : "apply_run_failed" },
-      isOutOfWindow ? 422 : 500,
-    );
   }
 
   const { error: recomputeError } = await supabase.rpc("recompute_season", {
     p_season_id: season.id,
   });
   if (recomputeError) {
-    await supabase.from("cell_efforts").delete().eq("run_id", runId);
-    if (insertedUserLeagueId) {
-      await supabase.from("user_leagues").delete().eq("id", insertedUserLeagueId);
+    if (efforts.length > 0) {
+      const { error: delEffortsError } = await supabase
+        .from("cell_efforts")
+        .delete()
+        .eq("run_id", runId);
+      if (delEffortsError) {
+        console.error(
+          JSON.stringify({
+            run_id: runId,
+            step: "rollback_efforts_after_recompute",
+            error: delEffortsError,
+          }),
+        );
+      }
     }
-    await supabase.from("runs").update(previousRunSnapshot).eq("id", runId);
-    return jsonResponse({ error: "recompute_season_failed" }, 500);
+    if (insertedUserLeagueId) {
+      const { error: delLeagueError } = await supabase
+        .from("user_leagues")
+        .delete()
+        .eq("id", insertedUserLeagueId);
+      if (delLeagueError) {
+        console.error(
+          JSON.stringify({
+            run_id: runId,
+            step: "rollback_user_league_after_recompute",
+            error: delLeagueError,
+          }),
+        );
+      }
+    }
+    const { error: rollbackRunError } = await supabase
+      .from("runs")
+      .update(previousRunSnapshot)
+      .eq("id", runId);
+    if (rollbackRunError) {
+      console.error(
+        JSON.stringify({
+          run_id: runId,
+          step: "rollback_runs_after_recompute",
+          error: rollbackRunError,
+        }),
+      );
+    }
+    if (leagueResolution.leagueInsertPayload?.reason === "promotion") {
+      const { error: restoreSeasonError } = await supabase.rpc("recompute_season", {
+        p_season_id: season.id,
+      });
+      if (restoreSeasonError) {
+        console.error(
+          JSON.stringify({
+            run_id: runId,
+            step: "rollback_recompute_after_promotion",
+            error: restoreSeasonError,
+          }),
+        );
+      }
+    }
+    const isOutOfWindow = recomputeError.message.toUpperCase().includes("OUT_OF_WINDOW");
+    return jsonResponse(
+      { error: isOutOfWindow ? "out_of_window" : "recompute_season_failed" },
+      isOutOfWindow ? 422 : 500,
+    );
   }
 
-  const { data: dismissedReports } = await supabase
+  const { data: dismissedReports, error: dismissedReportsError } = await supabase
     .from("reports")
     .update({ status: "dismissed" })
     .eq("run_id", runId)
     .in("status", ["open", "reviewing"])
     .select("id");
+
+  if (dismissedReportsError) {
+    return jsonResponse({ error: "reports_update_failed" }, 500);
+  }
 
   const dismissedReportIds = ((dismissedReports as Array<{ id: string }> | null) ?? []).map(
     (r) => r.id,
@@ -521,21 +635,34 @@ async function handleVoidRun(
       p_season_id: run.season_id,
     });
     if (recomputeError) {
-      await supabase
+      const { error: rollbackRunError } = await supabase
         .from("runs")
         .update({ status: run.status, reject_code: run.reject_code })
         .eq("id", runId);
+      if (rollbackRunError) {
+        console.error(
+          JSON.stringify({
+            run_id: runId,
+            step: "rollback_runs_after_void_recompute",
+            error: rollbackRunError,
+          }),
+        );
+      }
       return jsonResponse({ error: "recompute_season_failed" }, 500);
     }
     recomputed = true;
   }
 
-  const { data: resolvedReports } = await supabase
+  const { data: resolvedReports, error: resolvedReportsError } = await supabase
     .from("reports")
     .update({ status: "resolved" })
     .eq("run_id", runId)
     .in("status", ["open", "reviewing"])
     .select("id");
+
+  if (resolvedReportsError) {
+    return jsonResponse({ error: "reports_update_failed" }, 500);
+  }
 
   const resolvedReportIds = ((resolvedReports as Array<{ id: string }> | null) ?? []).map(
     (r) => r.id,
