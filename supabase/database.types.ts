@@ -3,6 +3,48 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string;
+          admin_id: string | null;
+          created_at: string;
+          id: string;
+          metadata: NonNullable<Json>;
+          reason: string;
+          target_id: string;
+          target_type: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          admin_id?: string | null;
+          created_at?: string;
+          id?: string;
+          metadata?: NonNullable<Json>;
+          reason: string;
+          target_id: string;
+          target_type: string;
+        };
+        Update: {
+          action?: string;
+          admin_id?: string | null;
+          created_at?: string;
+          id?: string;
+          metadata?: NonNullable<Json>;
+          reason?: string;
+          target_id?: string;
+          target_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_logs_admin_id_fkey";
+            columns: ["admin_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       cell_efforts: {
         Row: {
           crossed_at: string;
